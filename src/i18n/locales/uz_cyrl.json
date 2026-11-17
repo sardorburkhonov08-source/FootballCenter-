@@ -304,5 +304,6 @@
   "a_broadcast_confirm": "📢 Шу хабар {count} та фойдаланувчига юборилсинми?",
   "a_broadcast_started": "⏳ Юбориш бошланди...",
   "a_broadcast_done": "✅ Етказилди: {ok} та\n❌ Етказилмади: {fail} та",
-  "a_webadmin_link": "🌐 Web App админ панели: {url}"
+  "a_webadmin_link": "🌐 Web App админ панели: {url}",
+  "too_fast": "⏳ Жуда тез! Бир неча сония кутиб, қайта уриниб кўринг."
 }

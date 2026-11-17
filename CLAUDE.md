@@ -37,6 +37,14 @@ public/admin/           web admin paneli
 test/                   avtomatik testlar
 ```
 
+## Yuklama va API'dan himoya (o'zgartirishda saqlang)
+
+- **Futbol API — API-Football v3** (`src/services/football.js`, header `x-apisports-key`): xotira + PostgreSQL (`api_cache`) keshi, ma'lumot turiga qarab TTL (tugagan o'yin — qayta so'ralmaydi, jonli — 30–60 s), eskirgan keshni darhol berib orqada bitta so'rov bilan yangilash, bir xil so'rovlarni birlashtirish, daqiqalik limit navbati (foydalanuvchi so'rovi 15 s dan ortiq kutmaydi), kunlik limit nazorati (oxirgi 10 so'rov fon vazifalariga zaxira), tarif rad javoblari ham keshlanadi. Bir kunning barcha o'yinlari — bitta so'rov (`/fixtures?date=`). Yangi API chaqiruvi faqat `request()` orqali; tashqariga faqat normalize qilingan ma'lumot chiqadi.
+- **Reyting** (`src/services/leaderboard.js`): 30 s umumiy kesh. G'olibni aniqlash (fon vazifasi) — keshsiz `computeRanking`.
+- **Spam**: bot — foydalanuvchiga 3 s da 8 ta yangilanish; Mini App API — daqiqasiga 120 so'rov (`src/services/ratelimit.js`).
+- **Telegram**: `@grammyjs/auto-retry` (429 da kutib qayta yuboradi), webhook `max_connections: 40`.
+- Foydalanuvchi qatori o'zgarmasa bazaga qayta yozilmaydi (`users.upsertFromTelegram`).
+
 ## Bosqichlar
 
 Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testlardan o'tgan, lekin haqiqiy Telegram/API bilan hali sinalmagan; ⬜ — boshlanmagan.
@@ -53,11 +61,10 @@ Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testl
 | 8 | Web admin panel | 17 | 🧪 |
 | 9 | AI yordamchi | 10 | 🧪 |
 
-2–9-bosqichlar kodi oldingi ishda yozilgan. Har bir bosqich haqiqiy bot tokeni, football-data.org va Claude API kalitlari bilan Railway'da tekshirilgach ✅ ga o'tkaziladi.
+2–9-bosqichlar kodi oldingi ishda yozilgan. Har bir bosqich haqiqiy bot tokeni, API-Football va Claude API kalitlari bilan Railway'da tekshirilgach ✅ ga o'tkaziladi.
 
 ### Ma'lum cheklovlar (keyingi ishlar)
 
-- football-data.org bepul tarifida gol/karta/tarkib tafsilotlari yo'q — Mini Manager'ning bu ballari faqat API bersa hisoblanadi.
+- API-Football bepul tarifi: kuniga 100 so'rov va joriy mavsum bo'lmasligi mumkin (mustaqil manbalarga ko'ra) — real ishlash uchun pullik tarif kerak bo'lishi mumkin. API javob formatlari soxta ma'lumot bilan sinalgan, haqiqiy API bilan tekshirilishi kerak.
 - Quiz savollari standart manbasi (Open Trivia DB) ingliz tilida.
 - Web admin paneli faqat o'zbek (lotin) tilida.
-- Reyting va profil so'rovlari keshlanmagan — ko'p foydalanuvchida sekin (1000+ bir vaqtdagi foydalanuvchi uchun kesh qo'shish kerak).

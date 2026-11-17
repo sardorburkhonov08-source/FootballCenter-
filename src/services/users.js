@@ -11,6 +11,11 @@ function newRefCode() {
 async function upsertFromTelegram(from) {
   const existing = await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]);
   if (existing) {
+    // Bazaga keraksiz yozuv yubormaslik: ism o'zgarmagan va oxirgi faollik 5 daqiqadan yangi bo'lsa — yozmaymiz
+    const same = existing.username === (from.username || null) && existing.first_name === (from.first_name || null)
+      && existing.last_name === (from.last_name || null);
+    const recent = existing.last_seen_at && Date.now() - new Date(existing.last_seen_at).getTime() < 5 * 60 * 1000;
+    if (same && recent) return { user: existing, created: false };
     const user = await db.one(
       `UPDATE users SET username = $2, first_name = $3, last_name = $4, last_seen_at = now()
        WHERE telegram_id = $1 RETURNING *`,

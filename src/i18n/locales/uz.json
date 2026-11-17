@@ -304,5 +304,6 @@
   "a_broadcast_confirm": "📢 Shu xabar {count} ta foydalanuvchiga yuborilsinmi?",
   "a_broadcast_started": "⏳ Yuborish boshlandi...",
   "a_broadcast_done": "✅ Yetkazildi: {ok} ta\n❌ Yetkazilmadi: {fail} ta",
-  "a_webadmin_link": "🌐 Web App admin paneli: {url}"
+  "a_webadmin_link": "🌐 Web App admin paneli: {url}",
+  "too_fast": "⏳ Juda tez! Bir necha soniya kutib, qayta urinib ko'ring."
 }

@@ -26,6 +26,8 @@ async function startBot(bot) {
     await bot.api.setWebhook(`${config.publicUrl}${config.webhookPath}`, {
       secret_token: config.webhookSecret || undefined,
       allowed_updates: ['message', 'callback_query'],
+      // Telegram bir vaqtda shuncha so'rovni parallel yuboradi — bot ularni bir paytda qayta ishlaydi
+      max_connections: 40,
     });
     console.log(`🤖 Bot webhook rejimida: @${bot.botInfo.username}`);
   } else {

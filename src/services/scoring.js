@@ -10,27 +10,6 @@ const POINTS = {
 };
 const NONE = 0; // "bo'lmaydi"
 
-/**
- * football-data match obyektidan hisoblash uchun natija.
- * Ma'lumot API'da bo'lmasa (masalan bepul tarifda goals/bookings yo'q) — tegishli maydon null.
- */
-function extractResult(m) {
-  const homeId = m.homeTeam.id;
-  const awayId = m.awayTeam.id;
-  const ft = (m.score && m.score.fullTime) || {};
-  const goals = Array.isArray(m.goals) ? m.goals : null;
-  const bookings = Array.isArray(m.bookings) ? m.bookings : null;
-  const ids = (arr) => (Array.isArray(arr) && arr.length ? arr.map((p) => p.id) : null);
-  return {
-    homeId, awayId,
-    homeGoals: ft.home, awayGoals: ft.away,
-    goals: goals && goals.map((g) => ({ teamId: g.team && g.team.id, scorerId: g.scorer && g.scorer.id, assistId: g.assist && g.assist.id, own: g.type === 'OWN' })),
-    bookings: bookings && bookings.map((b) => ({ teamId: b.team && b.team.id, playerId: b.player && b.player.id, card: b.card })),
-    lineupHome: ids(m.homeTeam.lineup),
-    lineupAway: ids(m.awayTeam.lineup),
-  };
-}
-
 /** Bitta jamoa bo'yicha voqea taxmini: pred = null (taxmin yo'q) | 0 (bo'lmaydi) | playerId */
 function evalEvent(pred, actualIds, knownEmpty) {
   if (pred === null || pred === undefined) return false;
@@ -72,4 +51,7 @@ function score(pred, r) {
   return { total, breakdown: b };
 }
 
-module.exports = { POINTS, NONE, extractResult, score };
+// Natija formati (football.matchResult): { homeId, awayId, homeGoals, awayGoals,
+//   goals: [{ teamId, scorerId, assistId, own }] | null, bookings: [{ teamId, playerId, card }] | null,
+//   lineupHome: [id] | null, lineupAway: [id] | null }
+module.exports = { POINTS, NONE, score };

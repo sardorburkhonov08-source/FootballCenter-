@@ -7,6 +7,7 @@ process.env.ADMIN_PASSWORD = 'secret';
 process.env.FOOTBALL_API_KEY = 'test-key';
 process.env.ANTHROPIC_API_KEY = '';
 process.env.WEBHOOK_URL = 'https://fc.example.com';
+process.env.RATE_LIMIT_OFF = 'true';
 process.env.UPLOAD_DIR = require('path').join(require('os').tmpdir(), 'fc-test-uploads');
 
 const db = require('../src/db/pool');

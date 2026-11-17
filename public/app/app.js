@@ -74,21 +74,40 @@
 
   // ---------------- API
   class ApiError extends Error { constructor(status, body) { super(body && body.error ? body.error : `HTTP ${status}`); this.status = status; this.body = body || {}; } }
+  // Brauzer ichidagi qisqa kesh: tab/sana almashtirganda bir xil ma'lumot serverdan qayta so'ralmaydi
+  const CLIENT_CACHE = [
+    [/^\/matches\?/, 60000], [/^\/competitions/, 300000], [/^\/leaderboard\//, 15000],
+    [/^\/(banners|prizes)/, 300000], [/^\/manager\/games$/, 15000],
+  ];
+  const clientCache = new Map();
+
   async function api(path, opts = {}) {
+    const method = opts.method || 'GET';
+    const rule = method === 'GET' && !opts.fresh ? CLIENT_CACHE.find(([re]) => re.test(path)) : null;
+    if (rule) {
+      const hit = clientCache.get(path);
+      if (hit && Date.now() - hit.at < rule[1]) return hit.data;
+    }
     const res = await fetch(`/api${path}`, {
-      method: opts.method || 'GET',
+      method,
       headers: { Authorization: `tma ${initData}`, ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     let body = null;
     try { body = await res.json(); } catch (e) { /* */ }
     if (!res.ok) throw new ApiError(res.status, body);
+    if (rule) clientCache.set(path, { at: Date.now(), data: body });
+    if (method !== 'GET') clientCache.clear(); // ma'lumot o'zgardi — keshni tozalaymiz
     return body;
   }
 
   function errorBox(err, retry) {
     let msg = t('error_generic');
-    if (err && err.status === 503) msg = t('football_unavailable');
+    if (err && err.status === 503) {
+      const reason = err.body && err.body.reason;
+      msg = reason === 'plan' ? t('football_plan') : reason === 'limit' ? t('football_limit') : t('football_unavailable');
+    }
+    if (err && err.status === 429) msg = t('too_fast');
     return el('div', { class: 'card center' }, el('p', { text: msg }), retry ? el('button', { class: 'btn ghost', text: t('retry'), onclick: retry }) : null);
   }
   function skeleton(n) { return el('div', null, Array.from({ length: n || 3 }, () => el('div', { class: 'skeleton' }))); }

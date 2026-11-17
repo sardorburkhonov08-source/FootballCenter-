@@ -115,7 +115,7 @@ router.get('/manager/matches', wrap(async (req, res) => {
     const list = await football.matchesRange(from, to);
     res.json({ from, to, matches: list.filter((m) => m.state === 'scheduled') });
   } catch (e) {
-    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable' });
+    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
     throw e;
   }
   return undefined;
@@ -135,7 +135,7 @@ router.post('/manager/games', express.json(), wrap(async (req, res) => {
     return res.json(await manager.assignGame(id));
   } catch (e) {
     if (e instanceof manager.ValidationError) return res.status(400).json({ error: e.message });
-    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable' });
+    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
     throw e;
   }
 }));

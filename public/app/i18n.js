@@ -6,6 +6,8 @@
     open_in_telegram_text: "Bu ilova Telegram Mini App. Uni bot ichidagi «⚽ FootballCenter» tugmasi orqali oching.",
     loading: 'Yuklanmoqda...', error_generic: "⚠️ Xatolik yuz berdi. Qayta urinib ko'ring.", retry: '🔄 Qayta urinish',
     football_unavailable: "⚠️ Futbol ma'lumotlari hozircha mavjud emas. Keyinroq urinib ko'ring.",
+    football_plan: "⚠️ Bu ma'lumot hozirgi API tarifida mavjud emas.",
+    football_limit: "⏳ Bugungi so'rovlar limiti tugadi. Ertaga yangilanadi — hozircha saqlangan ma'lumotlar ko'rsatiladi.",
     premium_only_title: '💎 Faqat Premium uchun', premium_only_text: 'Bu qism faqat Premium foydalanuvchilar uchun',
     buy_premium_btn: '💎 Premium sotib olish', close_btn: 'Yopish', back: '← Orqaga',
     home_matches: "⚽ O'yinlar", home_competitions: '🏆 Musobaqalar', home_news: '📰 Yangiliklar',
@@ -51,6 +53,7 @@
     prof_total: 'Jami ball', prof_place: "Umumiy o'rin", prof_predictions: 'Taxminlar', prof_answers: 'Javoblar',
     prof_correct: "To'g'ri javoblar", prof_quiz_locked: '🔒 Faqat Premium', som: "so'm", admin_panel: '🔒 Admin panel',
     place_short: '{place}-o\'rin', news_soon: '📰 Yangiliklar tez orada',
+    too_fast: "⏳ Juda tez! Bir necha soniya kutib, qayta urinib ko'ring.",
   };
 
   const ru = {
@@ -59,6 +62,8 @@
     open_in_telegram_text: 'Это Telegram Mini App. Откройте его кнопкой «⚽ FootballCenter» в боте.',
     loading: 'Загрузка...', error_generic: '⚠️ Произошла ошибка. Попробуйте ещё раз.', retry: '🔄 Повторить',
     football_unavailable: '⚠️ Футбольные данные сейчас недоступны. Попробуйте позже.',
+    football_plan: '⚠️ Эти данные недоступны на текущем тарифе API.',
+    football_limit: '⏳ Дневной лимит запросов исчерпан. Обновится завтра — пока показываются сохранённые данные.',
     premium_only_title: '💎 Только для Premium', premium_only_text: 'Этот раздел доступен только Premium-пользователям',
     buy_premium_btn: '💎 Купить Premium', close_btn: 'Закрыть', back: '← Назад',
     home_matches: '⚽ Матчи', home_competitions: '🏆 Турниры', home_news: '📰 Новости',
@@ -104,6 +109,7 @@
     prof_total: 'Всего баллов', prof_place: 'Общее место', prof_predictions: 'Прогнозы', prof_answers: 'Ответы',
     prof_correct: 'Верные ответы', prof_quiz_locked: '🔒 Только Premium', som: 'сум', admin_panel: '🔒 Админ-панель',
     place_short: '{place}-е место', news_soon: '📰 Новости скоро',
+    too_fast: '⏳ Слишком быстро! Подождите пару секунд и попробуйте снова.',
   };
 
   const en = {
@@ -112,6 +118,8 @@
     open_in_telegram_text: 'This is a Telegram Mini App. Open it with the «⚽ FootballCenter» button in the bot.',
     loading: 'Loading...', error_generic: '⚠️ Something went wrong. Please try again.', retry: '🔄 Retry',
     football_unavailable: '⚠️ Football data is unavailable right now. Please try later.',
+    football_plan: '⚠️ This data is not available on the current API plan.',
+    football_limit: "⏳ Today's request limit is used up. It resets tomorrow — saved data is shown meanwhile.",
     premium_only_title: '💎 Premium only', premium_only_text: 'This section is for Premium users only',
     buy_premium_btn: '💎 Get Premium', close_btn: 'Close', back: '← Back',
     home_matches: '⚽ Matches', home_competitions: '🏆 Competitions', home_news: '📰 News',
@@ -157,6 +165,7 @@
     prof_total: 'Total points', prof_place: 'Overall place', prof_predictions: 'Predictions', prof_answers: 'Answers',
     prof_correct: 'Correct answers', prof_quiz_locked: '🔒 Premium only', som: 'UZS', admin_panel: '🔒 Admin panel',
     place_short: '#{place}', news_soon: '📰 News coming soon',
+    too_fast: '⏳ Too fast! Please wait a few seconds and try again.',
   };
 
   const uzCyrl = {};

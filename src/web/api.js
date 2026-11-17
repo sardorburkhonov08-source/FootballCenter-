@@ -28,7 +28,7 @@ function footballRoute(fn) {
     try {
       res.json(await fn(req, res));
     } catch (e) {
-      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', status: e.status || null });
+      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
       throw e;
     }
   });
@@ -79,7 +79,7 @@ router.post('/matches/:id/subscribe', requirePremium, footballRoute(async (req) 
     await db.query('DELETE FROM match_subscriptions WHERE user_id = $1 AND api_match_id = $2', [req.user.id, id]);
     return { subscribed: false };
   }
-  const m = football.normMatch(await football.rawMatch(id, 300));
+  const m = football.normMatch(await football.rawMatch(id));
   if (m.state !== 'scheduled') return { subscribed: false, error: 'not_scheduled' };
   await db.query(
     'INSERT INTO match_subscriptions (user_id, api_match_id, kickoff_at, title) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
@@ -129,7 +129,7 @@ router.post('/manager/games/:id/prediction', express.json(), wrap(async (req, re
     res.json({ prediction: await manager.savePrediction(req.user, Number(req.params.id), req.body || {}) });
   } catch (e) {
     if (e instanceof manager.ValidationError) return res.status(400).json({ error: e.message });
-    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable' });
+    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
     throw e;
   }
   return undefined;

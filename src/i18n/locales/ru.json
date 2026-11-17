@@ -302,5 +302,6 @@
   "a_broadcast_confirm": "📢 Отправить это сообщение {count} пользователям?",
   "a_broadcast_started": "⏳ Рассылка началась...",
   "a_broadcast_done": "✅ Доставлено: {ok}\n❌ Не доставлено: {fail}",
-  "a_webadmin_link": "🌐 Админ-панель Web App: {url}"
+  "a_webadmin_link": "🌐 Админ-панель Web App: {url}",
+  "too_fast": "⏳ Слишком быстро! Подождите пару секунд и попробуйте снова."
 }

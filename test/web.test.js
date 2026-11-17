@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { db, resetDb, createTestBot, fakeFootball, settings } = require('./helpers');
+const { db, resetDb, createTestBot } = require('./helpers');
 const { signInitData } = require('../src/web/auth');
 const football = require('../src/services/football');
 const quiz = require('../src/services/quiz');
@@ -11,37 +11,53 @@ let base;
 let h;
 
 const NOW = Date.now();
-const iso = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
-const team = (id, name) => ({ id, name, shortName: name, tla: name.slice(0, 3).toUpperCase(), crest: `https://crests/${id}.png` });
-const squad = (teamId) => Array.from({ length: 16 }, (_, i) => ({ id: teamId * 100 + i, name: `P${teamId}-${i}`, position: i === 0 ? 'Goalkeeper' : i < 6 ? 'Defence' : i < 11 ? 'Midfield' : 'Offence' }));
+// ---- Soxta API-Football v3 javoblari
+const logo = (id) => `https://media.api-sports.io/football/teams/${id}.png`;
+const team = (id, name) => ({ id, name, logo: logo(id) });
+const POS = (i) => (i === 0 ? 'Goalkeeper' : i < 6 ? 'Defender' : i < 11 ? 'Midfielder' : 'Attacker');
+const squad = (teamId) => Array.from({ length: 16 }, (_, i) => ({ id: teamId * 100 + i, name: `P${teamId}-${i}`, number: i + 1, position: POS(i) }));
 const KICKOFF = NOW + 3 * 3600 * 1000;
-let matchState = { status: 'TIMED', utcDate: iso(KICKOFF) };
+let matchState = { short: 'NS', ts: KICKOFF };
+const PL = { id: 39, name: 'Premier League', country: 'England', logo: 'pl.png', flag: 'gb.svg', season: 2026, round: 'Regular Season - 12' };
 
-function rawMatch() {
+function fixture(over = {}) {
+  const ts = over.ts || matchState.ts;
   return {
-    id: 555, utcDate: matchState.utcDate, status: matchState.status, competition: { id: 2021, name: 'Premier League', code: 'PL' },
-    homeTeam: { ...team(1, 'Arsenal'), lineup: matchState.lineupHome }, awayTeam: { ...team(2, 'Chelsea'), lineup: matchState.lineupAway },
-    score: { winner: null, fullTime: { home: matchState.home ?? null, away: matchState.away ?? null } },
-    goals: matchState.goals, bookings: matchState.bookings,
+    fixture: { id: over.id || 555, date: new Date(ts).toISOString(), timestamp: Math.floor(ts / 1000), venue: { name: 'Emirates' }, status: { short: over.short || matchState.short, elapsed: null } },
+    league: PL,
+    teams: { home: team(1, 'Arsenal'), away: team(2, 'Chelsea') },
+    goals: { home: over.home ?? matchState.home ?? null, away: over.away ?? matchState.away ?? null },
+    score: { halftime: { home: null, away: null } },
+    events: over.events || matchState.events || [],
+    lineups: over.lineups || matchState.lineups || [],
+    statistics: [],
   };
 }
 
 const ymdTashkent = new Date(NOW + 5 * 3600 * 1000).toISOString().slice(0, 10);
+const league = (id, name, country, code, type = 'League') => ({ league: { id, name, type, logo: `${id}.png` }, country: { name: country, code, flag: code ? `${code}.svg` : null }, seasons: [{ year: 2026, current: true }] });
+const player = (id, name, goals, assists) => ({ player: { id, name }, statistics: [{ team: team(1, 'Arsenal'), goals: { total: goals, assists } }] });
 
-football.setFetch(fakeFootball({
-  '/matches': () => ({ matches: [{ ...rawMatch(), utcDate: `${ymdTashkent}T10:00:00Z` }, { ...rawMatch(), id: 556, status: 'IN_PLAY', utcDate: `${ymdTashkent}T08:00:00Z`, score: { fullTime: { home: 1, away: 1 } } }] }),
-  '/matches/555': () => rawMatch(),
-  '/teams/1': { squad: squad(1) },
-  '/teams/2': { squad: squad(2) },
-  '/competitions': { competitions: [
-    { id: 2001, name: 'UEFA Champions League', code: 'CL', area: { id: 2077, name: 'Europe', code: 'EUR' } },
-    { id: 2021, name: 'Premier League', code: 'PL', area: { id: 2072, name: 'England', code: 'ENG' } },
-    { id: 9001, name: 'Super League', code: 'UZB', area: { id: 2250, name: 'Uzbekistan', code: 'UZB' } },
-    { id: 2014, name: 'La Liga', code: 'PD', area: { id: 2224, name: 'Spain', code: 'ESP' } },
-  ] },
-  '/competitions/2021/standings': { standings: [{ type: 'TOTAL', table: [{ position: 1, team: team(1, 'Arsenal'), playedGames: 10, won: 8, draw: 1, lost: 1, points: 25, goalsFor: 20, goalsAgainst: 5, goalDifference: 15 }] }] },
-  '/competitions/2021/scorers': { scorers: [{ player: { id: 1, name: 'Saka' }, team: team(1, 'Arsenal'), goals: 9, assists: 2 }, { player: { id: 2, name: 'Odegaard' }, team: team(1, 'Arsenal'), goals: 3, assists: 7 }] },
-}));
+const apiRequests = [];
+football.setFetch(async (url) => {
+  const u = new URL(url);
+  const q = Object.fromEntries(u.searchParams);
+  apiRequests.push(u.pathname + u.search);
+  let response = null;
+  if (u.pathname === '/fixtures' && q.date) {
+    response = [fixture({ ts: Date.parse(`${q.date}T15:00:00+05:00`) }), fixture({ id: 556, short: '1H', home: 1, away: 1, ts: Date.parse(`${q.date}T13:00:00+05:00`) })];
+  } else if (u.pathname === '/fixtures' && q.id === '555') response = [fixture()];
+  else if (u.pathname === '/players/squads') response = [{ team: team(Number(q.team), 'T'), players: squad(Number(q.team)) }];
+  else if (u.pathname === '/leagues') {
+    response = [league(2, 'UEFA Champions League', 'World', null, 'Cup'), league(39, 'Premier League', 'England', 'GB-ENG'),
+      league(369, 'Super League', 'Uzbekistan', 'UZ'), league(140, 'La Liga', 'Spain', 'ES')];
+  } else if (u.pathname === '/standings' && q.league === '39' && q.season === '2026') {
+    response = [{ league: { standings: [[{ rank: 1, team: team(1, 'Arsenal'), points: 25, goalsDiff: 15, group: 'Premier League', all: { played: 10, win: 8, draw: 1, lose: 1, goals: { for: 20, against: 5 } } }]] } }];
+  } else if (u.pathname === '/players/topscorers') response = [player(1, 'Saka', 9, 2), player(2, 'Odegaard', 3, 7)];
+  else if (u.pathname === '/players/topassists') response = [player(2, 'Odegaard', 3, 7), player(1, 'Saka', 9, 2)];
+  if (!response) return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: [], response: [] }) };
+  return { ok: true, status: 200, headers: new Map([['x-ratelimit-requests-remaining', '90']]), json: async () => ({ errors: [], response }) };
+});
 
 quiz.setFetch(async () => ({ ok: true, json: async () => ({ results: [
   { question: 'Which country won the 2018 FIFA World Cup?', correct_answer: 'France', incorrect_answers: ['Croatia', 'Brazil', 'Germany'] },
@@ -125,9 +141,9 @@ test("Musobaqalar: xalqaro + davlatlar alifbo bo'yicha; Oddiy faqat jadval", asy
   const c = await call('/api/competitions', { id: FREE });
   assert.deepStrictEqual(c.body.international.map((x) => x.name), ['UEFA Champions League']);
   assert.deepStrictEqual(c.body.countries.map((x) => x.name), ['England', 'Spain', 'Uzbekistan']);
-  assert.strictEqual((await call('/api/competitions/2021/standings', { id: FREE })).body.standings[0].table[0].points, 25);
-  for (const tab of ['results', 'calendar', 'scorers', 'assists']) assert.strictEqual((await call(`/api/competitions/2021/${tab}`, { id: FREE })).status, 402, tab);
-  const assists = await call('/api/competitions/2021/assists', { id: PREM });
+  assert.strictEqual((await call('/api/competitions/39/standings', { id: FREE })).body.standings[0].table[0].points, 25);
+  for (const tab of ['results', 'calendar', 'scorers', 'assists']) assert.strictEqual((await call(`/api/competitions/39/${tab}`, { id: FREE })).status, 402, tab);
+  const assists = await call('/api/competitions/39/assists', { id: PREM });
   assert.deepStrictEqual(assists.body.players.map((p) => p.player.name), ['Odegaard', 'Saka']);
 });
 
@@ -162,12 +178,18 @@ test('Mini Manager: murabbiy, taxmin, qulf, hisoblash, reyting', async () => {
 
   // Tugadi -> hisoblash
   Object.assign(matchState, {
-    status: 'FINISHED', home: 2, away: 0,
-    lineupHome: XI(1).map((id) => ({ id })), lineupAway: [...XI(2).slice(0, 10), 215].map((id) => ({ id })),
-    goals: [{ team: { id: 1 }, scorer: { id: 105 }, assist: { id: 106 }, type: 'REGULAR' }, { team: { id: 1 }, scorer: { id: 110 }, assist: null, type: 'REGULAR' }],
-    bookings: [{ team: { id: 2 }, player: { id: 203 }, card: 'YELLOW' }],
+    short: 'FT', home: 2, away: 0,
+    lineups: [
+      { team: { id: 1 }, startXI: XI(1).map((id) => ({ player: { id } })) },
+      { team: { id: 2 }, startXI: [...XI(2).slice(0, 10), 215].map((id) => ({ player: { id } })) },
+    ],
+    events: [
+      { time: { elapsed: 10 }, team: { id: 1 }, type: 'Goal', detail: 'Normal Goal', player: { id: 105 }, assist: { id: 106 } },
+      { time: { elapsed: 50 }, team: { id: 1 }, type: 'Goal', detail: 'Normal Goal', player: { id: 110 }, assist: { id: null } },
+      { time: { elapsed: 60 }, team: { id: 2 }, type: 'Card', detail: 'Yellow Card', player: { id: 203 }, assist: { id: null } },
+    ],
   });
-  football.clearCache();
+  await football.clearCache();
   h.clear();
   assert.strictEqual(await manager.scoreFinished(), 1);
   const pred = await db.one('SELECT p.* FROM mini_manager_predictions p JOIN users u ON u.id = p.user_id WHERE u.telegram_id = $1', [FREE]);
