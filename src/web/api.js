@@ -28,7 +28,10 @@ function footballRoute(fn) {
     try {
       res.json(await fn(req, res));
     } catch (e) {
-      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
+      if (e instanceof football.FootballUnavailable) {
+        football.logError(req.path, e);
+        return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
+      }
       throw e;
     }
   });

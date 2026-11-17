@@ -147,3 +147,17 @@ test("foydalanuvchi ma'lumoti o'zgarmasa bazaga qayta yozilmaydi", async () => {
   const c = (await users.upsertFromTelegram({ ...from, first_name: 'Zz' })).user;
   assert.strictEqual(c.first_name, 'Zz', "ism o'zgarsa yangilanadi");
 });
+
+test('API-Football /status tashxisi: tarif va bugungi so\'rovlar, shaxsiy ma\'lumotsiz', async () => {
+  delete require.cache[require.resolve('../src/services/football')];
+  const f = require('../src/services/football');
+  f.setFetch(async (url) => {
+    assert.match(url, /\/status$/);
+    return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: [], response: { account: { firstname: 'X', email: 'x@example.com' }, subscription: { plan: 'Free', active: true }, requests: { current: 7, limit_day: 100 } } }) };
+  });
+  const s = await f.checkStatus();
+  assert.deepStrictEqual({ ok: s.ok, plan: s.plan, requestsToday: s.requestsToday, limitDay: s.limitDay }, { ok: true, plan: 'Free', requestsToday: 7, limitDay: 100 });
+  assert.ok(!JSON.stringify(s).includes('example.com'));
+  f.setFetch(async () => ({ ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { token: 'Error/Missing application key.' }, response: [] }) }));
+  assert.strictEqual((await f.checkStatus()).reason, 'token');
+});

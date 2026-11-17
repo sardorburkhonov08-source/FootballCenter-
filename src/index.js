@@ -53,6 +53,13 @@ async function main() {
   const server = app.listen(config.port, () => console.log(`🌐 Web server: http://localhost:${config.port}`));
 
   if (bot) startBot(bot).catch((e) => console.error('❌ Bot:', e));
+
+  // Futbol API holatini logga yozish (kalit, tarif, bugungi so'rovlar)
+  require('./services/football').checkStatus().then((s) => {
+    if (s.ok) console.log(`⚽ API-Football: tarif ${s.plan || '?'}${s.active ? '' : ' (faol emas)'}, bugun ${s.requestsToday ?? '?'}/${s.limitDay ?? '?'} so'rov`);
+    else if (s.reason === 'no_key') console.warn('⚠️ FOOTBALL_API_KEY sozlanmagan — futbol bo\'limlari ishlamaydi');
+    else console.warn(`❌ API-Football: ${s.reason}${s.message ? ` — ${s.message}` : ''}`);
+  });
   const stopJobs = config.disableJobs ? () => {} : require('./jobs/scheduler').start();
 
   // To'xtatish signali (docker stop, systemctl stop) — toza yopish
