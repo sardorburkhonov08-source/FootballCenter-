@@ -176,6 +176,37 @@ async function request(path, params = {}, ttl = MIN, opts = {}) {
   return unwrap((await refresh(key, ttl, { background: !!opts.background })).data);
 }
 
+/**
+ * Tashxis: kalit to'g'riligi, tarif va bugungi so'rovlar (API-Football /status — kunlik limitga kirmaydi).
+ * Shaxsiy ma'lumot (email, ism) qaytarilmaydi.
+ */
+async function checkStatus() {
+  if (!config.footballApiKey) return { ok: false, reason: 'no_key' };
+  try {
+    const res = await fetchImpl(`${config.footballApiBase}/status`, { headers: { 'x-apisports-key': config.footballApiKey } });
+    if (!res.ok) return { ok: false, reason: `http_${res.status}` };
+    const body = await res.json();
+    const errors = apiErrors(body);
+    if (errors) return { ok: false, reason: Object.keys(errors)[0] || 'error', message: String(Object.values(errors)[0] || '') };
+    const r = body.response || {};
+    const sub = r.subscription || {};
+    const reqs = r.requests || {};
+    if (reqs.limit_day !== undefined) daily = { remaining: Math.max(0, reqs.limit_day - (reqs.current || 0)), day: utcDay() };
+    return { ok: true, plan: sub.plan || null, active: sub.active !== false, end: sub.end || null, requestsToday: reqs.current ?? null, limitDay: reqs.limit_day ?? null };
+  } catch (e) {
+    return { ok: false, reason: 'network', message: e.message };
+  }
+}
+
+// Bir xil xato logni to'ldirib yubormasligi uchun — har biri daqiqasiga ko'pi bilan bir marta
+const loggedAt = new Map();
+function logError(context, e) {
+  const key = `${e.reason}:${e.message}`;
+  if (Date.now() - (loggedAt.get(key) || 0) < 60000) return;
+  loggedAt.set(key, Date.now());
+  console.warn(`⚠️ [football] ${context}: ${e.reason} — ${e.message}`);
+}
+
 async function cleanupCache() {
   await db.query("DELETE FROM api_cache WHERE expires_at < now() - interval '30 days'");
 }
@@ -480,7 +511,7 @@ async function matchesRange(fromYmd, toYmd) {
 }
 
 module.exports = {
-  FootballUnavailable, setFetch, clearCache, cleanupCache, stats, request, ttlForMatch, ttlForMatchList,
+  FootballUnavailable, setFetch, clearCache, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
   matchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
   standings, competitionMatches, scorers, squad, matchesRange, normMatch, matchState, positionGroup,
 };
