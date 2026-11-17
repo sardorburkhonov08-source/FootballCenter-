@@ -11,8 +11,11 @@ function list(v) {
   return (v || '').split(',').map((s) => s.trim()).filter(Boolean);
 }
 
-function stripSlash(v) {
-  return (v || '').trim().replace(/\/+$/, '');
+/** Ommaviy manzilni normallashtirish: bo'shliq va oxirgi "/" olib tashlanadi, https:// yo'q bo'lsa qo'shiladi */
+function normalizeUrl(v) {
+  const s = (v || '').trim().replace(/\/+$/, '');
+  if (!s) return '';
+  return /^https?:\/\//i.test(s) ? s.replace(/^http:\/\//i, 'https://') : `https://${s}`;
 }
 
 /** Tokendan kelib chiqadigan barqaror maxfiy qiymat (alohida env berilmasa) */
@@ -24,7 +27,7 @@ const botToken = process.env.BOT_TOKEN || '';
 
 // Serverning ommaviy HTTPS manzili, masalan https://footballcenter-production.up.railway.app
 // WEBHOOK_URL berilmasa, Railway beradigan domen (agar mavjud bo'lsa) ishlatiladi.
-const publicUrl = stripSlash(process.env.WEBHOOK_URL)
+const publicUrl = normalizeUrl(process.env.WEBHOOK_URL)
   || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '');
 
 const config = {
@@ -66,3 +69,4 @@ const config = {
 };
 
 module.exports = config;
+module.exports.normalizeUrl = normalizeUrl;

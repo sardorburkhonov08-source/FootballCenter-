@@ -105,3 +105,11 @@ test('har bir bot xabari emoji bilan boshlanadi', () => {
   assert.deepStrictEqual(noEmoji, []);
   assert.match(t('ru', 'topup_approved', { amount: '1 000' }), /^✅/);
 });
+
+test("WEBHOOK_URL: https:// yo'q bo'lsa qo'shiladi, oxirgi / olib tashlanadi", () => {
+  const { normalizeUrl } = require('../src/config');
+  assert.strictEqual(normalizeUrl(' footballcenter-production.up.railway.app/ '), 'https://footballcenter-production.up.railway.app');
+  assert.strictEqual(normalizeUrl('http://a.up.railway.app'), 'https://a.up.railway.app');
+  assert.strictEqual(normalizeUrl('https://a.up.railway.app//'), 'https://a.up.railway.app');
+  assert.strictEqual(normalizeUrl(''), '');
+});
