@@ -62,7 +62,7 @@ async function toUser(user, key, params = {}, { kind, extra } = {}) {
 async function adminIds() {
   const config = require('../config');
   const rows = await db.many('SELECT telegram_id FROM users WHERE is_admin AND NOT is_blocked');
-  return [...new Set([...config.ownerIds, ...rows.map((r) => Number(r.telegram_id))])];
+  return [...new Set([...config.adminIds, ...rows.map((r) => Number(r.telegram_id))])];
 }
 
 module.exports = { setApi, getApi, NOTIFICATIONS, isEnabled, toggle, sendRaw, toUser, adminIds };

@@ -18,7 +18,7 @@ async function upsertFromTelegram(from) {
     );
     return { user, created: false };
   }
-  const isOwner = config.ownerIds.includes(Number(from.id));
+  const isOwner = config.adminIds.includes(Number(from.id));
   for (let i = 0; i < 5; i += 1) {
     try {
       const user = await db.one(
@@ -58,7 +58,7 @@ function isPremium(user) {
 }
 
 function isOwner(user) {
-  return !!user && config.ownerIds.includes(Number(user.telegram_id));
+  return !!user && config.adminIds.includes(Number(user.telegram_id));
 }
 
 function isAdmin(user) {

@@ -72,7 +72,7 @@ function adminMenuKb(lang) {
     [ui.btn(L('a_btn_stats'), 'a:stats'), ui.btn(L('a_btn_export'), 'a:export')],
     [ui.btn(L('a_btn_broadcast'), 'a:broadcast')],
   ];
-  if (config.webAppUrl) rows.push([{ text: L('a_btn_webadmin'), web_app: { url: `${config.webAppUrl}/admin/` } }]);
+  if (config.webAppUrl) rows.push([{ text: L('a_btn_webadmin'), web_app: { url: `${config.publicUrl}/admin/` } }]);
   rows.push([ui.btn(L('back'), 'm:menu')]);
   return ui.kb(rows);
 }
@@ -116,10 +116,10 @@ async function showFaq(ctx) {
 
 async function showAdmins(ctx) {
   const lang = ctx.lang;
-  const rows = await db.many('SELECT * FROM users WHERE is_admin OR telegram_id = ANY($1) ORDER BY registered_at', [config.ownerIds]);
+  const rows = await db.many('SELECT * FROM users WHERE is_admin OR telegram_id = ANY($1) ORDER BY registered_at', [config.adminIds]);
   const known = new Set(rows.map((r) => Number(r.telegram_id)));
   const lines = rows.map((u) => `• ${escapeHtml(users.displayName(u))} — <code>${u.telegram_id}</code>${users.isOwner(u) ? t(lang, 'a_owner_tag') : ''}`);
-  for (const id of config.ownerIds) if (!known.has(id)) lines.push(`• <code>${id}</code>${t(lang, 'a_owner_tag')}`);
+  for (const id of config.adminIds) if (!known.has(id)) lines.push(`• <code>${id}</code>${t(lang, 'a_owner_tag')}`);
   const kbRows = [[ui.btn(t(lang, 'a_btn_admin_add'), 'ad:add')]];
   for (const u of rows) if (!users.isOwner(u)) kbRows.push([ui.btn(t(lang, 'a_btn_remove', { title: users.displayName(u) }), `ad:rm:${u.telegram_id}`)]);
   kbRows.push([ui.btn(t(lang, 'back'), 'm:admin')]);

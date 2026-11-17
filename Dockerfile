@@ -1,3 +1,4 @@
+# Railway shu Dockerfile orqali yig'adi (railway.json). Lokal: docker build -t footballcenter .
 FROM node:22-alpine
 
 WORKDIR /app
@@ -9,9 +10,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY src ./src
 COPY public ./public
 
-RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
-USER node
+# Railway Volume (yuklangan bannerlar/sovrinlar) root egaligida ulanadi, shuning uchun
+# ilova root sifatida ishlaydi — aks holda volume'ga yozib bo'lmaydi.
+RUN mkdir -p /app/uploads
 
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD wget -qO- http://127.0.0.1:3000/healthz || exit 1
 CMD ["node", "src/index.js"]

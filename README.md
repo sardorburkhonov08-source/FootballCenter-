@@ -1,136 +1,115 @@
 # ⚽ FootballCenter
 
-Telegram bot + Web App (Mini App). Texnik topshiriq bo'yicha to'liq loyiha:
+Telegram bot + Mini App (Web App). Texnik topshiriq: [docs/SPEC.md](docs/SPEC.md). Ishlab chiquvchilar uchun qoidalar va bosqichlar: [CLAUDE.md](CLAUDE.md).
 
-- 🤖 **Bot**: majburiy obuna, 4 tilda til tanlash, 💰 Balans (karta orqali to'ldirish + chek, 🎫 promokod, 👥 referral va Referral League, 🎁 bonus), 👤 Profil, ❤️ Donat (kanalga e'lon bilan), 📜 Qoidalar, 💎 Tarif, ⚙️ Sozlamalar (til, bildirishnomalar), 🆘 Yordam, 🤖 AI Yordamchi.
-- 🔒 **Bot admin paneli**: majburiy obuna, kartalar, to'lov/donat tasdiqlash, promokodlar, referral/bonus/donat/tarif sozlamalari, qoidalar va FAQ, murojaatlar, adminlar, foydalanuvchi qidirish/bloklash, texnik ishlar, statistika, CSV eksport, broadcast.
-- 📱 **Web App**: 🏠 Home (o'yinlar, musobaqalar), 🎮 Mini Manager, 🧠 Football Quiz (Premium), 👤 Profil; reklama banneri; Oddiy tarif uchun qulflangan qismlar.
-- 🌐 **Web admin paneli** (`/admin/`): bannerlar, Mini Manager o'yinlari, sovrinlar, Quiz savollari, taktikalar, statistika.
+Texnologiyalar: Node.js, Express, grammY, PostgreSQL. Hosting: **Railway**.
 
-Barcha vaqt hisoblari **Asia/Tashkent** zonasida. Narxlar, limitlar va matnlar kodda qattiq yozilmagan — admin panel orqali o'zgartiriladi.
+---
 
-## Texnologiyalar
+## 🚂 Railway'ga joylash — qadam-baqadam
 
-Node.js 20+, Express, [grammY](https://grammy.dev), PostgreSQL, football-data.org v4, Claude API (`@anthropic-ai/sdk`). Frontend — oddiy HTML/CSS/JS, build kerak emas.
+Kerak bo'ladi: GitHub akkaunt (shu repo), Telegram, bank kartasi (Railway bepul sinov kreditidan keyin pullik — narxlarni [railway.com/pricing](https://railway.com/pricing) da ko'ring). Taxminan 20 daqiqa.
 
-## Ishga tushirish
+> ⚠️ **Repo public.** Token, parol va kalitlarni hech qachon kodga, GitHub'ga yoki chatga yozmang — faqat Railway'ning **Variables** bo'limiga.
 
-👉 **Birinchi marta o'rnatyapsizmi? [QOLLANMA.md](QOLLANMA.md) — token olishdan botni ishga tushirishgacha qadamma-qadam.**
+### 1. Bot tokeni va Telegram ID
 
-Loyiha hech qanday platformaga bog'liq emas: istalgan Linux server (VPS) yoki kompyuterda ishlaydi. Telegram Web App faqat **HTTPS** manzil bilan ochiladi, shuning uchun serverga domen yo'naltirilgan bo'lishi kerak.
+1. Telegram'da **@BotFather** → `/newbot` → bot nomi → username (oxiri `bot` bilan tugaydi).
+2. BotFather bergan **token**ni (`123456789:AAH...`) saqlab qo'ying.
+3. **@userinfobot** ga `/start` yozing — u yuborgan **Id** raqami sizning Telegram ID'ingiz.
 
-### ⚡ Eng oson yo'l: `setup.sh`
+### 2. Railway'da loyiha yaratish va GitHub repo'ni ulash
 
-Toza Ubuntu serverda (22.04 yoki 24.04) shu buyruqlarni bering. Skript Docker'ni o'rnatadi, parollarni o'zi yaratadi, `.env` ni yozadi va botni ishga tushiradi. Sizdan faqat bot tokeni, Telegram ID va domen so'raladi.
+1. [railway.com](https://railway.com) → **Login** → **GitHub** orqali kiring.
+2. **New Project** → **Deploy from GitHub repo**.
+3. Ro'yxatdan **FootballCenter-** repo'sini tanlang. (Ro'yxatda bo'lmasa: **Configure GitHub App** → repo'ga ruxsat bering.)
+4. Railway servisni yaratadi va birinchi yig'ishni boshlaydi. Hozircha xato bilan to'xtashi normal — o'zgaruvchilar hali kiritilmagan.
+
+### 3. PostgreSQL qo'shish
+
+1. Loyiha oynasida **+ Create** (yoki **New**) → **Database** → **Add PostgreSQL**.
+2. Bir necha soniyada **Postgres** servisi paydo bo'ladi. Uni sozlash shart emas.
+
+### 4. Domen olish
+
+1. Bot servisini (FootballCenter-) bosing → **Settings** → **Networking** → **Generate Domain**.
+2. Port so'ralsa — deploy logidagi `🌐 Web server: http://localhost:XXXX` qatoridagi raqamni yozing (ilova Railway bergan `PORT` ni o'zi o'qiydi).
+3. `https://footballcenter-production-xxxx.up.railway.app` ko'rinishidagi manzil chiqadi — nusxalab oling. Bu sizning **WEBHOOK_URL**'ingiz.
+
+### 5. Environment variable'larni kiritish
+
+Bot servisi → **Variables** → **+ New Variable** (yoki **Raw Editor**) va quyidagilarni qo'shing:
+
+| Nomi | Qiymati |
+|---|---|
+| `BOT_TOKEN` | 1-qadamdagi token |
+| `ADMIN_IDS` | 1-qadamdagi Telegram ID (bir nechta bo'lsa vergul bilan) |
+| `WEBHOOK_URL` | 4-qadamdagi manzil, oxirida `/` siz |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` — aynan shunday yozing, Railway o'zi bazaga ulaydi |
+
+Ixtiyoriy (keyinroq qo'shsa ham bo'ladi):
+
+| Nomi | Nima uchun |
+|---|---|
+| `FOOTBALL_API_KEY` | O'yinlar va musobaqalar — [football-data.org](https://www.football-data.org/client/register) da bepul ro'yxatdan o'tib olinadi |
+| `ANTHROPIC_API_KEY` | 🤖 AI Yordamchi — [console.anthropic.com](https://console.anthropic.com) (pullik) |
+| `ADMIN_LOGIN`, `ADMIN_PASSWORD` | Web admin paneliga (`/admin`) brauzerdan kirish uchun. Telegram orqali admin login'siz kiradi |
+
+Saqlagach Railway servisni avtomatik qayta yig'adi va ishga tushiradi.
+
+### 6. Fayllar uchun Volume (bannerlar, sovrin rasmlari)
+
+Railway'da serverning disk xotirasi har deploy'da tozalanadi. Admin yuklagan rasmlar yo'qolmasligi uchun:
+
+1. Loyiha oynasida **+ Create** → **Volume** (yoki servis ustida o'ng tugma → **Attach Volume**) → bot servisini tanlang.
+2. **Mount path**: `/app/uploads`.
+
+### 7. Ishlayotganini tekshirish
+
+1. Bot servisi → **Deployments** → oxirgi deploy → **View Logs**. Quyidagilar ko'rinishi kerak:
+   ```
+   ✅ Ma'lumotlar bazasi tayyor
+   🌐 Web server: ...
+   🤖 Bot webhook rejimida: @sizning_bot
+   ```
+2. Brauzerda `WEBHOOK_URL/healthz` → `{"ok":true}`.
+3. Telegram'da botga `/start` → til tanlash chiqadi → asosiy menyu.
+
+**Webhook alohida o'rnatilmaydi** — bot har ishga tushganda uni `WEBHOOK_URL/telegram/webhook` ga o'zi o'rnatadi.
+
+### 8. BotFather sozlamalari
+
+Bot ishga tushganda menyu tugmasini Mini App'ga (`WEBHOOK_URL/app`) o'zi sozlaydi. Qo'lda ham qilish mumkin:
+
+1. @BotFather → `/mybots` → botingiz → **Bot Settings** → **Menu Button** → URL: `WEBHOOK_URL/app` (masalan `https://...up.railway.app/app`).
+2. Ixtiyoriy: **Edit Bot** → **Edit Description / About / Botpic** — bot tavsifi va rasmi.
+3. Majburiy obuna va donat kanali uchun botni o'sha kanallarga **admin** qilib qo'shing.
+
+### Muammo bo'lsa
+
+| Belgi | Sabab |
+|---|---|
+| Logda `BOT_TOKEN noto'g'ri` | Token xato nusxalangan — BotFather'dan qayta oling |
+| Logda `DATABASE_URL sozlanmagan` | 5-qadamdagi `DATABASE_URL` qo'shilmagan |
+| Bot javob bermaydi, log toza | `WEBHOOK_URL` domen bilan bir xil emas yoki oxirida `/` bor |
+| Mini App "Telegram orqali oching" deydi | Sahifa brauzerda ochilgan — bot ichidagi tugma orqali oching |
+
+---
+
+## 💻 Lokal ishlab chiqish
 
 ```bash
-git clone https://github.com/sardorburkhonov08-source/FootballCenter-.git
-```
-
-```bash
-cd FootballCenter- && sudo bash setup.sh
-```
-
-Keyinroq yangi versiyaga o'tish:
-
-```bash
-sudo bash setup.sh update
-```
-
-Holat va loglarni ko'rish:
-
-```bash
-sudo bash setup.sh status
-```
-
-**Bepul domen:** [duckdns.org](https://www.duckdns.org) da ro'yxatdan o'ting, subdomen yarating (masalan `footballcenter`) va **current ip** maydoniga serveringiz IP manzilini yozib, **update ip** bosing. Domen `footballcenter.duckdns.org` bo'ladi — HTTPS sertifikati avtomatik olinadi.
-
-### 1-usul: Docker Compose (tavsiya etiladi)
-
-Ilova, PostgreSQL va (ixtiyoriy) avtomatik HTTPS bitta buyruq bilan ko'tariladi. Serverda faqat Docker kerak.
-
-```bash
-git clone https://github.com/sardorburkhonov08-source/FootballCenter-.git
-cd FootballCenter-
-cp .env.example .env
-```
-
-`.env` faylida kamida quyidagilarni to'ldiring: `BOT_TOKEN`, `OWNER_IDS`, `POSTGRES_PASSWORD`, `DOMAIN`, `WEBAPP_URL` (`https://` + `DOMAIN`), `ADMIN_LOGIN`, `ADMIN_PASSWORD`, `SESSION_SECRET`.
-
-Domen DNS'i serverga yo'naltirilgan bo'lsa — HTTPS sertifikati (Let's Encrypt) Caddy orqali avtomatik olinadi:
-
-```bash
-docker compose --profile https up -d --build
-```
-
-O'zingizda nginx yoki boshqa HTTPS proksi bo'lsa, Caddy'siz ishga tushiring va proksini `localhost:3000` ga yo'naltiring:
-
-```bash
-docker compose up -d --build
-```
-
-Foydali buyruqlar:
-
-```bash
-docker compose logs -f app
-```
-
-```bash
-docker compose down
-```
-
-Baza (`pgdata`) va yuklangan fayllar (`uploads`) Docker volume'larida saqlanadi — konteyner qayta yaratilsa ham yo'qolmaydi.
-
-### 2-usul: Docker'siz
-
-Node.js 20+ va PostgreSQL 14+ o'rnatilgan bo'lishi kerak.
-
-```bash
-npm ci --omit=dev
+npm install
 cp .env.example .env
 npm start
 ```
 
-`.env` da `DATABASE_URL` ni o'z bazangizga yo'naltiring. Doimiy ishlashi uchun systemd, pm2 yoki shunga o'xshash vosita bilan ishga tushiring va oldiga HTTPS proksi (nginx/Caddy) qo'ying.
+`.env` da `BOT_TOKEN`, `DATABASE_URL` (lokal PostgreSQL), `ADMIN_IDS` ni to'ldiring. `WEBHOOK_URL` bo'sh bo'lsa, bot long polling rejimida ishlaydi — domen kerak emas (lekin Mini App HTTPS'siz Telegram'da ochilmaydi).
 
-Server ishga tushganda baza jadvallari avtomatik yaratiladi (`src/db/schema.sql`).
+Migratsiyalar server ishga tushganda avtomatik bajariladi (`src/db/migrations`); qo'lda: `npm run migrate`.
 
-### Telegram sozlamalari
-
-1. BotFather'da: `/mybots` → bot → **Bot Settings → Menu Button** → `WEBAPP_URL` manzili. Bot o'zi ham ishga tushganda menyu tugmasini shu manzilga sozlaydi.
-2. Majburiy obuna va donat kanali uchun botni o'sha kanallarga **admin** qilib qo'shing.
-3. Bot standart holatda long polling rejimida ishlaydi (qo'shimcha sozlash shart emas). Webhook kerak bo'lsa: `USE_WEBHOOK=true` — manzil avtomatik `WEBAPP_URL/tg-webhook` bo'ladi.
-
-### Muhim eslatmalar
-
-- **football-data.org bepul tarifi** o'yinlar, jadval, natijalar, taqvim va to'purarlarni beradi, lekin gollar/kartalar/tarkib tafsilotlari faqat pullik tariflarda bor. Ma'lumot kelmasa, o'yin sahifasidagi tegishli tab ko'rinmaydi. Mini Manager'da bu ma'lumotlarga bog'liq ballar (gol urgan, assist, kartalar, tarkib) faqat API ularni bersa hisoblanadi; g'olib va aniq hisob har doim hisoblanadi.
-- **Quiz savollari** standart holatda Open Trivia DB'dan (ingliz tilida, futbolga oid savollar filtrlanadi) olinadi. Web admin panelidan savollarni qo'lda ham qo'shish mumkin — ular navbatda birinchi chiqadi.
-- **AI Yordamchi** limiti — oxirgi 24 soat ichidagi so'rovlar (sirpanuvchi oyna). Mavzudan tashqari savollar limitdan kamaytirmaydi.
-- **Bonus**: Oddiy — oxirgi bonusdan 24 soat o'tgach, Premium — 12 soat o'tgach (kuniga necha marta — admin sozlamasi).
-- **Hafta**: seshanba 12:00 — keyingi seshanba 11:59. Haftalik/oylik g'oliblar davr tugagach 3 soat ichida aniqlanadi (kechikkan natijalar uchun) va web admin statistikasida ko'rinadi.
-- **O'zbek (kirill)** matnlari lotin matndan avtomatik transliteratsiya qilinadi (`src/i18n/translit.js`); aniq tarjima kerak bo'lsa `src/i18n/locales/uz_cyrl.js` dagi `OVERRIDES` ga qo'shing.
-
-## Testlar
+Testlar (alohida, bo'sh test bazasi kerak — u har safar tozalanadi):
 
 ```bash
 TEST_DATABASE_URL=postgres://... npm test
-```
-
-Testlar bo'sh test bazasini har safar qayta yaratadi — asosiy bazani bermang. Telegram, football-data va Quiz API'lari soxta javoblar bilan almashtiriladi.
-
-## Tuzilma
-
-```
-src/
-  index.js              ishga tushirish (migratsiya, bot, web, fon vazifalari)
-  config.js             .env sozlamalari
-  db/                   PostgreSQL ulanish va sxema
-  i18n/                 4 tilli matnlar va transliteratsiya
-  services/             biznes mantiq (promo, referral, bonus, manager, quiz, ...)
-  bot/                  Telegram bot: handlers/ (start, balance, donate, sections, admin)
-  web/                  Express: Web App API, admin API, initData tekshiruvi
-  jobs/scheduler.js     fon vazifalari
-public/                 Web App va web admin paneli
-test/                   avtomatik testlar
-Dockerfile, docker-compose.yml, Caddyfile   mustaqil ishga tushirish
 ```

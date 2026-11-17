@@ -1,8 +1,8 @@
 const LOCALES = {
-  uz: require('./locales/uz'),
-  uz_cyrl: require('./locales/uz_cyrl'),
-  ru: require('./locales/ru'),
-  en: require('./locales/en'),
+  uz: require('./locales/uz.json'),
+  uz_cyrl: require('./locales/uz_cyrl.json'),
+  ru: require('./locales/ru.json'),
+  en: require('./locales/en.json'),
 };
 
 const LANGS = ['uz', 'uz_cyrl', 'ru', 'en'];

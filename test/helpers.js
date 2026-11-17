@@ -1,12 +1,12 @@
 // Test muhiti: lokal PostgreSQL (TEST_DATABASE_URL) + soxta Telegram API
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgres://postgres@localhost:5433/fc_test?host=/var/tmp';
 process.env.BOT_TOKEN = '123456:TEST_TOKEN';
-process.env.OWNER_IDS = '1000';
+process.env.ADMIN_IDS = '1000';
 process.env.ADMIN_LOGIN = 'admin';
 process.env.ADMIN_PASSWORD = 'secret';
 process.env.FOOTBALL_API_KEY = 'test-key';
 process.env.ANTHROPIC_API_KEY = '';
-process.env.WEBAPP_URL = 'https://fc.example.com';
+process.env.WEBHOOK_URL = 'https://fc.example.com';
 process.env.UPLOAD_DIR = require('path').join(require('os').tmpdir(), 'fc-test-uploads');
 
 const db = require('../src/db/pool');
