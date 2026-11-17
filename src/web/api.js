@@ -79,7 +79,7 @@ router.post('/matches/:id/subscribe', requirePremium, footballRoute(async (req) 
     await db.query('DELETE FROM match_subscriptions WHERE user_id = $1 AND api_match_id = $2', [req.user.id, id]);
     return { subscribed: false };
   }
-  const m = football.normMatch(await football.rawMatch(id, 300));
+  const m = football.normMatch(await football.rawMatch(id));
   if (m.state !== 'scheduled') return { subscribed: false, error: 'not_scheduled' };
   await db.query(
     'INSERT INTO match_subscriptions (user_id, api_match_id, kickoff_at, title) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',

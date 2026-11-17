@@ -66,6 +66,8 @@ const config = {
   timezone: 'Asia/Tashkent',
   disableBot: process.env.DISABLE_BOT === 'true',
   disableJobs: process.env.DISABLE_JOBS === 'true',
+  // Spam himoyasini o'chirish (faqat avtomatik testlar uchun)
+  rateLimitOff: process.env.RATE_LIMIT_OFF === 'true',
 };
 
 module.exports = config;

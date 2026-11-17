@@ -37,6 +37,14 @@ public/admin/           web admin paneli
 test/                   avtomatik testlar
 ```
 
+## Yuklama va API'dan himoya (o'zgartirishda saqlang)
+
+- **Futbol API** (`src/services/football.js`): xotira + PostgreSQL (`api_cache`) keshi, ma'lumot turiga qarab TTL (tugagan o'yin — qayta so'ralmaydi, jonli — 30–60 s), eskirgan keshni darhol berib orqada bitta so'rov bilan yangilash, bir xil so'rovlarni birlashtirish, daqiqalik limit navbati (foydalanuvchi so'rovi 15 s dan ortiq kutmaydi). Yangi API chaqiruvi faqat `request()` orqali.
+- **Reyting** (`src/services/leaderboard.js`): 30 s umumiy kesh. G'olibni aniqlash (fon vazifasi) — keshsiz `computeRanking`.
+- **Spam**: bot — foydalanuvchiga 3 s da 8 ta yangilanish; Mini App API — daqiqasiga 120 so'rov (`src/services/ratelimit.js`).
+- **Telegram**: `@grammyjs/auto-retry` (429 da kutib qayta yuboradi), webhook `max_connections: 40`.
+- Foydalanuvchi qatori o'zgarmasa bazaga qayta yozilmaydi (`users.upsertFromTelegram`).
+
 ## Bosqichlar
 
 Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testlardan o'tgan, lekin haqiqiy Telegram/API bilan hali sinalmagan; ⬜ — boshlanmagan.
@@ -60,4 +68,3 @@ Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testl
 - football-data.org bepul tarifida gol/karta/tarkib tafsilotlari yo'q — Mini Manager'ning bu ballari faqat API bersa hisoblanadi.
 - Quiz savollari standart manbasi (Open Trivia DB) ingliz tilida.
 - Web admin paneli faqat o'zbek (lotin) tilida.
-- Reyting va profil so'rovlari keshlanmagan — ko'p foydalanuvchida sekin (1000+ bir vaqtdagi foydalanuvchi uchun kesh qo'shish kerak).

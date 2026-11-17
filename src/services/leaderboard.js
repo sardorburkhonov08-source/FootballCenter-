@@ -5,8 +5,26 @@ function range(period, date = new Date()) {
   return period === 'monthly' ? monthRange(date) : weekRange(date);
 }
 
-/** Davr bo'yicha reyting: kind = manager | quiz */
+// Reyting hisoblash og'ir (barcha javoblarni yig'adi). Natija 30 soniya umumiy keshda saqlanadi:
+// minglab foydalanuvchi bir vaqtda ochsa ham bazada bitta hisob-kitob bajariladi.
+const RANKING_TTL_MS = 30 * 1000;
+const rankingCache = new Map();   // key -> { at, promise }
+
+function clearRankingCache() { rankingCache.clear(); }
+
+/** Davr bo'yicha reyting (keshlangan): kind = manager | quiz */
 async function ranking(kind, r) {
+  const key = `${kind}:${new Date(r.start).getTime()}:${new Date(r.end).getTime()}`;
+  const hit = rankingCache.get(key);
+  if (hit && Date.now() - hit.at < RANKING_TTL_MS) return hit.promise;
+  const promise = computeRanking(kind, r);
+  rankingCache.set(key, { at: Date.now(), promise });
+  promise.catch(() => rankingCache.delete(key));
+  if (rankingCache.size > 50) rankingCache.delete(rankingCache.keys().next().value);
+  return promise;
+}
+
+async function computeRanking(kind, r) {
   if (kind === 'manager') {
     return db.many(
       `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
@@ -61,4 +79,4 @@ async function overallPlace(kind, userId) {
   return r && r.points > 0 ? r : { points: r ? r.points : 0, place: null };
 }
 
-module.exports = { range, ranking, board, overallPlace, label };
+module.exports = { range, ranking, computeRanking, board, overallPlace, label, clearRankingCache, RANKING_TTL_MS };

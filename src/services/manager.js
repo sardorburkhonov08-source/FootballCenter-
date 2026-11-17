@@ -9,7 +9,7 @@ const { weekRange } = require('./time');
 class ValidationError extends Error {}
 
 async function assignGame(apiMatchId) {
-  const m = football.normMatch(await football.rawMatch(apiMatchId, 300));
+  const m = football.normMatch(await football.rawMatch(apiMatchId));
   if (m.state !== 'scheduled') throw new ValidationError('match_not_scheduled');
   const kickoff = new Date(m.utcDate);
   const w = weekRange(kickoff);
@@ -157,7 +157,7 @@ async function scoreFinished() {
   let scored = 0;
   for (const g of games) {
     let m;
-    try { m = await football.rawMatch(g.api_match_id, 60); } catch (e) { continue; }
+    try { m = await football.rawMatch(g.api_match_id, { background: true }); } catch (e) { continue; }
     const state = football.matchState(m.status);
     if (state === 'cancelled') {
       // O'yin qoldirildi — taxminlar ochiladi va kickoff yangilanadi

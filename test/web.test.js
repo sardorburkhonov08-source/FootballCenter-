@@ -167,7 +167,7 @@ test('Mini Manager: murabbiy, taxmin, qulf, hisoblash, reyting', async () => {
     goals: [{ team: { id: 1 }, scorer: { id: 105 }, assist: { id: 106 }, type: 'REGULAR' }, { team: { id: 1 }, scorer: { id: 110 }, assist: null, type: 'REGULAR' }],
     bookings: [{ team: { id: 2 }, player: { id: 203 }, card: 'YELLOW' }],
   });
-  football.clearCache();
+  await football.clearCache();
   h.clear();
   assert.strictEqual(await manager.scoreFinished(), 1);
   const pred = await db.one('SELECT p.* FROM mini_manager_predictions p JOIN users u ON u.id = p.user_id WHERE u.telegram_id = $1', [FREE]);

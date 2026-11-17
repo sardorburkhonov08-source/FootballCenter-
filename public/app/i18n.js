@@ -51,6 +51,7 @@
     prof_total: 'Jami ball', prof_place: "Umumiy o'rin", prof_predictions: 'Taxminlar', prof_answers: 'Javoblar',
     prof_correct: "To'g'ri javoblar", prof_quiz_locked: '🔒 Faqat Premium', som: "so'm", admin_panel: '🔒 Admin panel',
     place_short: '{place}-o\'rin', news_soon: '📰 Yangiliklar tez orada',
+    too_fast: "⏳ Juda tez! Bir necha soniya kutib, qayta urinib ko'ring.",
   };
 
   const ru = {
@@ -104,6 +105,7 @@
     prof_total: 'Всего баллов', prof_place: 'Общее место', prof_predictions: 'Прогнозы', prof_answers: 'Ответы',
     prof_correct: 'Верные ответы', prof_quiz_locked: '🔒 Только Premium', som: 'сум', admin_panel: '🔒 Админ-панель',
     place_short: '{place}-е место', news_soon: '📰 Новости скоро',
+    too_fast: '⏳ Слишком быстро! Подождите пару секунд и попробуйте снова.',
   };
 
   const en = {
@@ -157,6 +159,7 @@
     prof_total: 'Total points', prof_place: 'Overall place', prof_predictions: 'Predictions', prof_answers: 'Answers',
     prof_correct: 'Correct answers', prof_quiz_locked: '🔒 Premium only', som: 'UZS', admin_panel: '🔒 Admin panel',
     place_short: '#{place}', news_soon: '📰 News coming soon',
+    too_fast: '⏳ Too fast! Please wait a few seconds and try again.',
   };
 
   const uzCyrl = {};

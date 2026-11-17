@@ -1,4 +1,6 @@
 const { Bot } = require('grammy');
+const { autoRetry } = require('@grammyjs/auto-retry');
+const { createLimiter } = require('../services/ratelimit');
 const config = require('../config');
 const { t } = require('../i18n');
 const settings = require('../services/settings');
@@ -18,6 +20,9 @@ const STATES = Object.assign({}, ...modules.map((m) => m.states || {}));
 
 function createBot(token = config.botToken, botConfig = {}) {
   const bot = new Bot(token, botConfig);
+
+  // Telegram "juda tez" (429) desa — kutib, qayta yuboradi; xabarlar yo'qolmaydi
+  bot.api.config.use(autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 60 }));
 
   // Faqat shaxsiy chatlar (kanal/guruh yangilanishlari e'tiborsiz)
   bot.use(async (ctx, next) => {
@@ -42,6 +47,22 @@ function createBot(token = config.botToken, botConfig = {}) {
       return undefined;
     }
     return next();
+  });
+
+  // Spam himoyasi: bitta foydalanuvchidan 3 soniyada 8 tadan ortiq bosish/xabar e'tiborsiz qoldiriladi
+  const limiter = createLimiter({ max: 8, windowMs: 3000 });
+  bot.use(async (ctx, next) => {
+    if (!ctx.from) return next();
+    const r = limiter.hit(ctx.from.id);
+    if (r.allowed) return next();
+    if (r.warn) {
+      const lang = ctx.lang || 'uz';
+      if (ctx.callbackQuery) await ctx.answerCallbackQuery({ text: t(lang, 'too_fast') }).catch(() => {});
+      else await ctx.reply(t(lang, 'too_fast')).catch(() => {});
+    } else if (ctx.callbackQuery) {
+      await ctx.answerCallbackQuery().catch(() => {});
+    }
+    return undefined;
   });
 
   for (const m of modules) m.register(bot);

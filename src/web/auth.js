@@ -1,6 +1,10 @@
 const crypto = require('crypto');
 const config = require('../config');
 const users = require('../services/users');
+const { createLimiter } = require('../services/ratelimit');
+
+// Mini App: bitta foydalanuvchi daqiqasiga 120 tadan ortiq so'rov yubora olmaydi
+const apiLimiter = createLimiter({ max: 120, windowMs: 60 * 1000 });
 
 const MAX_AGE_SEC = 24 * 3600;
 
@@ -44,6 +48,10 @@ async function requireTelegramUser(req, res, next) {
   try {
     const v = verifyInitData(initDataFromReq(req));
     if (!v) return res.status(401).json({ error: 'unauthorized' });
+    if (!apiLimiter.hit(v.user.id).allowed) {
+      res.set('Retry-After', '30');
+      return res.status(429).json({ error: 'too_many_requests' });
+    }
     const { user } = await users.upsertFromTelegram(v.user);
     if (user.is_blocked) return res.status(403).json({ error: 'blocked' });
     req.user = user;

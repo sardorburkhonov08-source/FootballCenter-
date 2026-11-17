@@ -70,7 +70,7 @@ async function finalizePeriods(now = new Date()) {
     const r = prevRange(period, now);
     if (now.getTime() < r.end.getTime() + PERIOD_GRACE_MS) continue;
     for (const kind of ['manager', 'quiz']) {
-      const rows = await leaderboard.ranking(kind, r);
+      const rows = await leaderboard.computeRanking(kind, r); // keshsiz — g'olib aniq bo'lishi kerak
       const winner = rows[0];
       const ins = await db.one(
         `INSERT INTO period_winners (kind, period, period_start, period_end, user_id, points)
@@ -120,6 +120,7 @@ const JOBS = [
   { name: 'premium_expiry', every: 300, fn: premiumExpiry },
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
+  { name: 'api_cache_cleanup', every: 6 * 3600, fn: () => require('../services/football').cleanupCache() },
 ];
 
 function start() {
