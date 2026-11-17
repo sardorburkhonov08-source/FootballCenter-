@@ -1,4 +1,4 @@
--- 002: Tashqi API javoblari keshi (football-data.org). Deploy/restartdan keyin ham saqlanadi,
+-- 002: Tashqi futbol API javoblari keshi. Deploy/restartdan keyin ham saqlanadi,
 -- shuning uchun bir xil ma'lumot API'dan qayta-qayta so'ralmaydi.
 CREATE TABLE IF NOT EXISTS api_cache (
   key        TEXT PRIMARY KEY,

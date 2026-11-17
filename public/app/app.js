@@ -103,7 +103,10 @@
 
   function errorBox(err, retry) {
     let msg = t('error_generic');
-    if (err && err.status === 503) msg = t('football_unavailable');
+    if (err && err.status === 503) {
+      const reason = err.body && err.body.reason;
+      msg = reason === 'plan' ? t('football_plan') : reason === 'limit' ? t('football_limit') : t('football_unavailable');
+    }
     if (err && err.status === 429) msg = t('too_fast');
     return el('div', { class: 'card center' }, el('p', { text: msg }), retry ? el('button', { class: 'btn ghost', text: t('retry'), onclick: retry }) : null);
   }

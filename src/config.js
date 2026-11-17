@@ -55,7 +55,7 @@ const config = {
   sessionSecret: process.env.SESSION_SECRET || derived('session', botToken) || crypto.randomBytes(32).toString('hex'),
 
   footballApiKey: process.env.FOOTBALL_API_KEY || '',
-  footballApiBase: process.env.FOOTBALL_API_BASE || 'https://api.football-data.org/v4',
+  footballApiBase: process.env.FOOTBALL_API_BASE || 'https://v3.football.api-sports.io',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   aiModel: process.env.AI_MODEL || 'claude-opus-5-5',
   quizApiUrl: process.env.QUIZ_API_URL || 'https://opentdb.com/api.php?amount=50&category=21&type=multiple',

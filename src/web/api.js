@@ -28,7 +28,7 @@ function footballRoute(fn) {
     try {
       res.json(await fn(req, res));
     } catch (e) {
-      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', status: e.status || null });
+      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
       throw e;
     }
   });
@@ -129,7 +129,7 @@ router.post('/manager/games/:id/prediction', express.json(), wrap(async (req, re
     res.json({ prediction: await manager.savePrediction(req.user, Number(req.params.id), req.body || {}) });
   } catch (e) {
     if (e instanceof manager.ValidationError) return res.status(400).json({ error: e.message });
-    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable' });
+    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
     throw e;
   }
   return undefined;

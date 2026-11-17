@@ -6,8 +6,10 @@ const football = require('../src/services/football');
 const config = require('../src/config');
 
 let calls = 0;
-let status = 'TIMED';
-let respond = () => ({ ok: true, status: 200, headers: new Map(), json: async () => ({ id: 1, status, utcDate: new Date(Date.now() + 3600e3).toISOString(), homeTeam: { id: 1 }, awayTeam: { id: 2 } }) });
+let status = 'NS';
+const fx = (short, ms) => ({ fixture: { id: 1, timestamp: Math.floor((Date.now() + ms) / 1000), status: { short } }, teams: { home: { id: 1 }, away: { id: 2 } }, goals: {} });
+const envelope = (response, headers = []) => ({ ok: true, status: 200, headers: new Map(headers), json: async () => ({ errors: [], response }) });
+let respond = () => envelope([fx(status, 3600e3)]);
 
 test.before(async () => {
   await resetDb();
@@ -20,12 +22,12 @@ test("bir vaqtdagi 50 ta bir xil so'rov — API'ga 1 ta so'rov", async () => {
   calls = 0;
   const results = await Promise.all(Array.from({ length: 50 }, () => football.rawMatch(1)));
   assert.strictEqual(calls, 1);
-  assert.ok(results.every((r) => r.id === 1));
+  assert.ok(results.every((r) => r.fixture.id === 1));
 });
 
 test("kesh bazada saqlanadi: xotira tozalansa (restart/deploy) ham API'ga so'rov ketmaydi", async () => {
   calls = 0;
-  const row = await db.one("SELECT key, expires_at FROM api_cache WHERE key = '/matches/1'");
+  const row = await db.one("SELECT key, expires_at FROM api_cache WHERE key = '/fixtures?id=1'");
   assert.ok(row, 'bazada kesh bor');
   // Xotirani tozalash = yangi server nusxasi
   delete require.cache[require.resolve('../src/services/football')];
@@ -43,35 +45,66 @@ test("eskirgan kesh: darhol eski javob qaytadi, orqada bitta yangilash so'rovi",
   delete require.cache[require.resolve('../src/services/football')];
   const f = require('../src/services/football');
   calls = 0;
-  status = 'IN_PLAY';
+  status = '1H';
   f.setFetch(async () => { calls += 1; await new Promise((r) => setTimeout(r, 50)); return respond(); });
   const t0 = Date.now();
   const stale = await Promise.all(Array.from({ length: 20 }, () => f.rawMatch(1)));
   assert.ok(Date.now() - t0 < 50, 'foydalanuvchi API javobini kutmadi');
-  assert.ok(stale.every((r) => r.status === 'TIMED'), 'eski ma\'lumot berildi');
+  assert.ok(stale.every((r) => r.fixture.status.short === 'NS'), 'eski ma\'lumot berildi');
   await new Promise((r) => setTimeout(r, 120));
   assert.strictEqual(calls, 1, 'faqat bitta yangilash so\'rovi');
-  assert.strictEqual((await f.rawMatch(1)).status, 'IN_PLAY', 'kesh yangilandi');
-  status = 'TIMED';
+  assert.strictEqual((await f.rawMatch(1)).fixture.status.short, '1H', 'kesh yangilandi');
+  status = 'NS';
 });
 
 test("yangilanish vaqti ma'lumot turiga qarab", () => {
   const now = Date.now();
-  const iso = (ms) => new Date(now + ms).toISOString();
-  assert.strictEqual(football.ttlForMatch({ status: 'IN_PLAY', utcDate: iso(-1e6) }), 30);
-  assert.strictEqual(football.ttlForMatch({ status: 'FINISHED', utcDate: iso(-1e7) }), 6 * 3600);
-  assert.strictEqual(football.ttlForMatch({ status: 'TIMED', utcDate: iso(30 * 3600e3) }), 6 * 3600);
-  assert.strictEqual(football.ttlForMatchList([{ status: 'FINISHED', utcDate: iso(-1e7) }], now - 1000), 24 * 3600, "o'tgan kun — 1 kun");
-  assert.strictEqual(football.ttlForMatchList([{ status: 'IN_PLAY', utcDate: iso(-1e6) }, { status: 'TIMED', utcDate: iso(3e6) }]), 60, 'jonli — 1 daqiqa');
-  const nextIn20min = football.ttlForMatchList([{ status: 'TIMED', utcDate: iso(20 * 60e3) }]);
+  assert.strictEqual(football.ttlForMatch(fx('2H', -1e6)), 30);
+  assert.strictEqual(football.ttlForMatch(fx('FT', -1e7)), 6 * 3600);
+  assert.strictEqual(football.ttlForMatch(fx('NS', 30 * 3600e3)), 6 * 3600);
+  assert.strictEqual(football.ttlForMatchList([fx('FT', -1e7)], now - 1000), 24 * 3600, "o'tgan kun — 1 kun");
+  assert.strictEqual(football.ttlForMatchList([fx('1H', -1e6), fx('NS', 3e6)]), 60, 'jonli — 1 daqiqa');
+  const nextIn20min = football.ttlForMatchList([fx('NS', 20 * 60e3)]);
   assert.ok(nextIn20min > 19 * 60 && nextIn20min <= 20 * 60, "keyingi o'yingacha");
+});
+
+test("kunlik limit: oxirgi so'rovlar fon vazifalari uchun saqlanadi", async () => {
+  delete require.cache[require.resolve('../src/services/football')];
+  const f = require('../src/services/football');
+  await f.clearCache();
+  f.setFetch(async () => envelope([fx('NS', 3600e3)], [['x-ratelimit-requests-remaining', '5']]));
+  await f.rawMatch(101); // API: bugun 5 ta so'rov qoldi
+  await assert.rejects(f.rawMatch(102), (e) => e.reason === 'limit', 'foydalanuvchi so\'rovi yuborilmaydi');
+  assert.ok(await f.rawMatch(103, { background: true }), 'fon vazifasi zaxiradan foydalanadi');
+});
+
+test("tarifda yo'q ma'lumot (joriy mavsum) — rad javobi keshlanadi, qayta so'ralmaydi", async () => {
+  delete require.cache[require.resolve('../src/services/football')];
+  const f = require('../src/services/football');
+  await f.clearCache();
+  let n = 0;
+  f.setFetch(async () => { n += 1; return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { plan: 'Free plans do not have access to this season' }, response: [] }) }; });
+  await assert.rejects(f.matchesByDate('2026-11-17'), (e) => e.reason === 'plan');
+  await assert.rejects(f.matchesByDate('2026-11-17'), (e) => e.reason === 'plan');
+  assert.strictEqual(n, 1);
+});
+
+test("kunlik limit tugadi (errors.requests) — ertagacha so'rov yuborilmaydi", async () => {
+  delete require.cache[require.resolve('../src/services/football')];
+  const f = require('../src/services/football');
+  await f.clearCache();
+  let n = 0;
+  f.setFetch(async () => { n += 1; return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { requests: 'You have reached the request limit for the day' }, response: [] }) }; });
+  await assert.rejects(f.rawMatch(201), (e) => e.reason === 'limit');
+  await assert.rejects(f.rawMatch(202), f.FootballUnavailable);
+  assert.strictEqual(n, 1);
 });
 
 test("API 'limit tugadi' desa — foydalanuvchi navbatda osilib qolmaydi", async () => {
   delete require.cache[require.resolve('../src/services/football')];
   const f = require('../src/services/football');
   await f.clearCache();
-  f.setFetch(async () => ({ ok: false, status: 429, headers: new Map([['x-requestcounter-reset', '50']]), json: async () => ({}) }));
+  f.setFetch(async () => ({ ok: false, status: 429, headers: new Map(), json: async () => ({}) }));
   await assert.rejects(f.rawMatch(77), f.FootballUnavailable);
   f.setFetch(async () => respond());
   const t0 = Date.now();

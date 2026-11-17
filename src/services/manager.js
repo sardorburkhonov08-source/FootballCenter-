@@ -158,17 +158,18 @@ async function scoreFinished() {
   for (const g of games) {
     let m;
     try { m = await football.rawMatch(g.api_match_id, { background: true }); } catch (e) { continue; }
-    const state = football.matchState(m.status);
+    const state = football.rawState(m);
     if (state === 'cancelled') {
       // O'yin qoldirildi — taxminlar ochiladi va kickoff yangilanadi
-      if (m.utcDate && new Date(m.utcDate) > new Date()) {
-        await db.query("UPDATE mini_manager_games SET status = 'upcoming', kickoff_at = $2 WHERE id = $1", [g.id, m.utcDate]);
+      const n = football.normMatch(m);
+      if (n.utcDate && new Date(n.utcDate) > new Date()) {
+        await db.query("UPDATE mini_manager_games SET status = 'upcoming', kickoff_at = $2 WHERE id = $1", [g.id, n.utcDate]);
         await db.query('UPDATE mini_manager_predictions SET is_locked = false WHERE game_id = $1', [g.id]);
       }
       continue;
     }
     if (state !== 'finished') continue;
-    const result = scoring.extractResult(m);
+    const result = football.matchResult(m);
     if (result.homeGoals === null || result.homeGoals === undefined) continue;
     const scoredPreds = await db.tx(async (c) => {
       const done = await c.query("UPDATE mini_manager_games SET status = 'finished', result = $2::jsonb WHERE id = $1 AND status = 'locked' RETURNING id",

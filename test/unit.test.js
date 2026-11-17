@@ -26,18 +26,27 @@ test('oy va sana formatlari Toshkent vaqtida', () => {
   assert.strictEqual(time.parseDate('32.10.2026'), null);
 });
 
-test("Mini Manager ball tizimi", () => {
+test("Mini Manager ball tizimi (API-Football natijasi)", () => {
+  const football = require('../src/services/football');
+  const ev = (teamId, type, detail, player, assist) => ({ time: { elapsed: 10 }, team: { id: teamId }, type, detail, player: { id: player }, assist: { id: assist || null } });
   const match = {
-    homeTeam: { id: 1, lineup: [{ id: 11 }, { id: 12 }, { id: 13 }] },
-    awayTeam: { id: 2, lineup: [{ id: 21 }, { id: 22 }] },
-    score: { fullTime: { home: 2, away: 0 } },
-    goals: [
-      { team: { id: 1 }, scorer: { id: 13 }, assist: { id: 12 }, type: 'REGULAR' },
-      { team: { id: 1 }, scorer: { id: 22 }, assist: null, type: 'OWN' },
+    fixture: { id: 1, status: { short: 'FT' }, timestamp: 1 },
+    teams: { home: { id: 1 }, away: { id: 2 } },
+    goals: { home: 2, away: 0 },
+    events: [
+      ev(1, 'Goal', 'Normal Goal', 13, 12),
+      ev(1, 'Goal', 'Own Goal', 22),
+      ev(2, 'Goal', 'Missed Penalty', 21),
+      ev(2, 'Card', 'Yellow Card', 21),
+      ev(1, 'subst', 'Substitution 1', 15, 11),
     ],
-    bookings: [{ team: { id: 2 }, player: { id: 21 }, card: 'YELLOW' }],
+    lineups: [
+      { team: { id: 1 }, startXI: [{ player: { id: 11 } }, { player: { id: 12 } }, { player: { id: 13 } }] },
+      { team: { id: 2 }, startXI: [{ player: { id: 21 } }, { player: { id: 22 } }] },
+    ],
   };
-  const r = scoring.extractResult(match);
+  const r = football.matchResult(match);
+  assert.deepStrictEqual(r.goals.filter((g) => !g.own).map((g) => g.scorerId), [13], "avtogol va o'tkazib yuborilgan penalti hisoblanmaydi");
   const pred = {
     predicted_winner: 'HOME', predicted_score_home: 2, predicted_score_away: 0,
     scorer_home: 13, scorer_away: 0, assist_home: 12, assist_away: 0,
@@ -52,12 +61,16 @@ test("Mini Manager ball tizimi", () => {
   });
   assert.strictEqual(s.total, 121);
 
-  // Taxmin qilinmagan (null) -> 0; batafsil ma'lumot yo'q bo'lsa faqat "bo'lmaydi"+0 gol ma'lum
-  const noData = scoring.extractResult({ homeTeam: { id: 1 }, awayTeam: { id: 2 }, score: { fullTime: { home: 1, away: 0 } } });
+  // Batafsil ma'lumot yo'q: faqat "bo'lmaydi" + 0 gol ma'lum bo'lgan joy hisoblanadi
+  const noData = football.matchResult({ fixture: { id: 2, status: { short: 'FT' } }, teams: { home: { id: 1 }, away: { id: 2 } }, goals: { home: 1, away: 0 } });
   const s2 = scoring.score({ predicted_winner: 'AWAY', predicted_score_home: 0, predicted_score_away: 1, scorer_home: null, scorer_away: 0, red_card_home: 0, lineup_home: [], lineup_away: [] }, noData);
   assert.strictEqual(s2.breakdown.scorer_away, 15);
   assert.strictEqual(s2.breakdown.red_home, 0);
   assert.strictEqual(s2.total, 15);
+
+  // Ikkinchi sariq — ham sariq, ham qizil
+  const sy = football.matchResult({ ...match, events: [ev(2, 'Card', 'Second Yellow card', 22)] });
+  assert.deepStrictEqual(sy.bookings, [{ teamId: 2, playerId: 22, card: 'YELLOW_RED' }]);
 });
 
 test('kirill transliteratsiyasi', () => {

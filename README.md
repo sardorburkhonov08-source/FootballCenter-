@@ -51,7 +51,7 @@ Ixtiyoriy (keyinroq qo'shsa ham bo'ladi):
 
 | Nomi | Nima uchun |
 |---|---|
-| `FOOTBALL_API_KEY` | O'yinlar va musobaqalar — [football-data.org](https://www.football-data.org/client/register) da bepul ro'yxatdan o'tib olinadi |
+| `FOOTBALL_API_KEY` | O'yinlar va musobaqalar — [API-Football](https://dashboard.api-football.com/register) da ro'yxatdan o'tib, **Account → My Access** sahifasidagi kalit. Bepul tarif: kuniga 100 so'rov, joriy mavsum bo'lmasligi mumkin; to'liq ishlash uchun pullik tarif |
 | `ANTHROPIC_API_KEY` | 🤖 AI Yordamchi — [console.anthropic.com](https://console.anthropic.com) (pullik) |
 | `ADMIN_LOGIN`, `ADMIN_PASSWORD` | Web admin paneliga (`/admin`) brauzerdan kirish uchun. Telegram orqali admin login'siz kiradi |
 
