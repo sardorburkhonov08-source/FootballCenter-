@@ -8,7 +8,7 @@ const config = {
   port: Number(process.env.PORT || 3000),
   botToken: process.env.BOT_TOKEN || '',
   botUsername: process.env.BOT_USERNAME || '',
-  // Web App ochiladigan to'liq HTTPS manzil (masalan https://footballcenter.repl.co)
+  // Web App ochiladigan to'liq HTTPS manzil (masalan https://football.example.com)
   webAppUrl: (process.env.WEBAPP_URL || '').replace(/\/+$/, ''),
   // Bo'sh bo'lsa long polling ishlatiladi; to'ldirilsa webhook (WEBAPP_URL + /tg-webhook)
   useWebhook: process.env.USE_WEBHOOK === 'true',

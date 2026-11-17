@@ -20,7 +20,7 @@ async function main() {
   }
 
   const app = createApp({ bot });
-  app.listen(config.port, () => console.log(`🌐 Web server: http://localhost:${config.port}`));
+  const server = app.listen(config.port, () => console.log(`🌐 Web server: http://localhost:${config.port}`));
 
   if (bot) {
     if (config.useWebhook) {
@@ -33,7 +33,22 @@ async function main() {
     }
   }
 
-  if (!config.disableJobs) require('./jobs/scheduler').start();
+  const stopJobs = config.disableJobs ? () => {} : require('./jobs/scheduler').start();
+
+  // To'xtatish signali (docker stop, systemctl stop) — toza yopish
+  let stopping = false;
+  const shutdown = async (signal) => {
+    if (stopping) return;
+    stopping = true;
+    console.log(`⏹ ${signal} — to'xtatilmoqda...`);
+    stopJobs();
+    if (bot && !config.useWebhook) await bot.stop().catch(() => {});
+    server.close();
+    await require('./db/pool').pool.end().catch(() => {});
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 main().catch((e) => {

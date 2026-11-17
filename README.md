@@ -15,21 +15,63 @@ Node.js 20+, Express, [grammY](https://grammy.dev), PostgreSQL, football-data.or
 
 ## Ishga tushirish
 
+Loyiha hech qanday platformaga bog'liq emas: istalgan Linux server (VPS) yoki kompyuterda ishlaydi. Telegram Web App faqat **HTTPS** manzil bilan ochiladi, shuning uchun serverga domen yo'naltirilgan bo'lishi kerak.
+
+### 1-usul: Docker Compose (tavsiya etiladi)
+
+Ilova, PostgreSQL va (ixtiyoriy) avtomatik HTTPS bitta buyruq bilan ko'tariladi. Serverda faqat Docker kerak.
+
 ```bash
-npm install
-cp .env.example .env   # qiymatlarni to'ldiring
+git clone https://github.com/sardorburkhonov08-source/FootballCenter-.git
+cd FootballCenter-
+cp .env.example .env
+```
+
+`.env` faylida kamida quyidagilarni to'ldiring: `BOT_TOKEN`, `OWNER_IDS`, `POSTGRES_PASSWORD`, `DOMAIN`, `WEBAPP_URL` (`https://` + `DOMAIN`), `ADMIN_LOGIN`, `ADMIN_PASSWORD`, `SESSION_SECRET`.
+
+Domen DNS'i serverga yo'naltirilgan bo'lsa — HTTPS sertifikati (Let's Encrypt) Caddy orqali avtomatik olinadi:
+
+```bash
+docker compose --profile https up -d --build
+```
+
+O'zingizda nginx yoki boshqa HTTPS proksi bo'lsa, Caddy'siz ishga tushiring va proksini `localhost:3000` ga yo'naltiring:
+
+```bash
+docker compose up -d --build
+```
+
+Foydali buyruqlar:
+
+```bash
+docker compose logs -f app
+```
+
+```bash
+docker compose down
+```
+
+Baza (`pgdata`) va yuklangan fayllar (`uploads`) Docker volume'larida saqlanadi — konteyner qayta yaratilsa ham yo'qolmaydi.
+
+### 2-usul: Docker'siz
+
+Node.js 20+ va PostgreSQL 14+ o'rnatilgan bo'lishi kerak.
+
+```bash
+npm ci --omit=dev
+cp .env.example .env
 npm start
 ```
 
+`.env` da `DATABASE_URL` ni o'z bazangizga yo'naltiring. Doimiy ishlashi uchun systemd, pm2 yoki shunga o'xshash vosita bilan ishga tushiring va oldiga HTTPS proksi (nginx/Caddy) qo'ying.
+
 Server ishga tushganda baza jadvallari avtomatik yaratiladi (`src/db/schema.sql`).
 
-### Replit'da
+### Telegram sozlamalari
 
-1. Repo'ni Replit'ga import qiling (`.replit` fayli tayyor).
-2. **Secrets** bo'limiga `.env.example`dagi o'zgaruvchilarni qo'shing. PostgreSQL uchun Replit Database (`DATABASE_URL` avtomatik beriladi) yoki Neon/Supabase.
-3. **Deploy** qiling (Reserved VM tavsiya etiladi — bot va fon vazifalari doimiy ishlashi kerak). Deploy manzilini `WEBAPP_URL` ga yozing.
-4. BotFather'da: `/mybots` → bot → **Bot Settings → Menu Button** → `WEBAPP_URL` manzili. Bot o'zi ham ishga tushganda menyu tugmasini shu manzilga sozlaydi.
-5. Majburiy obuna va donat kanali uchun botni o'sha kanallarga **admin** qilib qo'shing.
+1. BotFather'da: `/mybots` → bot → **Bot Settings → Menu Button** → `WEBAPP_URL` manzili. Bot o'zi ham ishga tushganda menyu tugmasini shu manzilga sozlaydi.
+2. Majburiy obuna va donat kanali uchun botni o'sha kanallarga **admin** qilib qo'shing.
+3. Bot standart holatda long polling rejimida ishlaydi (qo'shimcha sozlash shart emas). Webhook kerak bo'lsa: `USE_WEBHOOK=true` — manzil avtomatik `WEBAPP_URL/tg-webhook` bo'ladi.
 
 ### Muhim eslatmalar
 
@@ -62,4 +104,5 @@ src/
   jobs/scheduler.js     fon vazifalari
 public/                 Web App va web admin paneli
 test/                   avtomatik testlar
+Dockerfile, docker-compose.yml, Caddyfile   mustaqil ishga tushirish
 ```
