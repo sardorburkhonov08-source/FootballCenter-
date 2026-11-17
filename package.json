@@ -1,0 +1,24 @@
+{
+  "name": "footballcenter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FootballCenter — Telegram bot + Web App (Mini App)",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "migrate": "node src/db/migrate.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.9.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "grammy": "^1.46.0",
+    "multer": "^2.5.0",
+    "pg": "^8.23.1"
+  }
+}
