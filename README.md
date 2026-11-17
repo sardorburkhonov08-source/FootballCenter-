@@ -15,7 +15,35 @@ Node.js 20+, Express, [grammY](https://grammy.dev), PostgreSQL, football-data.or
 
 ## Ishga tushirish
 
+👉 **Birinchi marta o'rnatyapsizmi? [QOLLANMA.md](QOLLANMA.md) — token olishdan botni ishga tushirishgacha qadamma-qadam.**
+
 Loyiha hech qanday platformaga bog'liq emas: istalgan Linux server (VPS) yoki kompyuterda ishlaydi. Telegram Web App faqat **HTTPS** manzil bilan ochiladi, shuning uchun serverga domen yo'naltirilgan bo'lishi kerak.
+
+### ⚡ Eng oson yo'l: `setup.sh`
+
+Toza Ubuntu serverda (22.04 yoki 24.04) shu buyruqlarni bering. Skript Docker'ni o'rnatadi, parollarni o'zi yaratadi, `.env` ni yozadi va botni ishga tushiradi. Sizdan faqat bot tokeni, Telegram ID va domen so'raladi.
+
+```bash
+git clone https://github.com/sardorburkhonov08-source/FootballCenter-.git
+```
+
+```bash
+cd FootballCenter- && sudo bash setup.sh
+```
+
+Keyinroq yangi versiyaga o'tish:
+
+```bash
+sudo bash setup.sh update
+```
+
+Holat va loglarni ko'rish:
+
+```bash
+sudo bash setup.sh status
+```
+
+**Bepul domen:** [duckdns.org](https://www.duckdns.org) da ro'yxatdan o'ting, subdomen yarating (masalan `footballcenter`) va **current ip** maydoniga serveringiz IP manzilini yozib, **update ip** bosing. Domen `footballcenter.duckdns.org` bo'ladi — HTTPS sertifikati avtomatik olinadi.
 
 ### 1-usul: Docker Compose (tavsiya etiladi)
 
