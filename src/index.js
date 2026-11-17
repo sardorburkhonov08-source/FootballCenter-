@@ -22,8 +22,11 @@ async function startBot(bot) {
   notify.setApi(bot.api);
   await setupCommands(bot);
   if (config.useWebhook) {
-    if (!config.webAppUrl) throw new Error('USE_WEBHOOK=true uchun WEBAPP_URL kerak');
-    await bot.api.setWebhook(`${config.webAppUrl}/tg-webhook`, { secret_token: config.webhookSecret || undefined, drop_pending_updates: false });
+    // Webhook har ishga tushishda avtomatik o'rnatiladi (WEBHOOK_URL + /telegram/webhook)
+    await bot.api.setWebhook(`${config.publicUrl}${config.webhookPath}`, {
+      secret_token: config.webhookSecret || undefined,
+      allowed_updates: ['message', 'callback_query'],
+    });
     console.log(`🤖 Bot webhook rejimida: @${bot.botInfo.username}`);
   } else {
     await bot.api.deleteWebhook().catch(() => {});

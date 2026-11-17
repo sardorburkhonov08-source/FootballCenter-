@@ -15,7 +15,12 @@ function createApp({ bot } = {}) {
 
   if (bot && config.useWebhook) {
     const { webhookCallback } = require('grammy');
-    app.post('/tg-webhook', express.json(), webhookCallback(bot, 'express', { secretToken: config.webhookSecret || undefined }));
+    app.post(config.webhookPath, express.json(), webhookCallback(bot, 'express', {
+      secretToken: config.webhookSecret || undefined,
+      // Uzoq ishlovlar (AI javobi) Telegram'ni kuttirmasin: 200 qaytariladi, ishlov davom etadi
+      onTimeout: 'return',
+      timeoutMilliseconds: 9000,
+    }));
   }
 
   app.get('/healthz', (req, res) => res.json({ ok: true }));
@@ -25,8 +30,10 @@ function createApp({ bot } = {}) {
   app.use('/api', (req, res) => res.status(404).json({ error: 'not_found' }));
 
   app.use('/uploads', express.static(config.uploadDir, { maxAge: '7d', fallthrough: false }));
-  app.get('/js/translit.js', (req, res) => res.type('application/javascript').sendFile(path.join(__dirname, '..', 'i18n', 'translit.js')));
-  app.use(express.static(path.join(__dirname, '..', '..', 'public'), { extensions: ['html'], maxAge: '5m' }));
+  // Mini App — /app manzilida (SPEC 1.3), web admin — /admin
+  app.get('/app/translit.js', (req, res) => res.type('application/javascript').sendFile(path.join(__dirname, '..', 'i18n', 'translit.js')));
+  app.get('/', (req, res) => res.redirect(302, '/app/'));
+  app.use(express.static(path.join(__dirname, '..', '..', 'public'), { extensions: ['html'], maxAge: '5m', redirect: true }));
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {

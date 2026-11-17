@@ -11,6 +11,7 @@
   "scripts": {
     "start": "node src/index.js",
     "migrate": "node src/db/migrate.js",
+    "i18n:cyrl": "node scripts/i18n-cyrl.js",
     "test": "node --test --test-concurrency=1 test/*.test.js"
   },
   "dependencies": {

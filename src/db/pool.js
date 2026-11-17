@@ -5,6 +5,8 @@ const pool = new Pool({
   connectionString: config.databaseUrl,
   ssl: config.databaseSsl ? { rejectUnauthorized: false } : undefined,
   max: 10,
+  // Sessiya vaqt zonasi — loyiha bo'yicha yagona (SPEC 20.5)
+  options: '-c timezone=Asia/Tashkent',
 });
 
 // pg BIGINT'ni string qaytaradi; bizdagi qiymatlar Number.MAX_SAFE_INTEGER'dan kichik

@@ -1,4 +1,4 @@
--- FootballCenter sxemasi. Idempotent: har ishga tushishda xavfsiz qayta bajariladi.
+-- 001: SPEC 18-bo'limdagi barcha jadvallar + bot/web uchun yordamchi jadvallar.
 
 CREATE TABLE IF NOT EXISTS users (
   id                  BIGSERIAL PRIMARY KEY,

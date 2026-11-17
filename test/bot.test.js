@@ -27,7 +27,7 @@ test('/start: til tanlash faqat birinchi marta, keyin menyu', async () => {
   assert.strictEqual((await user(U)).language, 'ru');
   assert.match(h.lastText(U), /^🏠 Главное меню/);
   const btns = h.buttons();
-  assert.ok(btns.some((b) => b.web_app && b.web_app.url === 'https://fc.example.com/'), 'web_app tugmasi');
+  assert.ok(btns.some((b) => b.web_app && b.web_app.url === 'https://fc.example.com/app/'), 'web_app tugmasi');
   assert.ok(!btns.some((b) => b.callback_data === 'm:admin'), "oddiy foydalanuvchida admin tugmasi yo'q");
   h.clear();
   await h.text(U, '/start');
