@@ -517,6 +517,14 @@ async function searchTeams(q) {
   }));
 }
 
+/** Bitta jamoa ma'lumoti (7 kun keshlanadi) */
+async function teamInfo(teamId) {
+  const data = await request('/teams', { id: Number(teamId) }, 7 * DAY);
+  if (!data[0]) throw new FootballUnavailable('Jamoa topilmadi', 'not_found');
+  const tm = data[0].team;
+  return { id: tm.id, name: tm.name, logo: tm.logo || null, country: tm.country || null };
+}
+
 /** Jamoaning keyingi va oxirgi o'yinlari */
 async function teamMatches(teamId) {
   const id = Number(teamId);
@@ -544,5 +552,5 @@ module.exports = {
   FootballUnavailable, setFetch, clearCache, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
   matchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
   standings, competitionMatches, scorers, squad, matchesRange, normMatch, matchState, positionGroup,
-  searchTeams, teamMatches, normalizeQuery,
+  searchTeams, teamMatches, normalizeQuery, teamInfo,
 };

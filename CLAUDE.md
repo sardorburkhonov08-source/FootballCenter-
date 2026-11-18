@@ -51,6 +51,12 @@ test/                   avtomatik testlar
 2. **🔥 Ommabop ligalar** — avtomatik (`src/services/popularity.js`): oxirgi N kunda eng ko'p noyob foydalanuvchi qiziqqan ligalar. Bazada faqat `(liga, kun, foydalanuvchilar soni)` saqlanadi, kimligi saqlanmaydi; sozlamalar — `popular_leagues_*`.
 3. Qolganlari — davlat, liga, vaqt bo'yicha; o'yin ko'p bo'lsa Mini App'da yig'ilgan holda.
 
+## 🪪 Muxlislik kartasi (SPEC'dan tashqari, egasi talabi bilan)
+
+- Profil bo'limida (Mini App). Karta raqami — `users.id`. Maydonlar (ixtiyoriy): sevimli klub (API'dan qidirib), sevimli futbolchi, hudud (14 hudud + xorij), qachondan muxlis. Statistika: shu klub muxlislari, shu hududdagilar, jami a'zolar.
+- Oddiy tarif — FootballCenter uslubidagi oddiy karta. Premium — klub logotipi va klub ranglari (`team_colors`: rang logotipdan avtomatik aniqlanadi, logotip ham saqlanadi).
+- Ulashish — referral havolasi bilan; Stories — server karta rasmini chizadi (`/card/<tgId>-<imzo>.png`, `@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`).
+
 ## Bosqichlar
 
 Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testlardan o'tgan, lekin haqiqiy Telegram/API bilan hali sinalmagan; ⬜ — boshlanmagan.
