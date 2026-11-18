@@ -1,7 +1,8 @@
 /* Web App matnlari — 4 tilda. Kirill varianti o'zbek lotindan transliteratsiya qilinadi. */
 (function () {
   const uz = {
-    nav_home: 'Home', nav_manager: 'Manager', nav_quiz: 'Quiz', nav_profile: 'Profil',
+    nav_home: 'Home', nav_games: 'Games', nav_quiz: 'Quiz', nav_profile: 'Profil',
+    games_title: '🎮 Games', games_mm_desc: "Haqiqiy o'yinlar uchun tarkib va natijani taxmin qiling, ball to'plang", games_soon: "🔜 Yangi o'yinlar tez orada qo'shiladi",
     open_in_telegram_title: '📱 Telegram orqali oching',
     open_in_telegram_text: "Bu ilova Telegram Mini App. Uni bot ichidagi «⚽ FootballCenter» tugmasi orqali oching.",
     loading: 'Yuklanmoqda...', error_generic: "⚠️ Xatolik yuz berdi. Qayta urinib ko'ring.", retry: '🔄 Qayta urinish',
@@ -86,7 +87,8 @@
   };
 
   const ru = {
-    nav_home: 'Главная', nav_manager: 'Manager', nav_quiz: 'Quiz', nav_profile: 'Профиль',
+    nav_home: 'Главная', nav_games: 'Games', nav_quiz: 'Quiz', nav_profile: 'Профиль',
+    games_title: '🎮 Games', games_mm_desc: 'Прогнозируйте составы и счёт реальных матчей, набирайте очки', games_soon: '🔜 Скоро появятся новые игры',
     open_in_telegram_title: '📱 Откройте через Telegram',
     open_in_telegram_text: 'Это Telegram Mini App. Откройте его кнопкой «⚽ FootballCenter» в боте.',
     loading: 'Загрузка...', error_generic: '⚠️ Произошла ошибка. Попробуйте ещё раз.', retry: '🔄 Повторить',
@@ -171,7 +173,8 @@
   };
 
   const en = {
-    nav_home: 'Home', nav_manager: 'Manager', nav_quiz: 'Quiz', nav_profile: 'Profile',
+    nav_home: 'Home', nav_games: 'Games', nav_quiz: 'Quiz', nav_profile: 'Profile',
+    games_title: '🎮 Games', games_mm_desc: 'Predict line-ups and scores of real matches and earn points', games_soon: '🔜 New games are coming soon',
     open_in_telegram_title: '📱 Open in Telegram',
     open_in_telegram_text: 'This is a Telegram Mini App. Open it with the «⚽ FootballCenter» button in the bot.',
     loading: 'Loading...', error_generic: '⚠️ Something went wrong. Please try again.', retry: '🔄 Retry',
