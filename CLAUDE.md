@@ -54,7 +54,7 @@ test/                   avtomatik testlar
 ## 🪪 Muxlislik kartasi (SPEC'dan tashqari, egasi talabi bilan)
 
 - **Faqat Premium.** Premiumi yo'qlar profilda xira, qulflangan namunani (`/card/sample-<til>.png`) va "💎 Premium bilan oching" tugmasini ko'radi. Premium tugasa karta yashiriladi, ma'lumot saqlanadi.
-- **O'zbekiston ID kartasi uslubida, ikki tomonli** (Mini App'da bosilsa aylanadi). Bayroq o'rnida klub logotipi, karta klub rangida (`team_colors`: rang logotipdan aniqlanadi). Premium belgisi — tagligi bilan oltin to'p (ikkala tomonda).
+- **O'zbekiston ID kartasi uslubida, ikki tomonli** (Mini App'da bosilsa aylanadi). Bayroq o'rnida klub logotipi, karta klub rangida (`team_colors`: rang logotipdan aniqlanadi): sarlavha tasmasi — klubning asosiy rangi, ostida ikkinchi rang chizig'i, fon — asosiy rangning och tusi. Premium belgisi — tagligi bilan oltin to'p (ikkala tomonda).
   - Old: "[Klub] klubi muxlislik kartasi", rasm, familiya, ism, GOAT (otasining ismi o'rnida), yosh (tug'ilgan yildan hisoblanadi), jins, sevimli futbolchi (fuqarolik o'rnida), muxlislik boshlangan yil, klub, karta raqami = klubning nechanchi muxlisi. Imzo yo'q. Klubning birinchi N muxlisi — "★ Birinchi N muxlis ★".
   - Orqa: hudud, muxlis raqami, points (Mini Manager + Quiz), faollashtirilgan sana, berilgan joyi — FootballCenter, klub reytingi (shu klub muxlislari orasida points bo'yicha; 1–3-o'rin medal bilan), xira kichik rasm, bot havolasining Code 128 shtrix-kodi (`src/services/barcode.js`).
   - Yozuvlar foydalanuvchi tilida (`card_*` kalitlari).
