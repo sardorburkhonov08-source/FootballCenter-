@@ -316,3 +316,31 @@ test('fon vazifalari: davr g\'olibi, eslatmalar', async () => {
   await jobs.matchStartReminders();
   assert.match(h.lastText(PREM), /^⚽ Arsenal — Chelsea o'yini 15 daqiqadan so'ng boshlanadi!/);
 });
+
+test("asosiy ligalar: o'yinlar tepada va admin tartibida; ro'yxat admin paneldan o'zgaradi", async () => {
+  const { orderMatches } = require('../src/web/api');
+  const m = (id, compId, comp, area, time) => ({ id, utcDate: `2026-11-18T${time}:00Z`, competition: { id: compId, name: comp }, area: { name: area } });
+  const list = [
+    m(1, 500, 'A-League', 'Australia', '10'), m(2, 39, 'Premier League', 'England', '20'),
+    m(3, 2, 'UEFA Champions League', 'World', '19'), m(4, 300, 'Super League', 'Uzbekistan', '12'),
+    m(5, 39, 'Premier League', 'England', '15'), m(6, 400, 'Bundesliga', 'Austria', '09'),
+  ];
+  const ordered = orderMatches(list, [2, 39]);
+  assert.deepStrictEqual(ordered.map((x) => x.id), [3, 5, 2, 1, 6, 4], 'avval UCL, so\'ng APL (vaqt bo\'yicha), keyin davlatlar alifbosi');
+  assert.deepStrictEqual(ordered.map((x) => x.featured), [true, true, true, false, false, false]);
+
+  const ah = { id: 1000 };
+  await call('/api/me', ah);
+  const before = await call('/api/admin/featured-leagues', ah);
+  assert.ok(before.body.ids.includes(39));
+  assert.ok(before.body.leagues.some((l) => l.name === 'Super League' && l.area === 'Uzbekistan'));
+  assert.strictEqual((await call('/api/admin/featured-leagues', { ...ah, method: 'PUT', body: 'x' })).status, 400);
+  assert.deepStrictEqual((await call('/api/admin/featured-leagues', { ...ah, method: 'PUT', body: [369, 2, 2, 'abc'] })).body, [369, 2]);
+  assert.strictEqual((await call('/api/admin/featured-leagues', { id: FREE, method: 'PUT', body: [1] })).status, 403);
+
+  const comps = await call('/api/competitions', { id: FREE });
+  assert.deepStrictEqual(comps.body.featured.map((c) => c.name), ['Super League', 'UEFA Champions League']);
+  const matches = await call(`/api/matches?date=${ymdTashkent}`, { id: FREE });
+  assert.strictEqual(matches.status, 200);
+  assert.ok(matches.body.matches.every((x) => x.featured === false), 'Uzbekistan/UCL o\'yinlari yo\'q — hammasi oddiy');
+});

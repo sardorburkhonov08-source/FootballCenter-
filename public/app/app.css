@@ -105,6 +105,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 /* ---------- O'yin kartasi */
 .league-head { display: flex; align-items: center; gap: 8px; margin: 16px 0 8px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .league-head img { width: 18px; height: 18px; object-fit: contain; }
+.league-toggle { width: 100%; text-align: left; padding: 10px 12px; margin: 8px 0 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: var(--text); }
+.league-toggle + div > .match:first-child { margin-top: 8px; }
+.league-toggle .chev { color: var(--muted); }
 .match { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
 .match + .match { margin-top: 8px; }
 .match .teams { flex: 1; min-width: 0; }

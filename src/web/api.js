@@ -64,9 +64,25 @@ router.get('/prizes', wrap(async (req, res) => {
 }));
 
 // ---------- 🏠 Home
+/**
+ * O'yinlar tartibi: avval asosiy ligalar (admin belgilagan tartibda), so'ng qolganlari —
+ * davlat, liga nomi va vaqt bo'yicha.
+ */
+function orderMatches(list, featuredIds) {
+  const rank = new Map(featuredIds.map((id, i) => [Number(id), i]));
+  const r = (m) => (m.competition && rank.has(m.competition.id) ? rank.get(m.competition.id) : Infinity);
+  const text = (v) => (v || '').toString();
+  return list
+    .map((m) => ({ ...m, featured: r(m) !== Infinity }))
+    .sort((a, b) => (r(a) - r(b))
+      || (a.featured ? 0 : text(a.area && a.area.name).localeCompare(text(b.area && b.area.name)))
+      || text(a.competition && a.competition.name).localeCompare(text(b.competition && b.competition.name))
+      || a.utcDate.localeCompare(b.utcDate));
+}
+
 router.get('/matches', footballRoute(async (req) => {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '') ? req.query.date : ymd();
-  const list = await football.matchesByDate(date);
+  const list = orderMatches(await football.matchesByDate(date), (await settings.get('featured_leagues')) || []);
   const subs = await db.many('SELECT api_match_id FROM match_subscriptions WHERE user_id = $1', [req.user.id]);
   const subSet = new Set(subs.map((s) => Number(s.api_match_id)));
   return { date, matches: list.map((m) => ({ ...m, subscribed: subSet.has(m.id) })) };
@@ -91,7 +107,13 @@ router.post('/matches/:id/subscribe', requirePremium, footballRoute(async (req) 
   return { subscribed: true };
 }));
 
-router.get('/competitions', footballRoute(async () => football.competitions()));
+router.get('/competitions', footballRoute(async () => {
+  const data = await football.competitions();
+  const all = [...data.international, ...data.countries.flatMap((c) => c.competitions.map((x) => ({ ...x, area: c.name })))];
+  const byId = new Map(all.map((x) => [x.id, x]));
+  const featured = ((await settings.get('featured_leagues')) || []).map((id) => byId.get(Number(id))).filter(Boolean);
+  return { featured, ...data };
+}));
 
 const COMP_TABS = ['standings', 'results', 'calendar', 'scorers', 'assists'];
 router.get('/competitions/:id', footballRoute(async (req) => ({ ...(await football.competitionInfo(req.params.id)), tabs: COMP_TABS, freeTabs: ['standings'] })));
@@ -183,3 +205,4 @@ router.get('/profile', wrap(async (req, res) => {
 }));
 
 module.exports = router;
+module.exports.orderMatches = orderMatches;
