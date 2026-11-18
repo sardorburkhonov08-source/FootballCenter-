@@ -78,7 +78,7 @@
   "bonus_got": "🎁 Congratulations! You received a bonus of {amount} UZS.\n💰 Current balance: {balance} UZS",
   "bonus_wait": "⏳ Your next bonus is available in {time}",
   "bonus_ready_notify": "🎁 Your bonus is ready! Claim it in 💰 Balance → 🎁 Bonus.",
-  "profile": "🧑 Name: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Language: {lang}\n\n💰 Balance: {balance} UZS\n⭐ Points: {points}\n⭐ Score: {ball}\n💎 Plan: {tariff}\n📅 Registered: {date}\n\n👥 Referrals: {refs}",
+  "profile": "🧑 Name: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Language: {lang}\n\n💰 Balance: {balance} UZS\n⭐ Points: {points}\n💎 Plan: {tariff}\n📅 Registered: {date}\n\n👥 Referrals: {refs}",
   "donate_title": "❤️ Donate\n\n💚 Thank you for supporting FootballCenter!\n💳 Choose a card type:",
   "donate_card_info": "💳 {type} card\n\n🔢 Card number: <code>{number}</code>\n👤 Card holder: {holder}\n\n📋 Tap the card number to copy it automatically.\n\n💵 Enter the donation amount (digits only, in UZS):",
   "donate_amount_confirm": "💵 Donation amount: {amount} UZS\n\nDo you confirm?",

@@ -324,3 +324,11 @@ test('admin: qoida matni, FAQ (kirill avtomatik), eksport, broadcast', async () 
   assert.ok(copies.includes(2003));
   assert.ok(!copies.includes(U), "yangiliklarni o'chirgan Premium'ga yuborilmaydi");
 });
+
+test("profil: Mini Manager va Quiz ballari bitta umumiy ⭐ Points qatorida", async () => {
+  await db.query('UPDATE users SET points_manager = 120, points_quiz = 7 WHERE telegram_id = $1', [U]);
+  await h.click(U, 'm:profile');
+  const text = h.lastText(U);
+  assert.match(text, /⭐ Points: 127\n/);
+  assert.strictEqual((text.match(/⭐/g) || []).length, 1, 'faqat bitta ⭐ qatori');
+});

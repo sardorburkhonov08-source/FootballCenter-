@@ -78,7 +78,7 @@
   "bonus_got": "🎁 Tabriklaymiz! Sizga {amount} so'm bonus berildi.\n💰 Joriy balans: {balance} so'm",
   "bonus_wait": "⏳ Keyingi bonusingiz {time}dan keyin",
   "bonus_ready_notify": "🎁 Bonusingiz tayyor! 💰 Balans → 🎁 Bonus bo'limiga kirib oling.",
-  "profile": "🧑 Ism: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Til: {lang}\n\n💰 Balans: {balance} so'm\n⭐ Points: {points}\n⭐ Ball: {ball}\n💎 Tarif: {tariff}\n📅 Ro'yxatdan o'tgan: {date}\n\n👥 Referrallar: {refs}",
+  "profile": "🧑 Ism: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Til: {lang}\n\n💰 Balans: {balance} so'm\n⭐ Points: {points}\n💎 Tarif: {tariff}\n📅 Ro'yxatdan o'tgan: {date}\n\n👥 Referrallar: {refs}",
   "donate_title": "❤️ Donat\n\n💚 FootballCenter'ni qo'llab-quvvatlaganingiz uchun rahmat!\n💳 Karta turini tanlang:",
   "donate_card_info": "💳 {type} karta\n\n🔢 Karta raqami: <code>{number}</code>\n👤 Karta egasi: {holder}\n\n📋 Karta raqamiga bosing — u avtomatik nusxalanadi.\n\n💵 Donat summasini kiriting (faqat raqam, so'mda):",
   "donate_amount_confirm": "💵 Donat summasi: {amount} so'm\n\nTasdiqlaysizmi?",
