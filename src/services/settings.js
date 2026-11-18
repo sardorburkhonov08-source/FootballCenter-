@@ -54,6 +54,12 @@ const DEFAULTS = {
   // 2 — UEFA Chempionlar Ligasi, 3 — Yevropa Ligasi, 848 — Konferensiya Ligasi, 1 — Jahon chempionati,
   // 4 — Yevropa chempionati, 39 — APL, 140 — La Liga, 135 — Seriya A, 78 — Bundesliga, 61 — Liga 1
   featured_leagues: [2, 3, 848, 1, 4, 39, 140, 135, 78, 61],
+  // 🔥 Ommabop ligalar (avtomatik): oxirgi N kunda eng ko'p foydalanuvchi qiziqqan ligalar
+  // asosiy ligalardan keyin chiqadi. Kamida min_users foydalanuvchi bo'lishi kerak.
+  popular_leagues_enabled: true,
+  popular_leagues_days: 14,
+  popular_leagues_limit: 10,
+  popular_leagues_min_users: 3,
   leaderboard_top: 30,
 };
 

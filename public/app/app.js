@@ -98,7 +98,7 @@
     try { body = await res.json(); } catch (e) { /* */ }
     if (!res.ok) throw new ApiError(res.status, body);
     if (rule) clientCache.set(path, { at: Date.now(), data: body });
-    if (method !== 'GET') clientCache.clear(); // ma'lumot o'zgardi — keshni tozalaymiz
+    if (method !== 'GET' && !opts.keepCache) clientCache.clear(); // ma'lumot o'zgardi — keshni tozalaymiz
     return body;
   }
 
@@ -359,11 +359,12 @@
       for (const m of data.matches) {
         const id = m.competition ? m.competition.id : 0;
         let g = groups[groups.length - 1];
-        if (!g || g.id !== id) { g = { id, featured: !!m.featured, competition: m.competition, area: m.area, matches: [] }; groups.push(g); }
+        if (!g || g.id !== id) { g = { id, featured: !!m.featured, popular: !!m.popular, competition: m.competition, area: m.area, matches: [] }; groups.push(g); }
         g.matches.push(m);
       }
       const featured = groups.filter((g) => g.featured);
-      const others = groups.filter((g) => !g.featured);
+      const popular = groups.filter((g) => g.popular);
+      const others = groups.filter((g) => !g.featured && !g.popular);
       // O'yinlar ko'p bo'lsa — boshqa ligalar yig'ilgan holda (bosilganda ochiladi)
       const collapse = data.matches.length > 20;
       const head = (g) => el('span', { class: 'grow ellipsis', text: [g.featured ? null : g.area && g.area.name, g.competition ? g.competition.name : ''].filter(Boolean).join(' · ') });
@@ -374,8 +375,15 @@
           g.matches.forEach((m) => list.append(matchCard(m, { bell: true })));
         }
       }
+      if (popular.length) {
+        list.append(el('h2', { text: t('popular_leagues') }));
+        for (const g of popular) {
+          list.append(el('div', { class: 'league-head' }, g.competition && g.competition.emblem ? crest(g.competition.emblem) : null, head(g)));
+          g.matches.forEach((m) => list.append(matchCard(m, { bell: true })));
+        }
+      }
       if (others.length) {
-        if (featured.length) list.append(el('h2', { text: t('other_leagues') }));
+        if (featured.length || popular.length) list.append(el('h2', { text: t('other_leagues') }));
         for (const g of others) {
           const body = el('div');
           const open = !collapse || S.expanded.has(g.id);
@@ -388,7 +396,10 @@
           if (collapse) {
             header.addEventListener('click', () => {
               haptic();
-              if (S.expanded.has(g.id)) { S.expanded.delete(g.id); body.replaceChildren(); chev.textContent = '▸'; } else { S.expanded.add(g.id); fill(); chev.textContent = '▾'; }
+              if (S.expanded.has(g.id)) { S.expanded.delete(g.id); body.replaceChildren(); chev.textContent = '▸'; } else {
+                S.expanded.add(g.id); fill(); chev.textContent = '▾';
+                api(`/stats/league/${g.id}`, { method: 'POST', keepCache: true }).catch(() => {}); // qiziqish statistikasi
+              }
             });
           }
           list.append(header, body);
@@ -474,16 +485,22 @@
     try {
       const data = await api('/competitions');
       box.replaceChildren();
-      const compItem = (c) => el('button', { class: 'item', onclick: () => push({ render: (v) => renderCompetition(v, c.id, c.name) }) },
-        c.emblem ? crest(c.emblem) : el('span', { class: 'crest-ph' }), el('span', { class: 'grow ellipsis', text: c.name }), el('span', { class: 'chev', text: '›' }));
+      // withArea — asosiy/ommabop ro'yxatlarda davlat nomi ham ko'rsatiladi (masalan, "Serie A · Brazil")
+      const compItem = (c, withArea) => el('button', { class: 'item', onclick: () => push({ render: (v) => renderCompetition(v, c.id, c.name) }) },
+        c.emblem ? crest(c.emblem) : el('span', { class: 'crest-ph' }),
+        el('span', { class: 'grow ellipsis' }, c.name, withArea && c.area ? el('span', { class: 'muted small', text: ` · ${c.area}` }) : null),
+        el('span', { class: 'chev', text: '›' }));
       if (data.featured && data.featured.length) {
-        box.append(el('h2', { text: t('featured_leagues') }), el('div', null, data.featured.map(compItem)));
+        box.append(el('h2', { text: t('featured_leagues') }), el('div', null, data.featured.map((c) => compItem(c, true))));
+      }
+      if (data.popular && data.popular.length) {
+        box.append(el('h2', { text: t('popular_leagues') }), el('div', null, data.popular.map((c) => compItem(c, true))));
       }
       if (data.international.length) {
-        box.append(el('h2', { text: t('intl') }), el('div', null, data.international.map(compItem)));
+        box.append(el('h2', { text: t('intl') }), el('div', null, data.international.map((c) => compItem(c))));
       }
       box.append(el('h2', { text: t('countries') }), el('div', null, data.countries.map((c) => el('button', {
-        class: 'item', onclick: () => push({ render: (v) => { v.append(backBar(c.name), el('div', null, c.competitions.map(compItem))); } }),
+        class: 'item', onclick: () => push({ render: (v) => { v.append(backBar(c.name), el('div', null, c.competitions.map((x) => compItem(x)))); } }),
       }, c.flag ? crest(c.flag) : el('span', { class: 'crest-ph' }), el('span', { class: 'grow', text: c.name }), el('span', { class: 'small muted', text: c.competitions.length }), el('span', { class: 'chev', text: '›' })))));
     } catch (err) {
       box.replaceChildren(errorBox(err, () => render()));

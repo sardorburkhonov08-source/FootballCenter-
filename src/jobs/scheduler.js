@@ -121,6 +121,7 @@ const JOBS = [
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
   { name: 'api_cache_cleanup', every: 6 * 3600, fn: () => require('../services/football').cleanupCache() },
+  { name: 'popularity_cleanup', every: 24 * 3600, fn: () => require('../services/popularity').cleanup() },
 ];
 
 function start() {

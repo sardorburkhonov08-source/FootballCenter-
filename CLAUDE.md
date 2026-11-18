@@ -45,6 +45,12 @@ test/                   avtomatik testlar
 - **Telegram**: `@grammyjs/auto-retry` (429 da kutib qayta yuboradi), webhook `max_connections: 40`.
 - Foydalanuvchi qatori o'zgarmasa bazaga qayta yozilmaydi (`users.upsertFromTelegram`).
 
+## O'yinlar tartibi
+
+1. **⭐ Asosiy ligalar** — admin belgilaydi (`settings.featured_leagues`, web admin → "⭐ Asosiy ligalar").
+2. **🔥 Ommabop ligalar** — avtomatik (`src/services/popularity.js`): oxirgi N kunda eng ko'p noyob foydalanuvchi qiziqqan ligalar. Bazada faqat `(liga, kun, foydalanuvchilar soni)` saqlanadi, kimligi saqlanmaydi; sozlamalar — `popular_leagues_*`.
+3. Qolganlari — davlat, liga, vaqt bo'yicha; o'yin ko'p bo'lsa Mini App'da yig'ilgan holda.
+
 ## Bosqichlar
 
 Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testlardan o'tgan, lekin haqiqiy Telegram/API bilan hali sinalmagan; ⬜ — boshlanmagan.

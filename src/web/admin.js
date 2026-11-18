@@ -10,6 +10,7 @@ const settings = require('../services/settings');
 const football = require('../services/football');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
+const popularity = require('../services/popularity');
 const users = require('../services/users');
 const { ymd, dayStart } = require('../services/time');
 const { requireAdmin, checkPassword, signSession, SESSION_TTL } = require('./auth');
@@ -149,18 +150,40 @@ router.delete('/manager/games/:id', wrap(async (req, res) => {
 }));
 
 // ---- ⭐ Asosiy ligalar (o'yinlar ro'yxatida eng tepada)
+const POPULAR_KEYS = ['popular_leagues_enabled', 'popular_leagues_days', 'popular_leagues_limit', 'popular_leagues_min_users'];
+
 router.get('/featured-leagues', wrap(async (req, res) => {
   const ids = (await settings.get('featured_leagues')) || [];
+  const s = await settings.getMany(POPULAR_KEYS);
+  const popular = {
+    enabled: !!s.popular_leagues_enabled, days: s.popular_leagues_days, limit: s.popular_leagues_limit, minUsers: s.popular_leagues_min_users,
+    ids: await popularity.popularIds(), stats: await popularity.stats(Number(s.popular_leagues_days), 30),
+  };
   try {
     const data = await football.competitions();
     const all = [...data.international.map((x) => ({ ...x, area: x.area || 'World' })),
       ...data.countries.flatMap((c) => c.competitions.map((x) => ({ ...x, area: c.name })))];
-    res.json({ ids, leagues: all.map((x) => ({ id: x.id, name: x.name, area: x.area, emblem: x.emblem })) });
+    res.json({ ids, popular, leagues: all.map((x) => ({ id: x.id, name: x.name, area: x.area, emblem: x.emblem })) });
   } catch (e) {
-    if (e instanceof football.FootballUnavailable) return res.json({ ids, leagues: [], error: 'football_unavailable' });
+    if (e instanceof football.FootballUnavailable) return res.json({ ids, popular, leagues: [], error: 'football_unavailable' });
     throw e;
   }
   return undefined;
+}));
+
+router.put('/popular-settings', express.json(), wrap(async (req, res) => {
+  const b = req.body || {};
+  const int = (v, lo, hi) => (Number.isInteger(Number(v)) && Number(v) >= lo && Number(v) <= hi ? Number(v) : null);
+  const days = int(b.days, 1, 90);
+  const limit = int(b.limit, 0, 30);
+  const minUsers = int(b.minUsers, 1, 100000);
+  if (typeof b.enabled !== 'boolean' || days === null || limit === null || minUsers === null) return res.status(400).json({ error: 'bad_popular' });
+  await settings.set('popular_leagues_enabled', b.enabled);
+  await settings.set('popular_leagues_days', days);
+  await settings.set('popular_leagues_limit', limit);
+  await settings.set('popular_leagues_min_users', minUsers);
+  popularity.clearCache();
+  return res.json({ enabled: b.enabled, days, limit, minUsers });
 }));
 
 router.put('/featured-leagues', express.json(), wrap(async (req, res) => {
