@@ -214,3 +214,20 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 /* ---------- Qidiruv */
 .search-bar { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; margin-top: 10px; padding: 0 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); text-align: left; font-size: 14px; }
 input[type=search].input { margin-bottom: 4px; }
+
+/* ---------- 🪪 Muxlislik kartasi (tekis ranglar, SPEC 19) */
+.fan-card { position: relative; overflow: hidden; border-radius: 22px; padding: 22px 20px 18px; min-height: 196px; border: 1px solid rgba(255,255,255,.06); }
+.fan-card .fc-stripe { position: absolute; left: 0; right: 0; top: 0; height: 6px; }
+.fc-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; }
+.fc-brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-no { font-variant-numeric: tabular-nums; letter-spacing: .06em; font-size: 16px; }
+.fc-mid { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 16px; }
+.fc-name { font-size: 34px; font-weight: 800; line-height: 1.05; text-transform: uppercase; word-break: break-word; }
+.fc-logo { width: 64px; height: 64px; object-fit: contain; flex: none; }
+.fc-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+.fc-wide { grid-column: 1 / -1; }
+.fc-field span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
+.fc-field b { display: block; font-size: 15px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-badge { position: absolute; right: 16px; bottom: 12px; font-size: 11px; font-weight: 800; letter-spacing: .08em; opacity: .85; }
+.fan-card.premium .fc-fields { padding-right: 70px; }
+.fc-hint { display: block; width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(242,201,76,.1); color: var(--gold); font-size: 13px; font-weight: 600; text-align: left; }

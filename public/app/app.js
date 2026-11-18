@@ -982,8 +982,108 @@
   }
 
   // ================= 👤 PROFIL
+  // ================= 🪪 MUXLISLIK KARTASI
+  function fanCardView(c) {
+    const st = c.style;
+    const field = (label, value) => el('div', { class: 'fc-field' }, el('span', { text: label }), el('b', { text: value || '—' }));
+    return el('div', { class: `fan-card${c.premium ? ' premium' : ''}`, style: `background:${st.bg};color:${st.text}` },
+      el('div', { class: 'fc-stripe', style: `background:${st.accent}` }),
+      el('div', { class: 'fc-top' },
+        el('span', { class: 'fc-brand', text: c.team ? c.team.name : 'FootballCenter' }),
+        el('span', { class: 'fc-no', text: `№ ${String(c.number).padStart(4, '0')}` })),
+      el('div', { class: 'fc-mid' },
+        el('div', { class: 'fc-name', text: c.name }),
+        c.premium && c.team && c.team.logo ? el('img', { class: 'fc-logo', src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : null),
+      el('div', { class: 'fc-fields' },
+        field(t('fc_since'), c.since ? t('fc_since_value', { year: c.since }) : null),
+        field(t('fc_player_short'), c.player),
+        el('div', { class: 'fc-wide' }, field(t('fc_region'), c.region && c.region.name))),
+      c.premium ? el('div', { class: 'fc-badge', text: '💎 PREMIUM' }) : null);
+  }
+
+  async function fanCardSection(container) {
+    container.replaceChildren(el('div', { class: 'skeleton', style: 'height:200px' }));
+    let d;
+    try { d = await api('/fan-card'); } catch (err) { container.replaceChildren(errorBox(err)); return; }
+    const c = d.card;
+    const stat = (value, label) => el('div', { class: 'stat' }, el('b', { text: value ?? '—' }), el('span', { text: label }));
+    const editBox = el('div');
+    const share = el('button', { class: 'btn ghost', text: t('fc_share'), onclick: () => {
+      const text = t('fc_share_text');
+      const url = d.refLink || (S.botUsername ? `https://t.me/${S.botUsername}` : '');
+      const link = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank', 'noopener');
+    } });
+    const story = el('button', { class: 'btn', text: t('fc_story'), onclick: () => {
+      if (!d.imageUrl || !tg || typeof tg.shareToStory !== 'function') { toast(t('fc_story_unsupported')); return; }
+      try {
+        tg.shareToStory(d.imageUrl, { text: `${t('fc_share_text')} ${d.refLink || ''}`.trim().slice(0, 200) });
+      } catch (e) { toast(t('fc_story_unsupported')); }
+    } });
+    container.replaceChildren(...[
+      el('h2', { style: 'margin-top:4px', text: t('fc_title') }),
+      fanCardView(c),
+      !c.premium && c.team ? el('button', { class: 'fc-hint', onclick: premiumModal, text: t('fc_premium_hint') }) : null,
+      el('div', { class: 'stats3', style: 'margin-top:10px' },
+        stat(c.stats.sameTeam, c.team ? t('fc_stat_club', { club: c.team.name }) : t('fc_club')),
+        stat(c.stats.sameRegion, t('fc_stat_region')),
+        stat(c.stats.total, t('fc_stat_total'))),
+      el('div', { class: 'card row between', style: 'margin-top:10px' },
+        el('div', null, el('b', { text: t('fc_profile') }), el('div', { class: 'small muted', text: t('fc_profile_hint') })),
+        el('button', { class: 'btn ghost', style: 'height:36px', text: `${c.filled}/${c.fields} ✏️`, onclick: () => { haptic(); editBox.childElementCount ? editBox.replaceChildren() : editBox.replaceChildren(fanCardForm(c, () => fanCardSection(container))); } })),
+      editBox,
+      el('div', { class: 'grid2', style: 'margin-top:10px' }, share, story),
+    ].filter(Boolean));
+  }
+
+  function fanCardForm(c, onSaved) {
+    let teamId = c.team ? c.team.id : null;
+    const teamLabel = el('div', { class: 'small', style: 'margin-top:6px', text: c.team ? `✅ ${c.team.name}` : '' });
+    const teamInput = el('input', { class: 'input', placeholder: t('fc_club_search'), autocomplete: 'off' });
+    const teamResults = el('div');
+    const player = el('input', { class: 'input', maxlength: '40', placeholder: t('fc_player_ph'), value: c.player || '', list: 'fc-players' });
+    const players = el('datalist', { id: 'fc-players' });
+    const loadSquad = (id) => { if (!id) return; api(`/teams/${id}/squad`).then((r) => players.replaceChildren(...r.players.map((n) => el('option', { value: n })))).catch(() => {}); };
+    loadSquad(teamId);
+    let timer = null;
+    teamInput.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = teamInput.value.trim();
+      if (q.length < 3) { teamResults.replaceChildren(); return; }
+      timer = setTimeout(async () => {
+        try {
+          const r = await api(`/search/teams?q=${encodeURIComponent(q)}`);
+          teamResults.replaceChildren(...r.teams.slice(0, 8).map((tm) => el('button', { class: 'item', type: 'button', onclick: () => {
+            teamId = tm.id; teamLabel.textContent = `✅ ${tm.name}`; teamResults.replaceChildren(); teamInput.value = ''; loadSquad(tm.id); haptic();
+          } }, tm.logo ? crest(tm.logo) : el('span', { class: 'crest-ph' }), el('span', { class: 'grow ellipsis' }, tm.name, tm.country ? el('span', { class: 'muted small', text: ` · ${tm.country}` }) : null))));
+        } catch (err) { teamResults.replaceChildren(errorBox(err)); }
+      }, 600);
+    });
+    const region = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
+      c.regions.map((r) => el('option', { value: r.code, text: r.name, selected: c.region && c.region.code === r.code })));
+    const yearNow = new Date(Date.now() + 5 * 3600e3).getUTCFullYear();
+    const since = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
+      Array.from({ length: yearNow - 1949 }, (_, i) => yearNow - i).map((y) => el('option', { value: y, text: y, selected: c.since === y })));
+    const save = el('button', { class: 'btn block', style: 'margin-top:12px', text: t('save') });
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try {
+        await api('/fan-card', { method: 'PUT', body: { teamId, player: player.value.trim() || null, region: region.value || null, since: since.value ? Number(since.value) : null } });
+        haptic('success'); toast(t('fc_saved')); onSaved();
+      } catch (err) { haptic('error'); toast(t('error_generic')); save.disabled = false; }
+    });
+    return el('div', { class: 'card', style: 'margin-top:8px' },
+      el('label', { class: 'field-label', text: t('fc_club') }), teamInput, teamResults, teamLabel,
+      el('label', { class: 'field-label', text: t('fc_player') }), player, players,
+      el('label', { class: 'field-label', text: t('fc_region') }), region,
+      el('label', { class: 'field-label', text: t('fc_since') }), since, save);
+  }
+
   async function renderProfile(view) {
-    const box = el('div', null, skeleton(4));
+    const cardBox = el('div');
+    view.append(cardBox);
+    fanCardSection(cardBox);
+    const box = el('div', { style: 'margin-top:14px' }, skeleton(4));
     view.append(box);
     let d;
     try { d = await api('/profile'); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
