@@ -339,3 +339,12 @@ test("Mini App'dagi Premium tugmasi: /start premium — Premium sahifasi darhol 
   await h.text(U, '/start');
   assert.ok(!h.buttons().some((b) => b.callback_data === 'tf:buy'), 'oddiy /start — asosiy menyu');
 });
+
+test("Tarif bo'limida 📊 Taqqoslash yo'q (egasi talabi)", async () => {
+  await h.click(U, 'm:tariff');
+  const data = h.buttons().map((b) => b.callback_data);
+  assert.ok(data.includes('tf:premium') && data.includes('tf:free'));
+  assert.ok(!data.includes('tf:compare'));
+  await h.click(OWNER, 'a:tariff');
+  assert.ok(!h.buttons().some((b) => b.callback_data === 'at:tariff_compare'), 'admin panelda ham yo\'q');
+});

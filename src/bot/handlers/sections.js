@@ -91,7 +91,6 @@ function register(bot) {
     await ui.show(ctx, t(lang, 'tariff_title', { tariff: users.isPremium(u) ? t(lang, 'tariff_premium') : t(lang, 'tariff_free') }), ui.kb([
       [ui.btn(t(lang, 'btn_tariff_free'), 'tf:free')],
       [ui.btn(t(lang, 'btn_tariff_premium'), 'tf:premium')],
-      [ui.btn(t(lang, 'btn_tariff_compare'), 'tf:compare')],
       [ui.btn(t(lang, 'back'), 'm:menu')],
     ]));
   });
@@ -115,11 +114,6 @@ function register(bot) {
       return ui.show(ctx, t(ctx.lang, 'premium_no_money'), ui.kb([[ui.btn(t(ctx.lang, 'btn_topup'), 'bal:topup')], [ui.btn(t(ctx.lang, 'back'), 'm:tariff')]]));
     }
     return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
-  });
-
-  bot.callbackQuery('tf:compare', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await ui.show(ctx, await editableText('tariff_compare', ctx.lang, 'tariff_compare_default'), ui.backKb(ctx.lang, 'm:tariff'));
   });
 
   // ---- ⚙️ Sozlamalar

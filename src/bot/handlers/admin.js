@@ -47,7 +47,7 @@ async function renderSection(ctx, name) {
   const rows = sec.keys.map((k) => [ui.btn(BOOL_KEYS.includes(k) ? `🔁 ${t(lang, `a_set_${k}`)}` : `✏️ ${t(lang, `a_set_${k}`)}`, `as:${name}:${k}`)]);
   let extraText = '';
   if (name === 'tariff') {
-    rows.push([ui.btn(t(lang, 'a_btn_edit_compare'), 'at:tariff_compare'), ui.btn(t(lang, 'a_btn_edit_premium_desc'), 'at:premium_description')]);
+    rows.push([ui.btn(t(lang, 'a_btn_edit_premium_desc'), 'at:premium_description')]);
   }
   if (name === 'forcesub') {
     const channels = (await settings.get('force_sub_channels')) || [];
@@ -393,7 +393,7 @@ function register(bot) {
     await state.clear(ctx.from.id);
     await ui.show(ctx, L(ctx, 'a_rules_title'), ui.kb([...RULE_KEYS.map((k) => [ui.btn(L(ctx, `rule_${k}`), `ar:rules:${k}`)]), [ui.btn(L(ctx, 'back'), 'm:admin')]]));
   });
-  admin.callbackQuery(/^at:(tariff_compare|premium_description)$/, async (ctx) => {
+  admin.callbackQuery(/^at:(premium_description)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await ui.show(ctx, L(ctx, 'a_lang_choose'), ui.kb([...ui.grid(LANGS.map((l) => ui.btn(LANG_NAMES[l], `ar:texts:${ctx.match[1]}:${l}`))), [ui.btn(L(ctx, 'back'), 'a:tariff')]]));
   });
@@ -404,7 +404,7 @@ function register(bot) {
   admin.callbackQuery(/^ar:(rules|texts):(\w+?):(uz|uz_cyrl|ru|en)$/, async (ctx) => {
     const [, table, key, lang] = ctx.match;
     if (table === 'rules' && !RULE_KEYS.includes(key)) return ctx.answerCallbackQuery();
-    if (table === 'texts' && !['tariff_compare', 'premium_description'].includes(key)) return ctx.answerCallbackQuery();
+    if (table === 'texts' && !['premium_description'].includes(key)) return ctx.answerCallbackQuery();
     await ctx.answerCallbackQuery();
     const row = await db.one(`SELECT text_${lang} AS v FROM ${table} WHERE key = $1`, [key]);
     await state.set(ctx.from.id, 'admin_text', { table, key, lang });
