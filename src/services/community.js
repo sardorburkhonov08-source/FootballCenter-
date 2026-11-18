@@ -5,6 +5,9 @@
 // - Egasi: e'lon yozadi, a'zoni chiqaradi, nom/tavsifni tahrirlaydi. Admin community'ni yopadi.
 // - Haftalik fan reytingi: a'zolarning hafta davomida to'plagan points yig'indisi (Mini Manager + Quiz + Hisobni top).
 //   Hafta tugagach g'olib yoziladi (wins + 1) va hamma foydalanuvchiga xabar ketadi.
+// - Daraja (1—7): XP = a'zolar community'da to'plagan jami points (tugagan haftalar + joriy hafta), chegaralar — settings.community_level_xp.
+// - ⚔️ Haftalik derbi: hafta boshida o'tgan hafta reytingidagi qo'shnilar juftlanadi (1–2, 3–4, ...); hafta oxirida
+//   ko'proq points to'plagan g'olib — keyingi derbi natijasigacha 👑 toj bilan ko'rsatiladi.
 const db = require('../db/pool');
 const settings = require('./settings');
 const users = require('./users');
@@ -99,12 +102,106 @@ async function colorsOf(c) {
   return { primary: pal.band, secondary: pal.stripe, text: pal.bandText, accent: pal.accent, bg: pal.bg };
 }
 
-async function publicCommunity(c, champion) {
+// ---------- Daraja va derbi
+const LEVEL_MAX = 7;
+async function levelThresholds() {
+  const v = await settings.get('community_level_xp');
+  return (Array.isArray(v) ? v : []).map(Number).filter((n) => Number.isFinite(n) && n > 0).slice(0, LEVEL_MAX - 1);
+}
+/** xp → { level, xp, from, next } (next — keyingi darajagacha kerakli jami XP; oxirgi darajada null) */
+function levelOf(xp, th) {
+  let level = 1;
+  th.forEach((x, i) => { if (xp >= x) level = i + 2; });
+  return { level, xp, from: level > 1 ? th[level - 2] : 0, next: th[level - 1] ?? null };
+}
+
+/** Oxirgi hisoblangan derbi haftasining g'oliblari — 👑 */
+async function crownIds() {
+  const rows = await db.many(
+    `SELECT winner_id FROM community_derbies WHERE winner_id IS NOT NULL
+       AND period_start = (SELECT max(period_start) FROM community_derbies WHERE status = 'finished')`,
+  );
+  return new Set(rows.map((r) => r.winner_id));
+}
+
+/** Kontekst: daraja chegaralari va tojlar (bir marta olinadi) */
+async function viewContext() {
+  const [th, crowns] = await Promise.all([levelThresholds(), crownIds()]);
+  return { th, crowns };
+}
+
+async function publicCommunity(c, champion, ctx) {
+  const x = ctx || await viewContext();
   return {
     id: c.id, name: c.name, description: c.description || '', team: { id: c.team_id, name: c.team_name, logo: c.team_logo },
     members: c.members, points: c.points, place: c.place, wins: c.wins,
     champion: !!(champion && champion.community_id === c.id), colors: await colorsOf(c),
+    level: levelOf(Number(c.xp || 0) + Number(c.points || 0), x.th), crown: x.crowns.has(c.id),
   };
+}
+
+/** Joriy haftadagi derbi (raqib va jonli hisob) */
+async function currentDerby(communityId, list) {
+  const r = weekRange();
+  const d = await db.one(
+    'SELECT * FROM community_derbies WHERE period_start = $1 AND (home_id = $2 OR away_id = $2)', [r.start, communityId],
+  );
+  if (!d) return null;
+  const oppId = d.home_id === communityId ? d.away_id : d.home_id;
+  const me = list.find((x) => x.id === communityId);
+  const opp = list.find((x) => x.id === oppId) || await db.one('SELECT * FROM communities WHERE id = $1', [oppId]);
+  if (!opp) return null;
+  return {
+    end: d.period_end,
+    my: me ? me.points : 0,
+    their: opp.points || 0,
+    opponent: { id: opp.id, name: opp.name, team: { name: opp.team_name, logo: opp.team_logo }, active: opp.status === 'active' },
+  };
+}
+
+/** Hafta boshida derbi juftliklarini tuzish (bir marta). → tuzilgan juftlar soni */
+async function ensureDerbies(now = new Date()) {
+  const r = weekRange(now);
+  const mark = await db.one(
+    'INSERT INTO community_derby_weeks (period_start, period_end) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *', [r.start, r.end],
+  );
+  if (!mark) return 0;
+  // O'tgan hafta reytingi tartibida qo'shnilar juftlanadi (toq qolgani bu hafta derbisiz)
+  const list = await standings(prevRange('weekly', now), { fresh: true });
+  let n = 0;
+  for (let i = 0; i + 1 < list.length; i += 2) {
+    await db.query('INSERT INTO community_derbies (period_start, period_end, home_id, away_id) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING',
+      [r.start, r.end, list[i].id, list[i + 1].id]);
+    n += 1;
+  }
+  return n;
+}
+
+/** Tugagan haftalar derbilarini hisoblash: ko'proq points — g'olib, teng — durang. → hisoblanganlar soni */
+async function resolveDerbies(now = new Date(), graceMs = 0) {
+  const due = await db.many("SELECT * FROM community_derbies WHERE status = 'active' AND period_end <= $1 ORDER BY period_start",
+    [new Date(now.getTime() - graceMs)]);
+  const cache = new Map();
+  for (const d of due) {
+    const key = new Date(d.period_start).getTime();
+    if (!cache.has(key)) cache.set(key, await weekPoints({ start: d.period_start, end: d.period_end }, true));
+    const pts = cache.get(key);
+    const members = await db.many('SELECT user_id, community_id FROM community_members WHERE community_id = ANY($1::int[])', [[d.home_id, d.away_id]]);
+    const sum = (id) => members.filter((m) => m.community_id === id).reduce((s, m) => s + (pts.get(m.user_id) || 0), 0);
+    const [hp, ap] = [sum(d.home_id), sum(d.away_id)];
+    const winner = hp > ap ? d.home_id : ap > hp ? d.away_id : null;
+    await db.query("UPDATE community_derbies SET home_points = $2, away_points = $3, winner_id = $4, status = 'finished' WHERE id = $1 AND status = 'active'",
+      [d.id, hp, ap, winner]);
+  }
+  return due.length;
+}
+
+/** Tugagan hafta points'ini community XP'siga qo'shish (bir marta) */
+async function addWeekXp(r, list) {
+  const mark = await db.one('INSERT INTO community_xp_weeks (period_start) VALUES ($1) ON CONFLICT DO NOTHING RETURNING *', [r.start]);
+  if (!mark) return false;
+  for (const c of list) if (c.points > 0) await db.query('UPDATE communities SET xp = xp + $2 WHERE id = $1', [c.id, c.points]);
+  return true;
 }
 
 /** Mini App: Community bo'limi */
@@ -116,7 +213,8 @@ async function overview(user) {
     standings(range), lastChampion(), membership(u.id),
     db.one("SELECT * FROM communities WHERE owner_user_id = $1 AND status = 'pending'", [u.id]),
   ]);
-  const out = await Promise.all(list.map((c) => publicCommunity(c, champion)));
+  const ctx = await viewContext();
+  const out = await Promise.all(list.map((c) => publicCommunity(c, champion, ctx)));
   return {
     premium: users.isPremium(u),
     card: card ? { teamId: card.team_id, teamName: card.team_name } : null,
@@ -170,6 +268,7 @@ async function detail(user, id) {
     .slice(0, 100);
   return {
     ...(await publicCommunity(ranked, champion)),
+    derby: await currentDerby(c.id, list),
     owner: { id: c.owner_user_id, name: users.displayName(owner) },
     isOwner: c.owner_user_id === user.id,
     isMember: !!(mine && mine.id === c.id),
@@ -416,6 +515,8 @@ async function finalizeWeek(now = new Date(), graceMs = 0) {
   const r = prevRange('weekly', now);
   if (now.getTime() < r.end.getTime() + graceMs) return null;
   const list = await standings(r, { fresh: true });
+  // XP: haftalik points community darajasiga qo'shiladi (g'olib bo'lmasa ham)
+  await addWeekXp(r, list);
   const top = list[0] && list[0].points > 0 ? list[0] : null;
   const ins = await db.one(
     `INSERT INTO community_weekly_winners (period_start, period_end, community_id, points) VALUES ($1,$2,$3,$4)
@@ -434,4 +535,5 @@ module.exports = {
   CommunityError, NAME_MAX, DESC_MAX, POST_MAX, REACTIONS, react, priceFor, overview, detail, stats, standings, weekPoints, requestCreate, join, leave,
   updateInfo, kick, addPost, deletePost, assertCanChangeClub, onClubChanged, list, approve, reject, close, finalizeWeek, lastChampion,
   notifyAdmins, approveAndNotify, rejectAndNotify, closeAndNotify, announceWinner,
+  levelOf, levelThresholds, crownIds, ensureDerbies, resolveDerbies, currentDerby,
 };

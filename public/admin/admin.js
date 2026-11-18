@@ -88,6 +88,19 @@
     try { await ({ banners, featured, games, score, prizes, quiz, tactics, fancards, communities, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
   }
 
+  // 👥 Community darajalari: 2—7-darajalar uchun kerakli XP (a'zolar to'plagan jami points)
+  function levelsCard(levels) {
+    const input = el('input', { class: 'input', value: (levels || []).join(', ') });
+    const save = el('button', { class: 'btn', text: '💾 Saqlash' });
+    save.addEventListener('click', async () => {
+      const list = input.value.split(/[,\s]+/).filter(Boolean).map(Number);
+      try { await api('/community-settings', { method: 'PUT', body: { levels: list } }); toast('✅ Saqlandi'); } catch (e) { fail(e); }
+    });
+    return el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '📈 Darajalar' }),
+      el('p', { class: 'small muted', text: '1-daraja — 0 XP. Bu yerda 2, 3, ... 7-darajalar uchun kerakli XP (o\'sib boruvchi, vergul bilan). XP — a\'zolarning community\'da to\'plagan jami points\'i.' }),
+      el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'XP chegaralari' }), input), save));
+  }
+
   // 👥 Fan community'lar — so'rovlar (tasdiqlash: pul shu paytda egasining balansidan yechiladi), faollarini yopish, narx
   async function communities(v) {
     const d = await api('/communities');
@@ -122,7 +135,7 @@
           el('b', { text: `${c.name} · ${c.team}` }), el('span', { class: 'small', text: STATUS[c.status] || c.status })),
         c.description ? el('p', { class: 'small', style: 'margin:6px 0', text: c.description }) : null,
         el('div', { class: 'small muted', text: [`Egasi: ${c.owner.name}${c.owner.username ? ` (@${c.owner.username})` : ''}`, `ID ${c.owner.telegramId}`,
-          `balans ${money(c.owner.balance)} so'm`, `a'zolar ${c.members}`, c.wins ? `🏆 ${c.wins}` : null, c.price ? `narx ${money(c.price)} so'm` : 'bepul',
+          `balans ${money(c.owner.balance)} so'm`, `a'zolar ${c.members}`, c.wins ? `🏆 ${c.wins}` : null, `XP ${money(c.xp)}`, c.price ? `narx ${money(c.price)} so'm` : 'bepul',
           `so'rov ${fmt(c.createdAt)}`, c.rejectReason ? `sabab: ${c.rejectReason}` : null].filter(Boolean).join(' · ') }),
         actions.length ? el('div', { class: 'row', style: 'margin-top:8px' }, actions) : null);
     };
@@ -132,6 +145,7 @@
       el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⚙️ Narx' }),
         el('p', { class: 'small muted', text: 'Klubning birinchi fan community\'si bepul. Shu klub uchun keyingilari — shu narxda, admin tasdiqlaganda egasining balansidan yechiladi.' }),
         el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Keyingi community narxi (so\'m)' }), price), savePrice)),
+      levelsCard(d.levels),
       el('h2', { text: `⏳ So'rovlar (${pending.length})` }),
       pending.length ? el('div', { class: 'list' }, pending.map(item)) : el('div', { class: 'card center muted', text: '📭 Yangi so\'rov yo\'q' }),
       el('h2', { text: `Barcha community'lar (${rest.length})` }),

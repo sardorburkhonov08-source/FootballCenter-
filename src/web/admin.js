@@ -329,8 +329,9 @@ router.get('/communities', wrap(async (req, res) => {
   const rows = await community.list(status);
   res.json({
     price: Number(await settings.get('community_extra_price')),
+    levels: await community.levelThresholds(),
     communities: rows.map((c) => ({
-      id: c.id, status: c.status, name: c.name, description: c.description, team: c.team_name, members: c.members, wins: c.wins,
+      id: c.id, status: c.status, name: c.name, description: c.description, team: c.team_name, members: c.members, wins: c.wins, xp: Number(c.xp || 0),
       price: Number(c.price), owner: { name: users.displayName(c), username: c.username, telegramId: c.owner_tg, balance: Number(c.owner_balance) },
       createdAt: c.created_at, rejectReason: c.reject_reason,
     })),
@@ -349,10 +350,20 @@ router.post('/communities/:id/close', wrap(async (req, res) => {
   return res.json({ ok: true });
 }));
 router.put('/community-settings', express.json(), wrap(async (req, res) => {
-  const price = Number(req.body && req.body.price);
-  if (!Number.isInteger(price) || price < 0) return res.status(400).json({ error: 'bad_price' });
-  await settings.set('community_extra_price', price);
-  return res.json({ price });
+  const b = req.body || {};
+  if ('levels' in b) {
+    // 2—7-darajalar uchun XP chegaralari: musbat, o'sib boruvchi, 6 tagacha
+    const levels = Array.isArray(b.levels) ? b.levels.map(Number) : [];
+    const ok = levels.length >= 1 && levels.length <= 6 && levels.every((n, i) => Number.isInteger(n) && n > 0 && (i === 0 || n > levels[i - 1]));
+    if (!ok) return res.status(400).json({ error: 'bad_levels' });
+    await settings.set('community_level_xp', levels);
+  }
+  if ('price' in b) {
+    const price = Number(b.price);
+    if (!Number.isInteger(price) || price < 0) return res.status(400).json({ error: 'bad_price' });
+    await settings.set('community_extra_price', price);
+  }
+  return res.json({ price: Number(await settings.get('community_extra_price')), levels: await community.levelThresholds() });
 }));
 
 router.get('/tactics', wrap(async (req, res) => res.json(await settings.get('tactics'))));

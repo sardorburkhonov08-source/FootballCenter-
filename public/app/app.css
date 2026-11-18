@@ -270,3 +270,11 @@ input[type=search].input { margin-bottom: 4px; }
 .ach-name { display: block; font-size: 12px; margin-top: 4px; line-height: 1.25; }
 .ach-desc { font-size: 10.5px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
 .share-prev { display: block; width: 46%; margin: 0 auto; aspect-ratio: 9 / 16; border-radius: 14px; background: var(--surface2); object-fit: cover; }
+.cm-progress { height: 10px; border-radius: 6px; background: var(--surface2); overflow: hidden; margin: 12px 0 6px; }
+.cm-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 6px; }
+.cm-derby { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.cm-dside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 10px 6px; border-radius: 12px; background: var(--surface2); }
+.cm-dside.me { outline: 2px solid var(--accent); }
+.cm-dside b { max-width: 100%; font-size: 13px; }
+.cm-dpts { font-size: 24px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+.cm-vs { font-weight: 800; color: var(--muted); flex: none; }
