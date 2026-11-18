@@ -44,10 +44,22 @@
     const res = await fetch(`/api/admin${path}`, { method: opts.method || 'GET', headers, body, credentials: 'same-origin' });
     let data = null;
     try { data = await res.json(); } catch (e) { /* */ }
-    if (!res.ok) { const err = new Error((data && data.error) || `HTTP ${res.status}`); err.status = res.status; throw err; }
+    if (!res.ok) { const err = new Error((data && data.error) || `HTTP ${res.status}`); err.status = res.status; err.reason = data && data.reason; throw err; }
     return data;
   }
-  function fail(e) { toast(ERRORS[e.message] || `⚠️ Xatolik: ${e.message}`); }
+  // Football API rad etish sabablari (src/services/football.js → FootballUnavailable.reason)
+  const FOOTBALL_REASONS = {
+    plan: 'API-Football tarifingizda bu sana/ma\'lumot yo\'q (bepul tarif sanalarni cheklaydi)',
+    limit: 'bugungi so\'rovlar limiti tugagan — ertaga yangilanadi',
+    busy: 'daqiqalik so\'rov limiti — 1 daqiqadan keyin qayta urinib ko\'ring',
+    token: 'FOOTBALL_API_KEY noto\'g\'ri yoki akkaunt bloklangan',
+    not_found: 'ma\'lumot topilmadi',
+    unavailable: 'API javob bermadi',
+  };
+  function fail(e) {
+    if (e.message === 'football_unavailable' && FOOTBALL_REASONS[e.reason]) { toast(`⚠️ Football API: ${FOOTBALL_REASONS[e.reason]}`); return; }
+    toast(ERRORS[e.message] || `⚠️ Xatolik: ${e.message}`);
+  }
 
   function mediaThumb(url, type) {
     if (!url) return el('div', { class: 'thumb' }, '🏆');
@@ -283,7 +295,9 @@
       results.replaceChildren(el('div', { class: 'skeleton' }));
       try {
         const d = await api(`/manager/matches?from=${from.value}&to=${to.value}`);
-        results.replaceChildren(...(d.matches.length ? d.matches.map((m) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
+        const skippedNote = d.skipped && d.skipped.length ? el('div', { class: 'card small', style: 'border-color:var(--gold)' },
+          `⚠️ Bu kunlar olinmadi: ${d.skipped.map((x) => `${x.date.slice(8, 10)}.${x.date.slice(5, 7)} — ${FOOTBALL_REASONS[x.reason] || x.reason}`).join('; ')}`) : null;
+        results.replaceChildren(...(skippedNote ? [skippedNote] : []), ...(d.matches.length ? d.matches.map((m) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
           el('div', { class: 'grow', style: 'min-width:200px' }, el('b', { text: `${m.home.fullName} — ${m.away.fullName}` }),
             el('div', { class: 'small muted', text: `${m.competition ? m.competition.name : ''} · ${fmt(m.utcDate)}` })),
           assignedIds.has(m.id) ? el('span', { class: 'badge live', text: '✅ Belgilangan' })

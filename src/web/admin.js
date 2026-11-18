@@ -115,8 +115,8 @@ router.get('/manager/matches', wrap(async (req, res) => {
   const toDefault = new Date(Date.parse(`${from}T00:00:00Z`) + 7 * 86400000).toISOString().slice(0, 10);
   const to = /^\d{4}-\d{2}-\d{2}$/.test(req.query.to || '') ? req.query.to : toDefault;
   try {
-    const list = await football.matchesRange(from, to);
-    res.json({ from, to, matches: list.filter((m) => m.state === 'scheduled') });
+    const r = await football.matchesRange(from, to);
+    res.json({ from, to, matches: r.matches.filter((m) => m.state === 'scheduled'), skipped: r.skipped });
   } catch (e) {
     if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
     throw e;

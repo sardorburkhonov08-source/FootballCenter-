@@ -1092,11 +1092,11 @@
 
     if (!d.premium) {
       put(container, heading,
-        el('button', { class: 'idc-locked', type: 'button', onclick: premiumModal },
+        el('button', { class: 'idc-locked', type: 'button', onclick: () => { haptic(); openBot(); } },
           el('img', { src: d.sampleUrl, alt: '' }), el('span', { class: 'idc-lock', text: '🔒' })),
         el('p', { class: 'small muted', style: 'margin:10px 2px', text: t('fc_locked_text') }),
         d.activated ? el('p', { class: 'small', style: 'margin:0 2px 10px', text: t('fc_locked_saved') }) : null,
-        el('button', { class: 'btn block gold-btn', text: t('fc_locked_btn'), onclick: premiumModal }));
+        el('button', { class: 'btn block gold-btn', text: t('fc_locked_btn'), onclick: () => { haptic(); openBot(); } }));
       return;
     }
 
