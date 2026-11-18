@@ -332,3 +332,10 @@ test("profil: Mini Manager va Quiz ballari bitta umumiy ⭐ Points qatorida", as
   assert.match(text, /⭐ Points: 127\n/);
   assert.strictEqual((text.match(/⭐/g) || []).length, 1, 'faqat bitta ⭐ qatori');
 });
+
+test("Mini App'dagi Premium tugmasi: /start premium — Premium sahifasi darhol ochiladi", async () => {
+  await h.text(U, '/start premium');
+  assert.ok(h.buttons().some((b) => b.callback_data === 'tf:buy'), 'sotib olish tugmasi');
+  await h.text(U, '/start');
+  assert.ok(!h.buttons().some((b) => b.callback_data === 'tf:buy'), 'oddiy /start — asosiy menyu');
+});

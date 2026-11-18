@@ -105,13 +105,7 @@ function register(bot) {
 
   bot.callbackQuery('tf:premium', async (ctx) => {
     await ctx.answerCallbackQuery();
-    const lang = ctx.lang;
-    const s = await settings.getMany(['premium_price', 'premium_days']);
-    const description = await editableText('premium_description', lang, 'premium_description_default');
-    await ui.show(ctx, t(lang, 'premium_info', { days: s.premium_days, price: money(s.premium_price), description: raw(description) }), ui.kb([
-      [ui.btn(t(lang, 'btn_activate'), 'tf:buy')],
-      [ui.btn(t(lang, 'back'), 'm:tariff')],
-    ]));
+    await showPremiumInfo(ctx);
   });
 
   bot.callbackQuery('tf:buy', async (ctx) => {
@@ -241,4 +235,15 @@ const states = {
   },
 };
 
-module.exports = { register, states, RULE_KEYS, tariffLabel };
+/** 💎 Premium haqida va sotib olish tugmasi (Mini App'dan ?start=premium havolasi ham shu sahifani ochadi) */
+async function showPremiumInfo(ctx) {
+  const lang = ctx.lang;
+  const s = await settings.getMany(['premium_price', 'premium_days']);
+  const description = await editableText('premium_description', lang, 'premium_description_default');
+  await ui.show(ctx, t(lang, 'premium_info', { days: s.premium_days, price: money(s.premium_price), description: raw(description) }), ui.kb([
+    [ui.btn(t(lang, 'btn_activate'), 'tf:buy')],
+    [ui.btn(t(lang, 'back'), 'm:tariff')],
+  ]));
+}
+
+module.exports = { register, states, RULE_KEYS, tariffLabel, showPremiumInfo };
