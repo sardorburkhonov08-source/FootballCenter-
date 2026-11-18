@@ -8,6 +8,7 @@ const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
 const referral = require('../services/referral');
+const popularity = require('../services/popularity');
 const { ymd } = require('../services/time');
 const { requireTelegramUser } = require('./auth');
 const config = require('../config');
@@ -65,30 +66,47 @@ router.get('/prizes', wrap(async (req, res) => {
 
 // ---------- 🏠 Home
 /**
- * O'yinlar tartibi: avval asosiy ligalar (admin belgilagan tartibda), so'ng qolganlari —
- * davlat, liga nomi va vaqt bo'yicha.
+ * O'yinlar tartibi: 1) admin belgilagan asosiy ligalar (shu tartibda); 2) avtomatik ommabop ligalar
+ * (foydalanuvchilar qiziqishi bo'yicha); 3) qolganlari — davlat, liga nomi va vaqt bo'yicha.
  */
-function orderMatches(list, featuredIds) {
+function orderMatches(list, featuredIds, popularIds = []) {
   const rank = new Map(featuredIds.map((id, i) => [Number(id), i]));
+  popularIds.forEach((id, i) => { if (!rank.has(Number(id))) rank.set(Number(id), 1000 + i); });
   const r = (m) => (m.competition && rank.has(m.competition.id) ? rank.get(m.competition.id) : Infinity);
   const text = (v) => (v || '').toString();
   return list
-    .map((m) => ({ ...m, featured: r(m) !== Infinity }))
+    .map((m) => { const x = r(m); return { ...m, featured: x < 1000, popular: x >= 1000 && x !== Infinity }; })
     .sort((a, b) => (r(a) - r(b))
-      || (a.featured ? 0 : text(a.area && a.area.name).localeCompare(text(b.area && b.area.name)))
+      || (r(a) !== Infinity ? 0 : text(a.area && a.area.name).localeCompare(text(b.area && b.area.name)))
       || text(a.competition && a.competition.name).localeCompare(text(b.competition && b.competition.name))
       || a.utcDate.localeCompare(b.utcDate));
 }
 
+/** Liga qiziqishini yozish — foydalanuvchi javobini kechiktirmaydi, xato bo'lsa e'tiborsiz */
+function track(req, leagueId) {
+  popularity.record(req.user.id, leagueId).catch((e) => console.warn('[popularity]', e.message));
+}
+
 router.get('/matches', footballRoute(async (req) => {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '') ? req.query.date : ymd();
-  const list = orderMatches(await football.matchesByDate(date), (await settings.get('featured_leagues')) || []);
+  const featured = (await settings.get('featured_leagues')) || [];
+  const list = orderMatches(await football.matchesByDate(date), featured, await popularity.popularIds());
   const subs = await db.many('SELECT api_match_id FROM match_subscriptions WHERE user_id = $1', [req.user.id]);
   const subSet = new Set(subs.map((s) => Number(s.api_match_id)));
   return { date, matches: list.map((m) => ({ ...m, subscribed: subSet.has(m.id) })) };
 }));
 
-router.get('/matches/:id', requirePremium, footballRoute(async (req) => football.matchDetail(req.params.id)));
+// Mini App'da liga guruhi ochilganda (qiziqish statistikasi uchun)
+router.post('/stats/league/:id', wrap(async (req, res) => {
+  track(req, req.params.id);
+  res.json({ ok: true });
+}));
+
+router.get('/matches/:id', requirePremium, footballRoute(async (req) => {
+  const d = await football.matchDetail(req.params.id);
+  if (d.competition) track(req, d.competition.id);
+  return d;
+}));
 
 // ⚽ O'yin boshlanishidan 15 daqiqa oldin eslatma (Premium)
 router.post('/matches/:id/subscribe', requirePremium, footballRoute(async (req) => {
@@ -100,6 +118,7 @@ router.post('/matches/:id/subscribe', requirePremium, footballRoute(async (req) 
   }
   const m = football.normMatch(await football.rawMatch(id));
   if (m.state !== 'scheduled') return { subscribed: false, error: 'not_scheduled' };
+  if (m.competition) track(req, m.competition.id);
   await db.query(
     'INSERT INTO match_subscriptions (user_id, api_match_id, kickoff_at, title) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
     [req.user.id, id, m.utcDate, `${m.home.name} — ${m.away.name}`],
@@ -111,8 +130,10 @@ router.get('/competitions', footballRoute(async () => {
   const data = await football.competitions();
   const all = [...data.international, ...data.countries.flatMap((c) => c.competitions.map((x) => ({ ...x, area: c.name })))];
   const byId = new Map(all.map((x) => [x.id, x]));
-  const featured = ((await settings.get('featured_leagues')) || []).map((id) => byId.get(Number(id))).filter(Boolean);
-  return { featured, ...data };
+  const featuredIds = ((await settings.get('featured_leagues')) || []).map(Number);
+  const featured = featuredIds.map((id) => byId.get(id)).filter(Boolean);
+  const popular = (await popularity.popularIds()).filter((id) => !featuredIds.includes(id)).map((id) => byId.get(id)).filter(Boolean);
+  return { featured, popular, ...data };
 }));
 
 const COMP_TABS = ['standings', 'results', 'calendar', 'scorers', 'assists'];
@@ -124,6 +145,7 @@ router.get('/competitions/:id/:tab', (req, res, next) => {
   return next();
 }, footballRoute(async (req) => {
   const { id, tab } = req.params;
+  track(req, id);
   if (tab === 'standings') return { standings: await football.standings(id) };
   if (tab === 'results') return { matches: await football.competitionMatches(id, 'results') };
   if (tab === 'calendar') return { matches: await football.competitionMatches(id, 'calendar') };

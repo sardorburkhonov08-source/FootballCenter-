@@ -28,7 +28,7 @@
     bad_media: '⚠️ Fayl turi qo\'llab-quvvatlanmaydi (JPG, PNG, WEBP, GIF, MP4, WEBM, Lottie JSON)',
     bad_link: '⚠️ Havola https:// bilan boshlanishi kerak', file_too_large: '⚠️ Fayl juda katta (maks. 50 MB)',
     football_unavailable: '⚠️ Football API mavjud emas (FOOTBALL_API_KEY ni tekshiring)', match_not_scheduled: '⚠️ Bu o\'yin allaqachon boshlangan',
-    bad_prize: '⚠️ Turi, davri va matnini to\'ldiring', bad_question: '⚠️ Barcha maydonlarni to\'ldiring', bad_tactics: '⚠️ Taktika formati: 4-4-2 (jami 10 ta futbolchi)', bad_leagues: '⚠️ Ro\'yxat noto\'g\'ri (ko\'pi bilan 50 ta liga)',
+    bad_prize: '⚠️ Turi, davri va matnini to\'ldiring', bad_question: '⚠️ Barcha maydonlarni to\'ldiring', bad_tactics: '⚠️ Taktika formati: 4-4-2 (jami 10 ta futbolchi)', bad_leagues: '⚠️ Ro\'yxat noto\'g\'ri (ko\'pi bilan 50 ta liga)', bad_popular: '⚠️ Qiymatlar noto\'g\'ri: kun 1–90, liga 0–30, foydalanuvchi ≥ 1',
     already_finished: '⚠️ Tugagan o\'yinni o\'chirib bo\'lmaydi', quiz_api_unavailable: '⚠️ Quiz API mavjud emas', bad_credentials: '❌ Login yoki parol noto\'g\'ri',
     too_many_attempts: '⏳ Juda ko\'p urinish. 15 daqiqadan keyin qayta urinib ko\'ring',
   };
@@ -150,6 +150,42 @@
       title, listBox,
       el('div', { style: 'margin-top:10px' }, save),
       el('h2', { text: '➕ Liga qo\'shish' }), search, results,
+      popularSection(d, label),
+    );
+  }
+
+  // 🔥 Avtomatik ommabop ligalar: sozlamalar va statistika
+  function popularSection(d, label) {
+    const p = d.popular;
+    const enabled = el('input', { type: 'checkbox', checked: p.enabled });
+    const num = (v, min, max) => el('input', { class: 'input', type: 'number', min: String(min), max: String(max), value: v });
+    const days = num(p.days, 1, 90);
+    const limit = num(p.limit, 0, 30);
+    const minUsers = num(p.minUsers, 1, 100000);
+    const save = el('button', { class: 'btn', text: '💾 Saqlash', onclick: async () => {
+      try {
+        await api('/popular-settings', { method: 'PUT', body: { enabled: enabled.checked, days: Number(days.value), limit: Number(limit.value), minUsers: Number(minUsers.value) } });
+        toast('✅ Saqlandi'); show();
+      } catch (e) { fail(e); }
+    } });
+    const auto = new Set(p.ids);
+    return el('div', null,
+      el('h2', { text: '🔥 Ommabop ligalar (avtomatik)' }),
+      el('div', { class: 'card' },
+        el('p', { class: 'small muted', text: 'Foydalanuvchilar eng ko\'p qiziqqan ligalar asosiy ligalardan keyin avtomatik chiqadi. Qiziqish: liga guruhini ochish, jadval/musobaqani ko\'rish, o\'yin tafsiloti, 🔔 eslatma. Bir foydalanuvchi bir ligani kuniga bir marta hisoblanadi; kimligi saqlanmaydi.' }),
+        el('label', { class: 'row', style: 'margin:8px 0' }, enabled, el('span', { text: 'Avtomatik ommabop ligalar yoqilgan' })),
+        el('div', { class: 'form-grid' },
+          el('div', null, el('label', { class: 'field-label', text: 'Oxirgi necha kun' }), days),
+          el('div', null, el('label', { class: 'field-label', text: 'Ko\'pi bilan nechta liga' }), limit),
+          el('div', null, el('label', { class: 'field-label', text: 'Kamida nechta foydalanuvchi' }), minUsers),
+          save)),
+      el('h3', { text: `Statistika — oxirgi ${p.days} kun` }),
+      el('div', { class: 'card' }, p.stats.length ? p.stats.map((r, i) => el('div', { class: 'lb-row' },
+        el('span', { class: 'pl', text: i + 1 }),
+        el('span', { class: 'grow ellipsis', text: label(r.league_id) }),
+        auto.has(r.league_id) ? el('span', { class: 'badge live', text: '🔥 ro\'yxatda' }) : null,
+        el('span', { class: 'pts', text: r.users })))
+        : el('div', { class: 'muted center', text: '📭 Hali statistika yo\'q' })),
     );
   }
 
