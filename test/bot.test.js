@@ -332,3 +332,19 @@ test("profil: Mini Manager va Quiz ballari bitta umumiy ⭐ Points qatorida", as
   assert.match(text, /⭐ Points: 127\n/);
   assert.strictEqual((text.match(/⭐/g) || []).length, 1, 'faqat bitta ⭐ qatori');
 });
+
+test("Mini App'dagi Premium tugmasi: /start premium — Premium sahifasi darhol ochiladi", async () => {
+  await h.text(U, '/start premium');
+  assert.ok(h.buttons().some((b) => b.callback_data === 'tf:buy'), 'sotib olish tugmasi');
+  await h.text(U, '/start');
+  assert.ok(!h.buttons().some((b) => b.callback_data === 'tf:buy'), 'oddiy /start — asosiy menyu');
+});
+
+test("Tarif bo'limida 📊 Taqqoslash yo'q (egasi talabi)", async () => {
+  await h.click(U, 'm:tariff');
+  const data = h.buttons().map((b) => b.callback_data);
+  assert.ok(data.includes('tf:premium') && data.includes('tf:free'));
+  assert.ok(!data.includes('tf:compare'));
+  await h.click(OWNER, 'a:tariff');
+  assert.ok(!h.buttons().some((b) => b.callback_data === 'at:tariff_compare'), 'admin panelda ham yo\'q');
+});

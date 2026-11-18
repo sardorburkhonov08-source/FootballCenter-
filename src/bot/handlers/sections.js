@@ -91,7 +91,6 @@ function register(bot) {
     await ui.show(ctx, t(lang, 'tariff_title', { tariff: users.isPremium(u) ? t(lang, 'tariff_premium') : t(lang, 'tariff_free') }), ui.kb([
       [ui.btn(t(lang, 'btn_tariff_free'), 'tf:free')],
       [ui.btn(t(lang, 'btn_tariff_premium'), 'tf:premium')],
-      [ui.btn(t(lang, 'btn_tariff_compare'), 'tf:compare')],
       [ui.btn(t(lang, 'back'), 'm:menu')],
     ]));
   });
@@ -105,13 +104,7 @@ function register(bot) {
 
   bot.callbackQuery('tf:premium', async (ctx) => {
     await ctx.answerCallbackQuery();
-    const lang = ctx.lang;
-    const s = await settings.getMany(['premium_price', 'premium_days']);
-    const description = await editableText('premium_description', lang, 'premium_description_default');
-    await ui.show(ctx, t(lang, 'premium_info', { days: s.premium_days, price: money(s.premium_price), description: raw(description) }), ui.kb([
-      [ui.btn(t(lang, 'btn_activate'), 'tf:buy')],
-      [ui.btn(t(lang, 'back'), 'm:tariff')],
-    ]));
+    await showPremiumInfo(ctx);
   });
 
   bot.callbackQuery('tf:buy', async (ctx) => {
@@ -121,11 +114,6 @@ function register(bot) {
       return ui.show(ctx, t(ctx.lang, 'premium_no_money'), ui.kb([[ui.btn(t(ctx.lang, 'btn_topup'), 'bal:topup')], [ui.btn(t(ctx.lang, 'back'), 'm:tariff')]]));
     }
     return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
-  });
-
-  bot.callbackQuery('tf:compare', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await ui.show(ctx, await editableText('tariff_compare', ctx.lang, 'tariff_compare_default'), ui.backKb(ctx.lang, 'm:tariff'));
   });
 
   // ---- ⚙️ Sozlamalar
@@ -241,4 +229,15 @@ const states = {
   },
 };
 
-module.exports = { register, states, RULE_KEYS, tariffLabel };
+/** 💎 Premium haqida va sotib olish tugmasi (Mini App'dan ?start=premium havolasi ham shu sahifani ochadi) */
+async function showPremiumInfo(ctx) {
+  const lang = ctx.lang;
+  const s = await settings.getMany(['premium_price', 'premium_days']);
+  const description = await editableText('premium_description', lang, 'premium_description_default');
+  await ui.show(ctx, t(lang, 'premium_info', { days: s.premium_days, price: money(s.premium_price), description: raw(description) }), ui.kb([
+    [ui.btn(t(lang, 'btn_activate'), 'tf:buy')],
+    [ui.btn(t(lang, 'back'), 'm:tariff')],
+  ]));
+}
+
+module.exports = { register, states, RULE_KEYS, tariffLabel, showPremiumInfo };

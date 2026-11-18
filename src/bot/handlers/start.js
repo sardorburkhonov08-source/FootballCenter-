@@ -50,6 +50,8 @@ async function onStart(ctx) {
   }
   const missing = await missingChannels(ctx);
   if (missing.length) return showSubscribe(ctx, missing);
+  // Mini App'dagi "💎 Premium sotib olish" tugmasi: t.me/<bot>?start=premium — Premium sahifasi darhol ochiladi
+  if (payload === 'premium' && ctx.user.language) return require('./sections').showPremiumInfo(ctx);
   return afterSubscription(ctx);
 }
 
