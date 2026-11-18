@@ -78,7 +78,7 @@
   "bonus_got": "🎁 Табриклаймиз! Сизга {amount} сўм бонус берилди.\n💰 Жорий баланс: {balance} сўм",
   "bonus_wait": "⏳ Кейинги бонусингиз {time}дан кейин",
   "bonus_ready_notify": "🎁 Бонусингиз тайёр! 💰 Баланс → 🎁 Бонус бўлимига кириб олинг.",
-  "profile": "🧑 Исм: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Тил: {lang}\n\n💰 Баланс: {balance} сўм\n⭐ Points: {points}\n⭐ Балл: {ball}\n💎 Тариф: {tariff}\n📅 Рўйхатдан ўтган: {date}\n\n👥 Реферраллар: {refs}",
+  "profile": "🧑 Исм: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Тил: {lang}\n\n💰 Баланс: {balance} сўм\n⭐ Points: {points}\n💎 Тариф: {tariff}\n📅 Рўйхатдан ўтган: {date}\n\n👥 Реферраллар: {refs}",
   "donate_title": "❤️ Донат\n\n💚 FootballCenter'ни қўллаб-қувватлаганингиз учун раҳмат!\n💳 Карта турини танланг:",
   "donate_card_info": "💳 {type} карта\n\n🔢 Карта рақами: <code>{number}</code>\n👤 Карта эгаси: {holder}\n\n📋 Карта рақамига босинг — у автоматик нусхаланади.\n\n💵 Донат суммасини киритинг (фақат рақам, сўмда):",
   "donate_amount_confirm": "💵 Донат суммаси: {amount} сўм\n\nТасдиқлайсизми?",

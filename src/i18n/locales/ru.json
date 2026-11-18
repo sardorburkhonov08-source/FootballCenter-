@@ -78,7 +78,7 @@
   "bonus_got": "🎁 Поздравляем! Вам начислен бонус {amount} сум.\n💰 Текущий баланс: {balance} сум",
   "bonus_wait": "⏳ Следующий бонус через {time}",
   "bonus_ready_notify": "🎁 Ваш бонус готов! Заберите его в разделе 💰 Баланс → 🎁 Бонус.",
-  "profile": "🧑 Имя: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Язык: {lang}\n\n💰 Баланс: {balance} сум\n⭐ Points: {points}\n⭐ Баллы: {ball}\n💎 Тариф: {tariff}\n📅 Дата регистрации: {date}\n\n👥 Рефералы: {refs}",
+  "profile": "🧑 Имя: {name}\n📛 Username: {username}\n🆔 Telegram ID: <code>{id}</code>\n🌐 Язык: {lang}\n\n💰 Баланс: {balance} сум\n⭐ Points: {points}\n💎 Тариф: {tariff}\n📅 Дата регистрации: {date}\n\n👥 Рефералы: {refs}",
   "donate_title": "❤️ Донат\n\n💚 Спасибо, что поддерживаете FootballCenter!\n💳 Выберите тип карты:",
   "donate_card_info": "💳 Карта {type}\n\n🔢 Номер карты: <code>{number}</code>\n👤 Владелец: {holder}\n\n📋 Нажмите на номер карты — он скопируется автоматически.\n\n💵 Введите сумму доната (только цифры, в сумах):",
   "donate_amount_confirm": "💵 Сумма доната: {amount} сум\n\nПодтверждаете?",
