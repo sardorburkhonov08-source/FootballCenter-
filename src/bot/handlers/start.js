@@ -5,6 +5,7 @@ const users = require('../../services/users');
 const referral = require('../../services/referral');
 const state = require('../state');
 const ui = require('../ui');
+const { formatDate } = require('../../services/time');
 
 const MEMBER_STATUSES = ['creator', 'administrator', 'member'];
 
@@ -71,10 +72,15 @@ function register(bot) {
   bot.callbackQuery(/^lang:(\w+)$/, async (ctx) => {
     const lang = ctx.match[1];
     if (!LANGS.includes(lang)) return ctx.answerCallbackQuery();
+    const firstTime = !ctx.user.language;
     ctx.user = await users.setLanguage(ctx.from.id, lang);
     ctx.lang = lang;
     await ctx.answerCallbackQuery({ text: t(lang, 'lang_saved') });
     await ui.show(ctx, t(lang, 'lang_saved'), undefined);
+    // 🎁 Birinchi marta til tanlaganda — sovg'a Premium haqida xabar
+    if (firstTime && users.isPremium(ctx.user) && (await users.gotWelcomePremium(ctx.user.id))) {
+      await ctx.reply(t(lang, 'welcome_premium', { days: await settings.get('welcome_premium_days'), date: formatDate(ctx.user.premium_expires_at) }), ui.HTML);
+    }
     await ctx.reply(t(lang, 'menu_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.mainMenuKb(lang, ctx.user) });
   });
 

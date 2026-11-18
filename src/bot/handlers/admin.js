@@ -28,7 +28,7 @@ const SECTIONS = {
   referral: { title: 'a_btn_referral', keys: ['referral_enabled', 'referral_bonus_free', 'referral_bonus_premium', 'referral_fake_protection', 'referral_league_premium_days'] },
   bonus: { title: 'a_btn_bonus', keys: ['bonus_free_min', 'bonus_free_max', 'bonus_free_per_day', 'bonus_premium_min', 'bonus_premium_max', 'bonus_premium_per_day'] },
   donation: { title: 'a_btn_donation', keys: ['donation_channel_id', 'donation_big_threshold', 'donation_announce_timeout_minutes'] },
-  tariff: { title: 'a_btn_tariff', keys: ['premium_price', 'premium_days', 'ai_limit_free', 'ai_limit_premium'] },
+  tariff: { title: 'a_btn_tariff', keys: ['premium_price', 'premium_days', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },

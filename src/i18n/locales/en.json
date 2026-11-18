@@ -372,5 +372,7 @@
   "community_kicked": "🚫 You were removed from the fan community “{name}”.",
   "community_weekly_winner": "🏆 Fan club of the week — {club} fans “{name}”!\n⭐ They earned {points} points this week. Congratulations! 👏\n\n👥 Fan ranking — Mini App → Community.",
   "a_btn_community_settings": "👥 Fan community settings",
-  "a_set_community_extra_price": "Price of a club's next fan community (UZS)"
+  "a_set_community_extra_price": "Price of a club's next fan community (UZS)",
+  "welcome_premium": "🎁 Welcome! You've been given <b>{days} days of Premium</b> — until {date} everything is unlocked: Mini Manager, Football Quiz, the fan card, fan communities and more.",
+  "a_set_welcome_premium_days": "Free Premium for new users (days, 0 — off)"
 }

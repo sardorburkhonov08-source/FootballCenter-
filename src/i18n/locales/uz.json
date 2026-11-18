@@ -374,5 +374,7 @@
   "community_kicked": "🚫 Siz «{name}» fan community'sidan chiqarildingiz.",
   "community_weekly_winner": "🏆 Haftaning fan klubi — {club} muxlislari «{name}»!\n⭐ Hafta davomida {points} points to'plashdi. Tabriklaymiz! 👏\n\n👥 Fan reytingi — Mini App → Community.",
   "a_btn_community_settings": "👥 Fan community sozlamalari",
-  "a_set_community_extra_price": "Klubning keyingi fan community narxi (so'm)"
+  "a_set_community_extra_price": "Klubning keyingi fan community narxi (so'm)",
+  "welcome_premium": "🎁 Xush kelibsiz! Sizga <b>{days} kunlik Premium</b> sovg'a qilindi — {date} gacha barcha imkoniyatlar ochiq: Mini Manager, Football Quiz, muxlislik kartasi, fan community va boshqalar.",
+  "a_set_welcome_premium_days": "Yangi foydalanuvchiga bepul Premium (kun, 0 — o'chiq)"
 }

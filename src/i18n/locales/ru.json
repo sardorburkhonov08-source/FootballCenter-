@@ -372,5 +372,7 @@
   "community_kicked": "🚫 Вас исключили из фан-сообщества «{name}».",
   "community_weekly_winner": "🏆 Фан-клуб недели — болельщики {club} «{name}»!\n⭐ За неделю набрали {points} очков. Поздравляем! 👏\n\n👥 Фан-рейтинг — Mini App → Community.",
   "a_btn_community_settings": "👥 Настройки фан-сообществ",
-  "a_set_community_extra_price": "Цена следующего фан-сообщества клуба (сум)"
+  "a_set_community_extra_price": "Цена следующего фан-сообщества клуба (сум)",
+  "welcome_premium": "🎁 Добро пожаловать! Вам подарен <b>Premium на {days} дн.</b> — до {date} открыты все возможности: Mini Manager, Football Quiz, карта болельщика, фан-сообщества и другое.",
+  "a_set_welcome_premium_days": "Бесплатный Premium новым пользователям (дней, 0 — выкл.)"
 }
