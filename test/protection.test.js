@@ -161,3 +161,17 @@ test('API-Football /status tashxisi: tarif va bugungi so\'rovlar, shaxsiy ma\'lu
   f.setFetch(async () => ({ ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { token: 'Error/Missing application key.' }, response: [] }) }));
   assert.strictEqual((await f.checkStatus()).reason, 'token');
 });
+
+test("bir necha kunlik o'yinlar: tarifda yo'q kun o'tkazib yuboriladi, qolganlari qaytadi", async () => {
+  const fb = require('../src/services/football');
+  await fb.clearCache();
+  fb.setFetch(async (url) => {
+    const date = new URL(url).searchParams.get('date');
+    if (date > '2030-01-02') return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { plan: 'Free plans do not have access to this date' }, response: [] }) };
+    return envelope([{ ...fx('NS', 3600e3), fixture: { id: Number(date.slice(-2)), date: `${date}T18:00:00+00:00`, timestamp: Math.floor(Date.parse(`${date}T18:00:00Z`) / 1000), status: { short: 'NS' } } }]);
+  });
+  const r = await fb.matchesRange('2030-01-01', '2030-01-04');
+  assert.deepStrictEqual(r.matches.map((m) => m.id), [1, 2]);
+  assert.deepStrictEqual(r.skipped, [{ date: '2030-01-03', reason: 'plan' }, { date: '2030-01-04', reason: 'plan' }]);
+  await assert.rejects(() => fb.matchesRange('2030-02-01', '2030-02-02'), (e) => e.reason === 'plan', "hamma kun olinmasa — xato");
+});

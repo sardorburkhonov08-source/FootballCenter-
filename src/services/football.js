@@ -539,13 +539,29 @@ async function teamMatches(teamId) {
 }
 
 /** Admin uchun: sanalar oralig'idagi o'yinlar (har kun — bitta keshlangan so'rov, ko'pi bilan 14 kun) */
+/**
+ * Bir necha kunning o'yinlari (har kun — bitta so'rov). Bir kun olinmasa (tarifda yo'q sana, limit) —
+ * o'sha kun o'tkazib yuboriladi va sababi qaytariladi; hamma kun olinmasa — xato.
+ * → { matches, skipped: [{ date, reason }] }
+ */
 async function matchesRange(fromYmd, toYmd) {
-  const out = [];
+  const matches = [];
+  const skipped = [];
+  let days = 0;
   const end = Date.parse(`${toYmd}T00:00:00Z`);
-  for (let d = Date.parse(`${fromYmd}T00:00:00Z`), i = 0; d <= end && i < 14; d += DAY * 1000, i += 1) {
-    out.push(...(await matchesByDate(new Date(d).toISOString().slice(0, 10))));
+  for (let d = Date.parse(`${fromYmd}T00:00:00Z`); d <= end && days < 14; d += DAY * 1000) {
+    days += 1;
+    const date = new Date(d).toISOString().slice(0, 10);
+    try {
+      matches.push(...(await matchesByDate(date)));
+    } catch (e) {
+      if (!(e instanceof FootballUnavailable)) throw e;
+      logError(`/fixtures?date=${date}`, e);
+      skipped.push({ date, reason: e.reason, error: e });
+    }
   }
-  return out.sort((a, b) => a.utcDate.localeCompare(b.utcDate));
+  if (days && skipped.length === days) throw skipped[0].error;
+  return { matches: matches.sort((a, b) => a.utcDate.localeCompare(b.utcDate)), skipped: skipped.map(({ date, reason }) => ({ date, reason })) };
 }
 
 module.exports = {
