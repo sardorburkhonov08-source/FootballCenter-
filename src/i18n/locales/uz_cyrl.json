@@ -434,5 +434,8 @@
   "a_btn_games_settings": "🎮 Ўйинлар созламалари",
   "a_set_duel_win_points": "Дуэл ғалабаси (points)",
   "a_set_duel_draw_points": "Дуэл дуранги (points)",
-  "a_set_duel_daily_limit": "Кунига points берадиган дуэллар сони"
+  "a_set_duel_daily_limit": "Кунига points берадиган дуэллар сони",
+  "a_set_penalty_win_points": "Пеналтй ғалабаси (points)",
+  "a_set_penalty_draw_points": "Пеналтй дуранги (points)",
+  "a_set_penalty_daily_games": "Кунига пеналтй ўйинлари сони"
 }

@@ -432,5 +432,8 @@
   "a_btn_games_settings": "🎮 Настройки игр",
   "a_set_duel_win_points": "Победа в дуэли (points)",
   "a_set_duel_draw_points": "Ничья в дуэли (points)",
-  "a_set_duel_daily_limit": "Дуэлей с points в день"
+  "a_set_duel_daily_limit": "Дуэлей с points в день",
+  "a_set_penalty_win_points": "Победа в пенальти (points)",
+  "a_set_penalty_draw_points": "Ничья в пенальти (points)",
+  "a_set_penalty_daily_games": "Игр в пенальти в день"
 }

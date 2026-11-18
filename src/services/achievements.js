@@ -20,7 +20,7 @@ const LIST = [
   { id: 'fan_club_week', icon: '👥', sql: null },
   { id: 'referral_5', icon: '🤝', sql: '(SELECT count(*) FROM referrals WHERE referrer_id = $1 AND is_active) >= 5' },
   { id: 'gift', icon: '🎁', sql: "EXISTS (SELECT 1 FROM premium_purchases WHERE from_user_id = $1 AND source = 'gift')" },
-  { id: 'points_1000', icon: '💯', sql: '(u.points_manager + u.points_quiz + u.points_score + u.points_duel) >= 1000' },
+  { id: 'points_1000', icon: '💯', sql: `${require('./users').totalPointsSql('u.')} >= 1000` },
 ];
 const BY_ID = Object.fromEntries(LIST.map((a) => [a.id, a]));
 

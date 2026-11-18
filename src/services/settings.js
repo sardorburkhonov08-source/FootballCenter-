@@ -22,6 +22,10 @@ const DEFAULTS = {
   duel_win_points: 10,
   duel_draw_points: 3,
   duel_daily_limit: 10,
+  // 🥅 Penalty (sinov): g'alaba / durang uchun points, kuniga nechta o'yin
+  penalty_win_points: 3,
+  penalty_draw_points: 1,
+  penalty_daily_games: 3,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

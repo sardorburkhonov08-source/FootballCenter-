@@ -434,5 +434,8 @@
   "a_btn_games_settings": "🎮 O'yinlar sozlamalari",
   "a_set_duel_win_points": "Duel g'alabasi (points)",
   "a_set_duel_draw_points": "Duel durangi (points)",
-  "a_set_duel_daily_limit": "Kuniga points beradigan duellar soni"
+  "a_set_duel_daily_limit": "Kuniga points beradigan duellar soni",
+  "a_set_penalty_win_points": "Penalty g'alabasi (points)",
+  "a_set_penalty_draw_points": "Penalty durangi (points)",
+  "a_set_penalty_daily_games": "Kuniga penalty o'yinlari soni"
 }

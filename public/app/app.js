@@ -11,7 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
-    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly' },
+    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
   };
@@ -707,6 +707,8 @@
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
     { key: 'duel', icon: '⚔️', title: () => t('du_title'), desc: () => t('games_du_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`⚔️ ${t('du_title')}`)); return renderDuels(v); } }) },
+    { key: 'penalty', icon: '🥅', title: () => t('pk_title'), desc: () => t('games_pk_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar(`🥅 ${t('pk_title')}`)); return renderPenalty(v); } }) },
     { key: 'score', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
   ];
@@ -972,6 +974,99 @@
     } catch (err) { list.replaceChildren(errorBox(err, () => render())); }
   }
 
+
+
+  // ================= 🥅 PENALTY (sinov) — botga qarshi seriya: 5 zarba urasiz, 5 tasini qaytarasiz
+  const PK_POS = { left: 24, center: 50, right: 76 };
+
+  async function renderPenalty(view) {
+    if (!S.me.premium) { lockedSection(view, '🥅'); return; }
+    const box = el('div', null, skeleton(3));
+    view.append(box, leaderboardBlock('penalty'));
+    let st;
+    try { st = await api('/penalty', { fresh: true }); } catch (err) {
+      if (err.status === 402) { S.me.premium = false; box.replaceChildren(); premiumModal(); return; }
+      box.replaceChildren(errorBox(err, () => render())); return;
+    }
+    if (st.game) { penaltyBoard(box, st, st.game); return; }
+    const startBtn = el('button', { class: 'btn block', disabled: st.left <= 0, text: st.left > 0 ? t('pk_start', { n: st.left }) : t('pk_limit') });
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      try { const g = await api('/penalty/start', { method: 'POST' }); haptic(); penaltyBoard(box, st, g); } catch (err) { toast(t('error_generic')); startBtn.disabled = false; }
+    });
+    box.replaceChildren(
+      el('div', { class: 'card' }, el('p', { class: 'small muted', style: 'margin-top:0', text: t('pk_rules', { n: st.rules.kicks, win: st.rules.win, draw: st.rules.draw, limit: st.rules.limit }) }), startBtn),
+      el('div', { class: 'stats3', style: 'margin-top:10px' },
+        el('div', { class: 'stat' }, el('b', { text: st.stats.played }), el('span', { text: t('pk_played') })),
+        el('div', { class: 'stat' }, el('b', { class: 'gold', text: st.stats.wins }), el('span', { text: t('pk_wins') })),
+        el('div', { class: 'stat' }, el('b', { text: st.stats.best }), el('span', { text: t('pk_best') }))));
+  }
+
+  function penaltyDots(kicks, by) {
+    const mine = kicks.filter((k) => k.by === by);
+    const n = Math.max(5, mine.length);
+    return el('div', { class: 'pk-dots' }, Array.from({ length: n }, (_, i) => {
+      const k = mine[i];
+      return el('span', { class: `pk-dot${k ? (k.goal ? ' goal' : ' miss') : ''}` });
+    }));
+  }
+
+  function penaltyBoard(box, st, game) {
+    let g = game;
+    let busy = false;
+    const keeper = el('div', { class: 'pk-keeper', text: '🧤' });
+    const ball = el('div', { class: 'pk-ball', text: '⚽' });
+    const flash = el('div', { class: 'pk-flash' });
+    const prompt = el('div', { class: 'pk-prompt' });
+    const score = el('div', { class: 'pk-score' });
+    const zones = ['left', 'center', 'right'].map((dir) => el('button', { class: 'pk-zone', type: 'button', 'aria-label': dir, onclick: () => shoot(dir) }));
+    const goal = el('div', { class: 'pk-goal' }, ...zones);
+    const pitch = el('div', { class: 'pk-pitch' }, goal, keeper, ball, flash);
+    const after = el('div');
+    const reset = () => {
+      keeper.style.left = '50%'; ball.style.left = '50%'; ball.style.bottom = '8%'; ball.style.transform = 'translateX(-50%) scale(1)';
+      flash.textContent = ''; flash.className = 'pk-flash';
+    };
+    const draw = () => {
+      put(score,
+        el('div', { class: 'pk-row' }, el('b', { text: t('du_you') }), penaltyDots(g.kicks, 'user'), el('b', { class: 'pk-n', text: g.userGoals })),
+        el('div', { class: 'pk-row' }, el('b', { text: '🤖 Bot' }), penaltyDots(g.kicks, 'bot'), el('b', { class: 'pk-n', text: g.botGoals })));
+      if (g.status === 'finished') {
+        prompt.textContent = '';
+        zones.forEach((z) => { z.disabled = true; });
+        const left = st.left - (st.game ? 0 : 1);
+        const again = el('button', { class: 'btn', style: 'margin:12px auto 0;min-width:60%', text: t('pk_again'), onclick: () => render() });
+        put(after, el('div', { class: `card center du-final ${g.result}`, style: 'padding:18px 0' },
+          el('div', { style: 'font-size:42px', text: g.result === 'win' ? '🏆' : g.result === 'draw' ? '🤝' : '💪' }),
+          el('h2', { style: 'margin:4px 0', text: `${t(`du_res_${g.result}`)} ${g.userGoals}:${g.botGoals}` }),
+          el('div', { class: g.points ? 'gold' : 'muted', text: g.points ? `+${g.points} points` : t('du_next_time') }),
+          left > 0 ? again : null));
+        return;
+      }
+      prompt.textContent = `${g.sudden ? `${t('pk_sudden')} · ` : ''}${t(g.next === 'user' ? 'pk_your_shot' : 'pk_your_save')}`;
+      pitch.classList.toggle('keeping', g.next === 'bot');
+    };
+    async function shoot(dir) {
+      if (busy || g.status !== 'active') return;
+      busy = true;
+      haptic();
+      let r;
+      try { r = await api('/penalty/kick', { method: 'POST', body: { dir } }); } catch (err) { toast(t('error_generic')); busy = false; return; }
+      const k = r.kick;
+      ball.style.left = `${PK_POS[k.shot]}%`; ball.style.bottom = '52%'; ball.style.transform = 'translateX(-50%) scale(.7)';
+      keeper.style.left = `${PK_POS[k.dive]}%`;
+      const good = k.by === 'user' ? k.goal : !k.goal;
+      setTimeout(() => {
+        flash.textContent = k.goal ? t('pk_goal') : t('pk_saved');
+        flash.className = `pk-flash on ${good ? 'good' : 'bad'}`;
+        haptic(good ? 'success' : 'error');
+      }, 380);
+      setTimeout(() => { g = r.game; reset(); draw(); busy = false; }, 1400);
+    }
+    reset();
+    draw();
+    box.replaceChildren(el('div', { class: 'card' }, score, prompt, pitch), after);
+  }
 
   // ================= ⚔️ DUEL — Quiz duel va Futbolchini top 1v1 (navbatma-navbat, faqat Premium)
   const DUEL_KINDS = [['quiz', '🧠'], ['player', '🕵️']];
