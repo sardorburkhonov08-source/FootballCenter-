@@ -118,7 +118,7 @@
   "btn_activate": "✅ Activate",
   "premium_activated": "✅ Premium activated! {price} UZS was deducted from your balance. Valid until: {date}",
   "premium_no_money": "😔 Sorry, you don't have enough funds. Please top up your balance.",
-  "premium_description_default": "✨ Premium features:\n🤖 AI Assistant — more requests per day\n🎁 Bonus — twice a day\n🧠 Football Quiz — full access\n⚽ Matches — detailed stats, lineups, events\n🏆 Competitions — results, fixtures, top players\n🔔 All notifications",
+  "premium_description_default": "✨ Premium features:\n🤖 AI Assistant — more requests per day\n🎁 Bonus — twice a day\n🧠 Football Quiz — full access\n⚽ Matches — detailed stats, lineups, events\n🏆 Competitions — results, fixtures, top players\n🔔 All notifications\n➕ And many, many more features!",
   "premium_expiry_reminder": "⏰ Your Premium ends in 3 days (on {date}). To extend it, open the 💎 Plan section.",
   "settings_title": "⚙️ Settings",
   "btn_change_lang": "🌐 Change language",
