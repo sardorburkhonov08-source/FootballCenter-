@@ -143,16 +143,67 @@ test('bonus: Premium — 12 soatda 1 marta, keyingisi vaqti ko\'rsatiladi', asyn
   assert.match(h.lastText(U), /^⏳ Keyingi bonusingiz 1[12] soat \d+ daqiqadan keyin/);
 });
 
-test("premium sotib olish: mablag' yetmasa va yetsa", async () => {
+test("premium sotib olish: 7 va 30 kunlik tariflar, mablag' yetmasa va yetsa", async () => {
   const P = 2002;
   await h.text(P, '/start');
   await h.click(P, 'lang:uz');
-  await h.click(P, 'tf:buy');
+  await h.click(P, 'tf:premium');
+  assert.match(h.lastText(P), /^💎 Premium\n\n📅 7 kun — <b>10 000 so'm<\/b>\n📅 30 kun — <b>30 000 so'm<\/b>/);
+  assert.deepStrictEqual(h.buttons().map((b) => b.callback_data).slice(0, 3), ['tf:buy:week', 'tf:buy:month', 'tf:gift']);
+  await h.click(P, 'tf:buy:month');
   assert.strictEqual(h.lastText(P), "😔 Kechirasiz, balansingizda mablag' yetarli emas. Hisobingizni to'ldiring.");
   await db.query('UPDATE users SET balance = 40000 WHERE telegram_id = $1', [P]);
-  await h.click(P, 'tf:buy');
+  await h.click(P, 'tf:buy:month');
   assert.match(h.lastText(P), /^✅ Premium faollashtirildi! Balansdan 30 000 so'm yechildi\. Amal qilish muddati: \d\d\.\d\d\.\d{4}gacha/);
   assert.strictEqual(Number((await user(P)).balance), 10000);
+  await h.click(P, 'tf:buy:week');
+  assert.match(h.lastText(P), /^✅ Premium faollashtirildi! Balansdan 10 000 so'm yechildi/);
+  const u = await user(P);
+  assert.strictEqual(Number(u.balance), 0);
+  const left = (new Date(u.premium_expires_at).getTime() - Date.now()) / 86400000;
+  assert.ok(left > 36.9 && left <= 37, `37 kun qolishi kerak: ${left}`);
+  // Admin narxni o'zgartiradi
+  await settings.set('premium_week_price', 12000);
+  await h.click(P, 'tf:premium');
+  assert.match(h.lastText(P), /7 kun — <b>12 000 so'm<\/b>/);
+  await settings.set('premium_week_price', 10000);
+});
+
+test("🎁 do'stga Premium sovg'a qilish", async () => {
+  const G = 2010;
+  const FR = 2011;
+  for (const id of [G, FR]) { await h.text(id, '/start'); await h.click(id, 'lang:uz'); }
+  await db.query("UPDATE users SET username = 'dost_ali' WHERE telegram_id = $1", [FR]);
+  await h.click(G, 'tf:gift');
+  assert.match(h.lastText(G), /^🎁 Do'stingizga qaysi Premium'ni sovg'a qilasiz\?/);
+  await h.click(G, 'tf:gift:week');
+  assert.match(h.lastText(G), /^👤 Do'stingizning @username/);
+  await h.text(G, '@yoq_odam');
+  assert.match(h.lastText(G), /^⚠️ Bunday foydalanuvchi topilmadi/);
+  await h.text(G, String(G));
+  assert.match(h.lastText(G), /^⚠️ O'zingizga sovg'a qilib bo'lmaydi/);
+  await h.text(G, '@Dost_Ali');
+  assert.match(h.lastText(G), /^🎁 <b>.+<\/b> ga 7 kunlik Premium sovg'a qilinsinmi\?\n💰 Narxi: 10 000 so'm/);
+  await h.click(G, 'tf:giftok');
+  assert.strictEqual(h.lastText(G), "😔 Kechirasiz, balansingizda mablag' yetarli emas. Hisobingizni to'ldiring.");
+  assert.strictEqual((await user(FR)).premium_expires_at, null);
+  // Mablag' bilan qaytadan
+  await db.query('UPDATE users SET balance = 15000 WHERE telegram_id = $1', [G]);
+  await h.click(G, 'tf:gift:week');
+  await h.text(G, String(FR));
+  h.clear();
+  await h.click(G, 'tf:giftok');
+  assert.match(h.lastText(G), /^✅ Sovg'a yuborildi! .+ endi \d\d\.\d\d\.\d{4} gacha Premium\. Balansingizdan 10 000 so'm yechildi\./);
+  assert.match(h.lastText(FR), /^🎁 .+ sizga 7 kunlik Premium sovg'a qildi!/);
+  assert.strictEqual(Number((await user(G)).balance), 5000);
+  const fr = await user(FR);
+  assert.ok((new Date(fr.premium_expires_at).getTime() - Date.now()) / 86400000 > 6.9);
+  assert.strictEqual((await user(G)).premium_expires_at, null, 'sovg\'a qiluvchi Premium olmaydi');
+  const log = await db.one("SELECT * FROM premium_purchases WHERE user_id = $1 AND source = 'gift'", [fr.id]);
+  assert.deepStrictEqual([Number(log.amount), log.days, Number(log.from_user_id)], [10000, 7, Number((await user(G)).id)]);
+  // Tasdiqlash ikki marta bosilsa — ikkinchi marta pul yechilmaydi
+  await h.click(G, 'tf:giftok');
+  assert.strictEqual(Number((await user(G)).balance), 5000);
 });
 
 test("bildirishnomalar: Oddiy uchun qulflangan, Premium o'zgartira oladi", async () => {
@@ -335,9 +386,9 @@ test("profil: Mini Manager va Quiz ballari bitta umumiy ⭐ Points qatorida", as
 
 test("Mini App'dagi Premium tugmasi: /start premium — Premium sahifasi darhol ochiladi", async () => {
   await h.text(U, '/start premium');
-  assert.ok(h.buttons().some((b) => b.callback_data === 'tf:buy'), 'sotib olish tugmasi');
+  assert.ok(h.buttons().some((b) => b.callback_data === 'tf:buy:month'), 'sotib olish tugmasi');
   await h.text(U, '/start');
-  assert.ok(!h.buttons().some((b) => b.callback_data === 'tf:buy'), 'oddiy /start — asosiy menyu');
+  assert.ok(!h.buttons().some((b) => String(b.callback_data).startsWith('tf:buy')), 'oddiy /start — asosiy menyu');
 });
 
 test("Tarif bo'limida 📊 Taqqoslash yo'q (egasi talabi)", async () => {

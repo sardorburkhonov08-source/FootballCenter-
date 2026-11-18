@@ -133,7 +133,7 @@ test("a'zolik: faqat shu klub muxlislari, har kim bitta community'da", async () 
   assert.deepStrictEqual(ov.body.my, { id: red.id, role: 'member' });
 });
 
-test("egasi: e'lon, tahrirlash, a'zoni chiqarish (qayta qo'shila olmaydi); a'zo chiqib ketadi, egasi chiqa olmaydi", async () => {
+test("egasi: post, tahrirlash, a'zoni chiqarish (qayta qo'shila olmaydi); a'zo chiqib ketadi, egasi chiqa olmaydi", async () => {
   const red = await db.one("SELECT id FROM communities WHERE name = 'Red Army'");
   assert.strictEqual((await call(`/api/community/${red.id}/posts`, M1, { method: 'POST', body: { text: 'Salom' } })).status, 403);
   const post = await call(`/api/community/${red.id}/posts`, A, { method: 'POST', body: { text: 'Shanba kuni hammamiz Mini Manager o\'ynaymiz!' } });
@@ -146,6 +146,21 @@ test("egasi: e'lon, tahrirlash, a'zoni chiqarish (qayta qo'shila olmaydi); a'zo 
   assert.deepStrictEqual([page.body.stats.members, page.body.stats.male, page.body.stats.female], [3, 2, 1]);
   assert.ok(page.body.stats.regions.some((r) => r.name === 'Samarqand viloyati'));
   assert.deepStrictEqual(page.body.stats.goats[0], { name: 'Lionel Messi', n: 3 });
+  // Reaksiyalar: a'zo bitta reaksiya qo'yadi, almashtiradi, qayta bossa olib tashlanadi; a'zo bo'lmagan qo'ya olmaydi
+  const react = (id, reaction) => call(`/api/community/posts/${post.body.id}/react`, id, { method: 'POST', body: { reaction } });
+  assert.deepStrictEqual(page.body.posts[0].reactions, { like: 0, ball: 0, fire: 0 });
+  assert.deepStrictEqual((await react(M1, 'fire')).body.reactions, { like: 0, ball: 0, fire: 1 });
+  let r = await react(M2, 'fire');
+  assert.deepStrictEqual([r.body.reactions.fire, r.body.myReaction], [2, 'fire']);
+  r = await react(M2, 'like');
+  assert.deepStrictEqual([r.body.reactions, r.body.myReaction], [{ like: 1, ball: 0, fire: 1 }, 'like']);
+  r = await react(M2, 'like');
+  assert.deepStrictEqual([r.body.reactions, r.body.myReaction], [{ like: 0, ball: 0, fire: 1 }, null]);
+  assert.strictEqual((await react(A, 'ball')).status, 200, 'egasi ham reaksiya qo\'yadi');
+  assert.strictEqual((await react(X, 'like')).body.error, 'not_member');
+  assert.strictEqual((await react(M1, 'heart')).body.error, 'bad_reaction');
+  const again = await call(`/api/community/${red.id}`, M1);
+  assert.deepStrictEqual([again.body.posts[0].reactions, again.body.posts[0].myReaction], [{ like: 0, ball: 1, fire: 1 }, 'fire']);
   h.clear();
   assert.strictEqual((await call(`/api/community/${red.id}/kick`, A, { method: 'POST', body: { userId: await uid(M2) } })).status, 200);
   await new Promise((res) => setTimeout(res, 50));

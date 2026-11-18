@@ -155,7 +155,7 @@ async function detail(user, id) {
   const range = weekRange();
   const [list, champion, st, posts, memberRows, pts, mine, owner] = await Promise.all([
     standings(range), lastChampion(), stats(c.id),
-    db.many('SELECT id, text, created_at FROM community_posts WHERE community_id = $1 ORDER BY created_at DESC LIMIT 30', [c.id]),
+    postsWithReactions(c.id, user.id),
     db.many(
       `SELECT m.user_id, m.role, u.first_name, u.last_name, u.username, u.telegram_id FROM community_members m
        JOIN users u ON u.id = m.user_id WHERE m.community_id = $1`, [c.id],
@@ -253,6 +253,46 @@ async function addPost(user, id, text) {
   const s = clean(text);
   if (!s || [...s].length > POST_MAX) throw new CommunityError('bad_post');
   return db.one('INSERT INTO community_posts (community_id, author_user_id, text) VALUES ($1,$2,$3) RETURNING *', [c.id, user.id, s]);
+}
+
+// ---------- Post reaksiyalari (👍 ⚽ 🔥): har bir a'zo postga bitta reaksiya qo'yadi
+const REACTIONS = ['like', 'ball', 'fire'];
+
+async function postsWithReactions(communityId, userId) {
+  const posts = await db.many('SELECT id, text, created_at FROM community_posts WHERE community_id = $1 ORDER BY created_at DESC LIMIT 30', [communityId]);
+  if (!posts.length) return posts;
+  const rows = await db.many(
+    `SELECT post_id, reaction, count(*)::int AS n, bool_or(user_id = $2) AS mine FROM community_post_reactions
+     WHERE post_id = ANY($1::int[]) GROUP BY post_id, reaction`, [posts.map((p) => p.id), userId],
+  );
+  return posts.map((p) => {
+    const reactions = Object.fromEntries(REACTIONS.map((r) => [r, 0]));
+    let myReaction = null;
+    for (const r of rows.filter((x) => x.post_id === p.id)) { reactions[r.reaction] = r.n; if (r.mine) myReaction = r.reaction; }
+    return { ...p, reactions, myReaction };
+  });
+}
+
+/** Reaksiya qo'yish: boshqasini bossa — almashadi, o'sha reaksiyani qayta bossa — olib tashlanadi. Faqat a'zolar. */
+async function react(user, postId, reaction) {
+  if (!REACTIONS.includes(reaction)) throw new CommunityError('bad_reaction');
+  const p = await db.one(
+    "SELECT p.* FROM community_posts p JOIN communities c ON c.id = p.community_id WHERE p.id = $1 AND c.status = 'active'", [Number(postId)],
+  );
+  if (!p) throw new CommunityError('not_found');
+  const mine = await membership(user.id);
+  if (!mine || mine.id !== p.community_id) throw new CommunityError('not_member');
+  const cur = await db.one('SELECT reaction FROM community_post_reactions WHERE post_id = $1 AND user_id = $2', [p.id, user.id]);
+  if (cur && cur.reaction === reaction) {
+    await db.query('DELETE FROM community_post_reactions WHERE post_id = $1 AND user_id = $2', [p.id, user.id]);
+  } else {
+    await db.query(
+      `INSERT INTO community_post_reactions (post_id, user_id, reaction) VALUES ($1, $2, $3)
+       ON CONFLICT (post_id, user_id) DO UPDATE SET reaction = EXCLUDED.reaction, created_at = now()`, [p.id, user.id, reaction],
+    );
+  }
+  const [post] = (await postsWithReactions(p.community_id, user.id)).filter((x) => x.id === p.id);
+  return post || { id: p.id, reactions: {}, myReaction: null };
 }
 
 async function deletePost(user, postId) {
@@ -388,7 +428,7 @@ async function finalizeWeek(now = new Date(), graceMs = 0) {
 }
 
 module.exports = {
-  CommunityError, NAME_MAX, DESC_MAX, POST_MAX, priceFor, overview, detail, stats, standings, weekPoints, requestCreate, join, leave,
+  CommunityError, NAME_MAX, DESC_MAX, POST_MAX, REACTIONS, react, priceFor, overview, detail, stats, standings, weekPoints, requestCreate, join, leave,
   updateInfo, kick, addPost, deletePost, assertCanChangeClub, onClubChanged, list, approve, reject, close, finalizeWeek, lastChampion,
   notifyAdmins, approveAndNotify, rejectAndNotify, closeAndNotify, announceWinner,
 };

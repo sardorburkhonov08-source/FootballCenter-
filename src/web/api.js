@@ -283,6 +283,7 @@ router.post('/community/:id/kick', express.json(), communityRoute(async (req) =>
   return { ok: true };
 }));
 router.post('/community/:id/posts', express.json(), communityRoute(async (req) => community.addPost(req.user, req.params.id, req.body && req.body.text)));
+router.post('/community/posts/:postId/react', express.json(), communityRoute(async (req) => community.react(req.user, req.params.postId, req.body && req.body.reaction)));
 router.delete('/community/posts/:postId', communityRoute(async (req) => { await community.deletePost(req.user, req.params.postId); return { ok: true }; }));
 
 // ---------- 👤 Profil
