@@ -65,9 +65,21 @@ function dominantColors(pngBuffer) {
     e.n += 1; e.r += r; e.g += g; e.b += b;
     buckets.set(key, e);
   }
-  const list = [...buckets.values()]
-    .map((e) => { const c = [e.r / e.n, e.g / e.n, e.b / e.n]; return { c, score: e.n * (0.35 + saturation(...c)) }; })
-    .sort((a, b) => b.score - a.score);
+  // Yaqin ranglar bitta guruhga birlashtiriladi (soya/gradient bir nechta bo'lakka bo'linib ketmasin)
+  const clusters = [];
+  for (const e of [...buckets.values()].sort((x, y) => y.n - x.n)) {
+    const c = [e.r / e.n, e.g / e.n, e.b / e.n];
+    const near = clusters.find((k) => Math.abs(k.c[0] - c[0]) + Math.abs(k.c[1] - c[1]) + Math.abs(k.c[2] - c[2]) < 70);
+    if (near) {
+      const n = near.n + e.n;
+      near.c = near.c.map((v, i) => (v * near.n + c[i] * e.n) / n);
+      near.n = n;
+    } else clusters.push({ c, n: e.n });
+  }
+  // Ball: maydon × to'yinganlik × yorqinlik — to'q kontur/halqa (qora, to'q ko'k) klubning asosiy rangi bo'lib qolmasin
+  const list = clusters
+    .map((k) => ({ c: k.c, score: k.n * (0.35 + saturation(...k.c)) * (0.3 + 0.7 * (Math.max(...k.c) / 255)) }))
+    .sort((x, y) => y.score - x.score);
   if (!list.length) return null;
   const primary = list[0].c;
   const far = (c) => Math.abs(c[0] - primary[0]) + Math.abs(c[1] - primary[1]) + Math.abs(c[2] - primary[2]) > 120;
@@ -99,6 +111,19 @@ async function teamColors(teamId, logoUrl) {
 }
 
 /** Kartadagi rang sxemasi: urg'u rangi och fonda o'qiladigan bo'lishi kerak */
+const HEX_RE = /^#[0-9a-f]{6}$/;
+/** Klub ranglari: admin/standart ro'yxatda bo'lsa — o'sha (rasmiy) rang, bo'lmasa logotipdan aniqlangani */
+async function clubColors(teamId, logoUrl) {
+  const [row, overrides] = await Promise.all([teamColors(teamId, logoUrl), settings.get('fan_card_team_colors')]);
+  const o = (overrides || {})[String(teamId)];
+  return {
+    primary: o && HEX_RE.test(o.primary) ? o.primary : row && row.primary_color,
+    secondary: o ? (HEX_RE.test(o.secondary) ? o.secondary : null) : row && row.secondary_color,
+    logoPng: row ? row.logo_png : null,
+    manual: !!o,
+  };
+}
+
 function contrast(a, b) { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); }
 
 /**
@@ -595,11 +620,11 @@ async function viewModel(u, lang) {
   const c = await cardRow(u.id);
   if (!c) return null;
   const [colors, rank, firstLimit] = await Promise.all([
-    teamColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'),
+    clubColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'),
   ]);
   return {
-    key: [DESIGN, colors && colors.primary_color, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, (u.points_manager || 0) + (u.points_quiz || 0), rank.place, rank.total, lang, firstLimit].join(':'),
-    club: c.team_name, logoPng: colors ? colors.logo_png : null, pal: palette(colors && colors.primary_color, colors && colors.secondary_color),
+    key: [DESIGN, colors.primary, colors.secondary, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, (u.points_manager || 0) + (u.points_quiz || 0), rank.place, rank.total, lang, firstLimit].join(':'),
+    club: c.team_name, logoPng: colors.logoPng, pal: palette(colors.primary, colors.secondary),
     photo: readPhoto(c.photo_path),
     lastName: c.last_name, firstName: c.first_name, goat: c.goat, age: currentYear() - c.birth_year, gender: c.gender,
     player: c.fav_player, since: c.fan_since, fanNumber: c.fan_number, first: c.fan_number <= Number(firstLimit), firstLimit,
@@ -634,7 +659,7 @@ function samplePng(lang) {
 }
 
 module.exports = {
-  REGIONS, GENDERS, ADMIN_FIELDS, CardError, setFetch, dominantColors, textOn, palette, teamColors, regionsList,
+  REGIONS, GENDERS, ADMIN_FIELDS, CardError, setFetch, dominantColors, textOn, palette, teamColors, clubColors, regionsList, HEX_RE,
   getCard, activate, updateFavorites, uploadPhoto, changeClub, adminRemovePhoto, adminUpdate, cardRow, clubRank,
   imagePath, verifyImagePath, cardSvg, renderPng, samplePng, clearImageCache, FONT_FILES,
 };

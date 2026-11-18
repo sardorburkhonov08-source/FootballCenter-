@@ -34,7 +34,7 @@
     bad_last_name: '⚠️ Familiya noto\'g\'ri (faqat harflar, 30 tagacha)', bad_first_name: '⚠️ Ism noto\'g\'ri (faqat harflar, 30 tagacha)',
     bad_birth_year: '⚠️ Tug\'ilgan yil noto\'g\'ri (yoshi 5–100)', bad_since: '⚠️ Muxlislik yili tug\'ilgan yildan oldin yoki kelajakda bo\'lmasin',
     bad_goat: '⚠️ GOAT 2–40 belgi bo\'lsin', bad_player: '⚠️ Sevimli futbolchi 2–40 belgi bo\'lsin', bad_gender: '⚠️ Jins noto\'g\'ri', bad_region: '⚠️ Hudud noto\'g\'ri',
-    not_active: '⚠️ Karta topilmadi', bad_fan_card_settings: '⚠️ Narx va N — 0 yoki musbat butun son; GOAT ro\'yxati 300 tagacha',
+    not_active: '⚠️ Karta topilmadi', bad_team_colors: '⚠️ Rang formati: #rrggbb', bad_fan_card_settings: '⚠️ Narx va N — 0 yoki musbat butun son; GOAT ro\'yxati 300 tagacha',
   };
 
   async function api(path, opts = {}) {
@@ -78,7 +78,22 @@
   // 🪪 Muxlislik kartalari — nomaqbul rasmni o'chirish, xato ma'lumotni tuzatish, sozlamalar
   async function fancards(v, query) {
     const q = query || '';
-    const [d, st] = await Promise.all([api(`/fan-cards?q=${encodeURIComponent(q)}`), api('/fan-card-settings')]);
+    const [d, st, teams] = await Promise.all([api(`/fan-cards?q=${encodeURIComponent(q)}`), api('/fan-card-settings'), api('/fan-card-teams')]);
+    const teamRow = (tm) => {
+      const cur = tm.manual || tm.detected || { primary: '#1f8a4c', secondary: null };
+      const p1 = el('input', { type: 'color', value: cur.primary, style: 'width:44px;height:34px;padding:0;border:0;background:none' });
+      const p2 = el('input', { type: 'color', value: cur.secondary || '#ffffff', style: 'width:44px;height:34px;padding:0;border:0;background:none' });
+      return el('div', { class: 'card row', style: 'flex-wrap:wrap' },
+        el('div', { class: 'grow', style: 'min-width:160px' }, el('b', { text: tm.name }),
+          el('div', { class: 'small muted', text: `${tm.fans} ta muxlis · ${tm.manual ? '✋ qo\'lda belgilangan' : tm.detected ? '🤖 logotipdan aniqlangan' : '⏳ hali aniqlanmagan'}` })),
+        el('label', { class: 'small muted' }, 'Asosiy ', p1), el('label', { class: 'small muted' }, 'Ikkinchi ', p2),
+        el('button', { class: 'mini ok', text: '💾', title: 'Saqlash', onclick: async () => {
+          try { await api(`/fan-card-teams/${tm.teamId}`, { method: 'PUT', body: { primary: p1.value, secondary: p2.value } }); toast('✅ Klub ranglari saqlandi'); fancards(v, q).catch(fail); } catch (e) { fail(e); }
+        } }),
+        tm.manual ? el('button', { class: 'mini', text: '🤖 Avtomatik', title: 'Logotipdan aniqlangan rangga qaytarish', onclick: async () => {
+          try { await api(`/fan-card-teams/${tm.teamId}`, { method: 'DELETE' }); toast('✅ Avtomatik rangga qaytarildi'); fancards(v, q).catch(fail); } catch (e) { fail(e); }
+        } }) : null);
+    };
     const price = el('input', { class: 'input', type: 'number', min: '0', value: st.price });
     const firstFans = el('input', { class: 'input', type: 'number', min: '0', value: st.firstFans });
     const goats = el('textarea', { class: 'input', rows: '6' });
@@ -128,6 +143,9 @@
           el('div', null, el('label', { class: 'field-label', text: '"Birinchi N muxlis" belgisi — N' }), firstFans),
           el('div', { style: 'grid-column:1/-1' }, el('label', { class: 'field-label', text: 'GOAT takliflari (har qatorda bitta)' }), goats),
           saveSt)),
+      el('h2', { text: '🎨 Klub ranglari' }),
+      el('p', { class: 'small muted', text: 'Karta klub rangida chiziladi. Rang logotipdan avtomatik aniqlanadi; noto\'g\'ri bo\'lsa, rasmiy rangni shu yerda belgilang. Ro\'yxatda — kartasi bor klublar.' }),
+      teams.length ? el('div', { class: 'list' }, teams.map(teamRow)) : el('div', { class: 'card center muted', text: '📭 Hali kartalar yo\'q' }),
       el('div', { class: 'card' }, el('label', { class: 'field-label', text: '🔍 Qidirish (Enter)' }), search),
       el('h2', { text: `Kartalar (${d.cards.length})` }),
       el('p', { class: 'small muted', text: 'Rasmi o\'chirilgan kartalar ro\'yxat boshida. Klub va karta raqamini o\'zgartirib bo\'lmaydi.' }),

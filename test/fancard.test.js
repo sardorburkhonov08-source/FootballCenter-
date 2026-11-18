@@ -72,6 +72,18 @@ test('logotipdan klub ranglari; Code 128 shtrix-kodi', () => {
   assert.notStrictEqual(city.bg, '#ffffff');
   assert.ok(parseInt(city.bg.slice(5, 7), 16) - parseInt(city.bg.slice(1, 3), 16) >= 15, 'fon havorang tusda');
   assert.strictEqual(fancard.palette('#c8102e', '#f6eb61').bandText, '#ffffff');
+  // Kontur/halqa to'q ko'k, maydon havorang (gradientli) — asosiy rang havorang bo'ladi
+  const p = new PNG({ width: 100, height: 100 });
+  for (let y = 0; y < 100; y += 1) for (let x = 0; x < 100; x += 1) {
+    const d = Math.hypot(x - 50, y - 50);
+    let col = [0, 0, 0, 0];
+    if (d < 49) col = [28, 44, 91, 255];
+    if (d < 40) col = [96 + (x % 24), 165 + (y % 12), 215, 255];
+    p.data.set(col, (y * 100 + x) * 4);
+  }
+  const cityLike = fancard.dominantColors(PNG.sync.write(p));
+  assert.ok(parseInt(cityLike.primary.slice(5, 7), 16) > 200, `havorang tanlanadi: ${cityLike.primary}`);
+  assert.strictEqual(cityLike.secondary, '#1c2c5b');
   const m = barcode.modules('Ab');
   // Start B + 'A' + 'b' + nazorat belgisi (har biri 11 modul) + Stop (13 modul)
   assert.strictEqual(m.length, 11 * 4 + 13);
@@ -203,6 +215,24 @@ test("Klubni almashtirish: narx balansdan yechiladi, yangi klubda navbat oxirida
   assert.strictEqual(Number((await db.one('SELECT balance FROM users WHERE id = $1', [id])).balance), 0);
   await settings.set('fan_card_first_fans', 2);
   assert.strictEqual((await call('/api/fan-card', 9002)).body.card.first, false, "3-muxlis 'birinchi 2' ga kirmaydi");
+});
+
+test("Klub ranglari: rasmiy rang ro'yxati logotipdan ustun, admin o'zgartiradi", async () => {
+  await call('/api/me', OWNER);
+  // 50 — standart ro'yxatda (Manchester City ranglari), logotip esa qizil
+  const c50 = await fancard.clubColors(50, 'https://media.example/50.png');
+  assert.deepStrictEqual([c50.primary, c50.secondary, c50.manual, !!c50.logoPng], ['#6cabdd', '#1c2c5b', true, true]);
+  const list = await call('/api/admin/fan-card-teams', OWNER);
+  assert.strictEqual(list.status, 200);
+  const red = list.body.find((x) => x.teamId === 50);
+  assert.deepStrictEqual([red.detected.primary, red.manual.primary], ['#c8102e', '#6cabdd']);
+  assert.strictEqual((await call('/api/admin/fan-card-teams/50', OWNER, { method: 'PUT', body: { primary: 'red' } })).status, 400);
+  assert.strictEqual((await call('/api/admin/fan-card-teams/50', OWNER, { method: 'PUT', body: { primary: '#123456', secondary: '#ABCDEF' } })).status, 200);
+  assert.deepStrictEqual((await fancard.clubColors(50)).primary, '#123456');
+  assert.strictEqual((await call('/api/admin/fan-card-teams/50', OWNER, { method: 'DELETE' })).status, 200);
+  const auto = await fancard.clubColors(50);
+  assert.deepStrictEqual([auto.primary, auto.manual], ['#c8102e', false], 'logotipdan aniqlangan rangga qaytdi');
+  assert.strictEqual((await call('/api/admin/fan-card-teams', 9002)).status, 403);
 });
 
 test("Web admin: rasmni o'chirish (foydalanuvchiga xabar), ma'lumotni tuzatish, sozlamalar", async () => {

@@ -253,6 +253,39 @@ router.put('/fan-card-settings', express.json(), wrap(async (req, res) => {
   return res.json({ price, firstFans, goats });
 }));
 
+// Klub ranglari: kartasi bor klublar, aniqlangan rang va admin belgilagan (rasmiy) rang
+router.get('/fan-card-teams', wrap(async (req, res) => {
+  const rows = await db.many(
+    `SELECT c.team_id, max(c.team_name) AS name, count(*)::int AS fans, tc.primary_color, tc.secondary_color
+     FROM fan_cards c LEFT JOIN team_colors tc ON tc.team_id = c.team_id
+     GROUP BY c.team_id, tc.primary_color, tc.secondary_color ORDER BY fans DESC, name LIMIT 200`,
+  );
+  const overrides = (await settings.get('fan_card_team_colors')) || {};
+  res.json(rows.map((r) => ({
+    teamId: r.team_id, name: r.name, fans: r.fans,
+    detected: r.primary_color ? { primary: r.primary_color, secondary: r.secondary_color } : null,
+    manual: overrides[String(r.team_id)] || null,
+  })));
+}));
+router.put('/fan-card-teams/:id', express.json(), wrap(async (req, res) => {
+  const id = Number(req.params.id);
+  const b = req.body || {};
+  const primary = String(b.primary || '').toLowerCase();
+  const secondary = b.secondary ? String(b.secondary).toLowerCase() : null;
+  if (!Number.isInteger(id) || id <= 0 || !fancard.HEX_RE.test(primary) || (secondary && !fancard.HEX_RE.test(secondary))) {
+    return res.status(400).json({ error: 'bad_team_colors' });
+  }
+  const all = { ...((await settings.get('fan_card_team_colors')) || {}), [String(id)]: { primary, secondary } };
+  await settings.set('fan_card_team_colors', all);
+  return res.json({ teamId: id, primary, secondary });
+}));
+router.delete('/fan-card-teams/:id', wrap(async (req, res) => {
+  const all = { ...((await settings.get('fan_card_team_colors')) || {}) };
+  delete all[String(Number(req.params.id))];
+  await settings.set('fan_card_team_colors', all);
+  return res.json({ ok: true });
+}));
+
 router.get('/tactics', wrap(async (req, res) => res.json(await settings.get('tactics'))));
 router.put('/tactics', express.json(), wrap(async (req, res) => {
   const list = Array.isArray(req.body) ? req.body.map((s) => String(s).trim()).filter((s) => /^\d(-\d){2,4}$/.test(s)) : [];
