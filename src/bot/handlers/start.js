@@ -6,6 +6,7 @@ const referral = require('../../services/referral');
 const state = require('../state');
 const ui = require('../ui');
 const { formatDate } = require('../../services/time');
+const config = require('../../config');
 
 const MEMBER_STATUSES = ['creator', 'administrator', 'member'];
 
@@ -43,6 +44,19 @@ async function afterSubscription(ctx) {
   await ui.showMenu(ctx);
 }
 
+async function sendDuelInvite(ctx, code) {
+  const duels = require('../../services/duels');
+  const d = await duels.byCode(code);
+  if (!d || d.mode !== 'invite') return;
+  const creator = await users.byId(d.creator_id);
+  if (ctx.userCreated && creator && creator.ref_code) await referral.attach(ctx.user, creator.ref_code).catch(() => {});
+  const lang = ctx.lang || 'uz';
+  const url = config.webAppUrl ? `${config.webAppUrl}/?duel=${encodeURIComponent(code)}` : null;
+  await ctx.reply(t(lang, 'duel_invite_msg', { name: users.displayName(creator), kind: t(lang, `duel_kind_${d.kind}`) }), {
+    ...ui.HTML, reply_markup: url ? { inline_keyboard: [[{ text: t(lang, 'btn_duel_open'), web_app: { url } }]] } : undefined,
+  });
+}
+
 async function onStart(ctx) {
   await state.clear(ctx.from.id);
   const payload = (ctx.match || '').trim();
@@ -53,7 +67,10 @@ async function onStart(ctx) {
   if (missing.length) return showSubscribe(ctx, missing);
   // Mini App'dagi "💎 Premium sotib olish" tugmasi: t.me/<bot>?start=premium — Premium sahifasi darhol ochiladi
   if (payload === 'premium' && ctx.user.language) return require('./sections').showPremiumInfo(ctx);
-  return afterSubscription(ctx);
+  await afterSubscription(ctx);
+  // ⚔️ Do'stning duel taklifi: t.me/<bot>?start=duel_<kod> — Mini App'da duel ochiladi
+  if (payload.startsWith('duel_')) await sendDuelInvite(ctx, payload.slice(5));
+  return undefined;
 }
 
 function register(bot) {

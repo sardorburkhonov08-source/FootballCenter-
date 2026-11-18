@@ -421,5 +421,16 @@
   "share_place": "{place}-е место",
   "share_achievements": "Достижения",
   "share_score": "Угадай счёт",
-  "share_join": "Присоединяйтесь — играйте в FootballCenter!"
+  "share_join": "Присоединяйтесь — играйте в FootballCenter!",
+  "duel_kind_quiz": "Quiz-дуэль",
+  "duel_kind_player": "Угадай игрока",
+  "duel_result_win": "⚔️ {kind}: вы обыграли <b>{name}</b> со счётом {my}:{their}! 🏆 +{points} points",
+  "duel_result_draw": "⚔️ {kind}: ничья с <b>{name}</b> — {my}:{their}. +{points} points",
+  "duel_result_loss": "⚔️ {kind}: <b>{name}</b> победил(а) {their}:{my}. Удачи в следующий раз! 💪",
+  "duel_invite_msg": "⚔️ <b>{name}</b> вызывает вас на дуэль «{kind}»! 5 раундов — кто угадает больше, тот и победил. Нажмите кнопку, чтобы принять 👇",
+  "btn_duel_open": "⚔️ Открыть дуэль",
+  "a_btn_games_settings": "🎮 Настройки игр",
+  "a_set_duel_win_points": "Победа в дуэли (points)",
+  "a_set_duel_draw_points": "Ничья в дуэли (points)",
+  "a_set_duel_daily_limit": "Дуэлей с points в день"
 }

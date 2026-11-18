@@ -33,6 +33,7 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
+  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -73,7 +74,7 @@ function adminMenuKb(lang) {
     [ui.btn(L('a_btn_faq'), 'a:faq'), ui.btn(L('a_btn_admins'), 'a:admins')],
     [ui.btn(L('a_btn_users'), 'a:users')],
     [ui.btn(L('a_btn_fancard_settings'), 'a:fancard'), ui.btn(L('a_btn_community_settings'), 'a:community')],
-    [ui.btn(L('a_btn_maintenance'), 'a:maintenance')],
+    [ui.btn(L('a_btn_games_settings'), 'a:games'), ui.btn(L('a_btn_maintenance'), 'a:maintenance')],
     [ui.btn(L('a_btn_stats'), 'a:stats'), ui.btn(L('a_btn_export'), 'a:export')],
     [ui.btn(L('a_btn_broadcast'), 'a:broadcast')],
   ];
@@ -193,11 +194,11 @@ function csvCell(v) {
 }
 
 async function exportUsers(ctx) {
-  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, points_manager, points_quiz, points_score,
+  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, points_manager, points_quiz, points_score, points_duel,
       CASE WHEN premium_expires_at > now() THEN 'premium' ELSE 'free' END AS tariff, premium_expires_at, registered_at, is_blocked, is_admin,
       (SELECT count(*) FROM referrals r WHERE r.referrer_id = users.id AND r.is_active) AS active_referrals
     FROM users ORDER BY registered_at`);
-  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', 'points_manager', 'points_quiz', 'points_score', 'tariff',
+  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', 'points_manager', 'points_quiz', 'points_score', 'points_duel', 'tariff',
     'premium_expires_at', 'registered_at', 'is_blocked', 'is_admin', 'active_referrals'];
   const csv = '﻿' + [cols.join(','), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(','))].join('\n');
   await ctx.replyWithDocument(new InputFile(Buffer.from(csv, 'utf8'), `users_${ymd()}.csv`), { caption: t(ctx.lang, 'a_export_caption', { count: rows.length }) });
@@ -270,7 +271,7 @@ function register(bot) {
     await ui.show(ctx, L(ctx, 'a_title'), adminMenuKb(ctx.lang));
   });
 
-  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard|community)$/, async (ctx) => {
+  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard|community|games)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.clear(ctx.from.id);
     await renderSection(ctx, ctx.match[1]);

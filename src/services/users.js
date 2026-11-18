@@ -71,8 +71,8 @@ async function find(query) {
   return db.one('SELECT * FROM users WHERE lower(username) = $1', [name]);
 }
 
-/** Umumiy points: Mini Manager + Quiz + Hisobni top */
-function totalPoints(u) { return (Number(u.points_manager) || 0) + (Number(u.points_quiz) || 0) + (Number(u.points_score) || 0); }
+/** Umumiy points: Mini Manager + Quiz + Hisobni top + Duel */
+function totalPoints(u) { return ['points_manager', 'points_quiz', 'points_score', 'points_duel'].reduce((sum, k) => sum + (Number(u[k]) || 0), 0); }
 
 function isPremium(user) {
   return !!(user && user.premium_expires_at && new Date(user.premium_expires_at) > new Date());

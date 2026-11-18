@@ -18,6 +18,10 @@ const DEFAULTS = {
   premium_days: 30,
   premium_week_price: 10000,
   premium_week_days: 7,
+  // ⚔️ Duel: g'alaba / durang uchun points, kuniga nechta duel points beradi
+  duel_win_points: 10,
+  duel_draw_points: 3,
+  duel_daily_limit: 10,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

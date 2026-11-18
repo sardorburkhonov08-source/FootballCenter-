@@ -452,9 +452,9 @@ router.get('/stats', wrap(async (req, res) => {
     [today, ymd()],
   );
   const top = await db.many(
-    `SELECT id, telegram_id, first_name, last_name, username, coach_name, points_manager, points_quiz, points_score,
-            (points_manager + points_quiz + points_score) AS total
-     FROM users WHERE (points_manager + points_quiz + points_score) > 0 AND NOT is_blocked ORDER BY total DESC LIMIT 20`,
+    `SELECT id, telegram_id, first_name, last_name, username, coach_name, points_manager, points_quiz, points_score, points_duel,
+            (points_manager + points_quiz + points_score + points_duel) AS total
+     FROM users WHERE (points_manager + points_quiz + points_score + points_duel) > 0 AND NOT is_blocked ORDER BY total DESC LIMIT 20`,
   );
   const winners = await db.many(
     `SELECT w.*, u.first_name, u.last_name, u.username, u.telegram_id FROM period_winners w LEFT JOIN users u ON u.id = w.user_id

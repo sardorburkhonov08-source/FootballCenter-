@@ -60,7 +60,7 @@ function register(bot) {
     const lang = ctx.lang;
     await ui.show(ctx, t(lang, 'profile', {
       name: users.displayName(u), username: u.username ? `@${u.username}` : t(lang, 'none'), id: u.telegram_id,
-      lang: LANG_NAMES[u.language] || t(lang, 'none'), balance: money(u.balance), points: users.totalPoints(u), // umumiy: Mini Manager + Quiz + Hisobni top
+      lang: LANG_NAMES[u.language] || t(lang, 'none'), balance: money(u.balance), points: users.totalPoints(u), // umumiy: Mini Manager + Quiz + Hisobni top + Duel
       tariff: tariffLabel(lang, u), date: formatDate(u.registered_at), refs: await users.activeReferralCount(u.id),
     }), ui.backKb(lang));
   });

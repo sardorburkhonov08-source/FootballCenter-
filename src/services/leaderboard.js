@@ -12,7 +12,7 @@ const rankingCache = new Map();   // key -> { at, promise }
 
 function clearRankingCache() { rankingCache.clear(); }
 
-/** Davr bo'yicha reyting (keshlangan): kind = manager | quiz | score */
+/** Davr bo'yicha reyting (keshlangan): kind = manager | quiz | score | duel */
 async function ranking(kind, r) {
   const key = `${kind}:${new Date(r.start).getTime()}:${new Date(r.end).getTime()}`;
   const hit = rankingCache.get(key);
@@ -34,6 +34,17 @@ async function computeRanking(kind, r) {
        JOIN users u ON u.id = p.user_id
        WHERE g.status = 'finished' AND p.points_earned IS NOT NULL AND g.kickoff_at >= $1 AND g.kickoff_at < $2 AND NOT u.is_blocked
        GROUP BY u.id HAVING sum(p.points_earned) > 0
+       ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end],
+    );
+  }
+  if (kind === 'duel') {
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(r.points)::int AS points, max(r.created_at) AS last_at
+       FROM duel_results r JOIN users u ON u.id = r.user_id
+       WHERE r.created_at >= $1 AND r.created_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id HAVING sum(r.points) > 0
        ORDER BY points DESC, last_at ASC`,
       [r.start, r.end],
     );
@@ -82,7 +93,7 @@ async function board(kind, period, userId, top = 30) {
 
 /** Umumiy (barcha vaqt) o'rin */
 async function overallPlace(kind, userId) {
-  const col = { manager: 'points_manager', quiz: 'points_quiz', score: 'points_score' }[kind];
+  const col = { manager: 'points_manager', quiz: 'points_quiz', score: 'points_score', duel: 'points_duel' }[kind];
   const r = await db.one(
     `SELECT u.${col} AS points,
             (SELECT count(*)::int + 1 FROM users x WHERE x.${col} > u.${col} AND NOT x.is_blocked) AS place

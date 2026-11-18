@@ -1,0 +1,1239 @@
+[
+ {
+  "name": "Lionel Messi",
+  "country": "ARG",
+  "pos": "FWD",
+  "born": 1987,
+  "clubs": [
+   "Barcelona",
+   "Paris Saint-Germain",
+   "Inter Miami"
+  ]
+ },
+ {
+  "name": "Cristiano Ronaldo",
+  "country": "POR",
+  "pos": "FWD",
+  "born": 1985,
+  "clubs": [
+   "Sporting CP",
+   "Manchester United",
+   "Real Madrid",
+   "Juventus",
+   "Al-Nassr"
+  ]
+ },
+ {
+  "name": "Kylian Mbappé",
+  "country": "FRA",
+  "pos": "FWD",
+  "born": 1998,
+  "clubs": [
+   "Monaco",
+   "Paris Saint-Germain",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Erling Haaland",
+  "country": "NOR",
+  "pos": "FWD",
+  "born": 2000,
+  "clubs": [
+   "Molde",
+   "Red Bull Salzburg",
+   "Borussia Dortmund",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Robert Lewandowski",
+  "country": "POL",
+  "pos": "FWD",
+  "born": 1988,
+  "clubs": [
+   "Lech Poznań",
+   "Borussia Dortmund",
+   "Bayern Munich",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Neymar",
+  "country": "BRA",
+  "pos": "FWD",
+  "born": 1992,
+  "clubs": [
+   "Santos",
+   "Barcelona",
+   "Paris Saint-Germain",
+   "Al-Hilal"
+  ]
+ },
+ {
+  "name": "Karim Benzema",
+  "country": "FRA",
+  "pos": "FWD",
+  "born": 1987,
+  "clubs": [
+   "Lyon",
+   "Real Madrid",
+   "Al-Ittihad"
+  ]
+ },
+ {
+  "name": "Harry Kane",
+  "country": "ENG",
+  "pos": "FWD",
+  "born": 1993,
+  "clubs": [
+   "Tottenham Hotspur",
+   "Bayern Munich"
+  ]
+ },
+ {
+  "name": "Mohamed Salah",
+  "country": "EGY",
+  "pos": "FWD",
+  "born": 1992,
+  "clubs": [
+   "Basel",
+   "Chelsea",
+   "Fiorentina",
+   "Roma",
+   "Liverpool"
+  ]
+ },
+ {
+  "name": "Sadio Mané",
+  "country": "SEN",
+  "pos": "FWD",
+  "born": 1992,
+  "clubs": [
+   "Red Bull Salzburg",
+   "Southampton",
+   "Liverpool",
+   "Bayern Munich",
+   "Al-Nassr"
+  ]
+ },
+ {
+  "name": "Luis Suárez",
+  "country": "URU",
+  "pos": "FWD",
+  "born": 1987,
+  "clubs": [
+   "Groningen",
+   "Ajax",
+   "Liverpool",
+   "Barcelona",
+   "Atlético Madrid",
+   "Inter Miami"
+  ]
+ },
+ {
+  "name": "Zlatan Ibrahimović",
+  "country": "SWE",
+  "pos": "FWD",
+  "born": 1981,
+  "clubs": [
+   "Malmö",
+   "Ajax",
+   "Juventus",
+   "Inter",
+   "Barcelona",
+   "Milan",
+   "Paris Saint-Germain",
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "Thierry Henry",
+  "country": "FRA",
+  "pos": "FWD",
+  "born": 1977,
+  "clubs": [
+   "Monaco",
+   "Juventus",
+   "Arsenal",
+   "Barcelona",
+   "New York Red Bulls"
+  ]
+ },
+ {
+  "name": "Ronaldo Nazário",
+  "country": "BRA",
+  "pos": "FWD",
+  "born": 1976,
+  "clubs": [
+   "Cruzeiro",
+   "PSV",
+   "Barcelona",
+   "Inter",
+   "Real Madrid",
+   "Milan",
+   "Corinthians"
+  ]
+ },
+ {
+  "name": "Ronaldinho",
+  "country": "BRA",
+  "pos": "FWD",
+  "born": 1980,
+  "clubs": [
+   "Grêmio",
+   "Paris Saint-Germain",
+   "Barcelona",
+   "Milan",
+   "Flamengo"
+  ]
+ },
+ {
+  "name": "Wayne Rooney",
+  "country": "ENG",
+  "pos": "FWD",
+  "born": 1985,
+  "clubs": [
+   "Everton",
+   "Manchester United",
+   "DC United"
+  ]
+ },
+ {
+  "name": "Didier Drogba",
+  "country": "CIV",
+  "pos": "FWD",
+  "born": 1978,
+  "clubs": [
+   "Guingamp",
+   "Marseille",
+   "Chelsea",
+   "Galatasaray"
+  ]
+ },
+ {
+  "name": "Samuel Eto'o",
+  "country": "CMR",
+  "pos": "FWD",
+  "born": 1981,
+  "clubs": [
+   "Mallorca",
+   "Barcelona",
+   "Inter",
+   "Chelsea"
+  ]
+ },
+ {
+  "name": "Andriy Shevchenko",
+  "country": "UKR",
+  "pos": "FWD",
+  "born": 1976,
+  "clubs": [
+   "Dynamo Kyiv",
+   "Milan",
+   "Chelsea"
+  ]
+ },
+ {
+  "name": "Antoine Griezmann",
+  "country": "FRA",
+  "pos": "FWD",
+  "born": 1991,
+  "clubs": [
+   "Real Sociedad",
+   "Atlético Madrid",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Romelu Lukaku",
+  "country": "BEL",
+  "pos": "FWD",
+  "born": 1993,
+  "clubs": [
+   "Anderlecht",
+   "Chelsea",
+   "Everton",
+   "Manchester United",
+   "Inter",
+   "Roma",
+   "Napoli"
+  ]
+ },
+ {
+  "name": "Lautaro Martínez",
+  "country": "ARG",
+  "pos": "FWD",
+  "born": 1997,
+  "clubs": [
+   "Racing Club",
+   "Inter"
+  ]
+ },
+ {
+  "name": "Vinícius Júnior",
+  "country": "BRA",
+  "pos": "FWD",
+  "born": 2000,
+  "clubs": [
+   "Flamengo",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Son Heung-min",
+  "country": "KOR",
+  "pos": "FWD",
+  "born": 1992,
+  "clubs": [
+   "Hamburg",
+   "Bayer Leverkusen",
+   "Tottenham Hotspur",
+   "Los Angeles FC"
+  ]
+ },
+ {
+  "name": "Raheem Sterling",
+  "country": "ENG",
+  "pos": "FWD",
+  "born": 1994,
+  "clubs": [
+   "Liverpool",
+   "Manchester City",
+   "Chelsea"
+  ]
+ },
+ {
+  "name": "Gabriel Batistuta",
+  "country": "ARG",
+  "pos": "FWD",
+  "born": 1969,
+  "clubs": [
+   "Fiorentina",
+   "Roma"
+  ]
+ },
+ {
+  "name": "Eldor Shomurodov",
+  "country": "UZB",
+  "pos": "FWD",
+  "born": 1995,
+  "clubs": [
+   "Bunyodkor",
+   "Rostov",
+   "Genoa",
+   "Roma",
+   "İstanbul Başakşehir"
+  ]
+ },
+ {
+  "name": "Alessandro Del Piero",
+  "country": "ITA",
+  "pos": "FWD",
+  "born": 1974,
+  "clubs": [
+   "Juventus",
+   "Sydney FC"
+  ]
+ },
+ {
+  "name": "Francesco Totti",
+  "country": "ITA",
+  "pos": "FWD",
+  "born": 1976,
+  "clubs": [
+   "Roma"
+  ]
+ },
+ {
+  "name": "Raúl",
+  "country": "ESP",
+  "pos": "FWD",
+  "born": 1977,
+  "clubs": [
+   "Real Madrid",
+   "Schalke 04"
+  ]
+ },
+ {
+  "name": "Fernando Torres",
+  "country": "ESP",
+  "pos": "FWD",
+  "born": 1984,
+  "clubs": [
+   "Atlético Madrid",
+   "Liverpool",
+   "Chelsea",
+   "Milan"
+  ]
+ },
+ {
+  "name": "David Villa",
+  "country": "ESP",
+  "pos": "FWD",
+  "born": 1981,
+  "clubs": [
+   "Valencia",
+   "Barcelona",
+   "Atlético Madrid",
+   "New York City"
+  ]
+ },
+ {
+  "name": "Sergio Agüero",
+  "country": "ARG",
+  "pos": "FWD",
+  "born": 1988,
+  "clubs": [
+   "Independiente",
+   "Atlético Madrid",
+   "Manchester City",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Edinson Cavani",
+  "country": "URU",
+  "pos": "FWD",
+  "born": 1987,
+  "clubs": [
+   "Palermo",
+   "Napoli",
+   "Paris Saint-Germain",
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "Victor Osimhen",
+  "country": "NGA",
+  "pos": "FWD",
+  "born": 1998,
+  "clubs": [
+   "Lille",
+   "Napoli",
+   "Galatasaray"
+  ]
+ },
+ {
+  "name": "Ousmane Dembélé",
+  "country": "FRA",
+  "pos": "FWD",
+  "born": 1997,
+  "clubs": [
+   "Rennes",
+   "Borussia Dortmund",
+   "Barcelona",
+   "Paris Saint-Germain"
+  ]
+ },
+ {
+  "name": "Bukayo Saka",
+  "country": "ENG",
+  "pos": "FWD",
+  "born": 2001,
+  "clubs": [
+   "Arsenal"
+  ]
+ },
+ {
+  "name": "Lamine Yamal",
+  "country": "ESP",
+  "pos": "FWD",
+  "born": 2007,
+  "clubs": [
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Marco van Basten",
+  "country": "NED",
+  "pos": "FWD",
+  "born": 1964,
+  "clubs": [
+   "Ajax",
+   "Milan"
+  ]
+ },
+ {
+  "name": "Pelé",
+  "country": "BRA",
+  "pos": "FWD",
+  "born": 1940,
+  "clubs": [
+   "Santos",
+   "New York Cosmos"
+  ]
+ },
+ {
+  "name": "Diego Maradona",
+  "country": "ARG",
+  "pos": "FWD",
+  "born": 1960,
+  "clubs": [
+   "Argentinos Juniors",
+   "Boca Juniors",
+   "Barcelona",
+   "Napoli",
+   "Sevilla"
+  ]
+ },
+ {
+  "name": "Johan Cruyff",
+  "country": "NED",
+  "pos": "FWD",
+  "born": 1947,
+  "clubs": [
+   "Ajax",
+   "Barcelona",
+   "Feyenoord"
+  ]
+ },
+ {
+  "name": "Eusébio",
+  "country": "POR",
+  "pos": "FWD",
+  "born": 1942,
+  "clubs": [
+   "Benfica"
+  ]
+ },
+ {
+  "name": "Luka Modrić",
+  "country": "CRO",
+  "pos": "MID",
+  "born": 1985,
+  "clubs": [
+   "Dinamo Zagreb",
+   "Tottenham Hotspur",
+   "Real Madrid",
+   "Milan"
+  ]
+ },
+ {
+  "name": "Kevin De Bruyne",
+  "country": "BEL",
+  "pos": "MID",
+  "born": 1991,
+  "clubs": [
+   "Genk",
+   "Chelsea",
+   "Wolfsburg",
+   "Manchester City",
+   "Napoli"
+  ]
+ },
+ {
+  "name": "Andrés Iniesta",
+  "country": "ESP",
+  "pos": "MID",
+  "born": 1984,
+  "clubs": [
+   "Barcelona",
+   "Vissel Kobe"
+  ]
+ },
+ {
+  "name": "Xavi",
+  "country": "ESP",
+  "pos": "MID",
+  "born": 1980,
+  "clubs": [
+   "Barcelona",
+   "Al-Sadd"
+  ]
+ },
+ {
+  "name": "Zinedine Zidane",
+  "country": "FRA",
+  "pos": "MID",
+  "born": 1972,
+  "clubs": [
+   "Cannes",
+   "Bordeaux",
+   "Juventus",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Andrea Pirlo",
+  "country": "ITA",
+  "pos": "MID",
+  "born": 1979,
+  "clubs": [
+   "Brescia",
+   "Inter",
+   "Milan",
+   "Juventus",
+   "New York City"
+  ]
+ },
+ {
+  "name": "Steven Gerrard",
+  "country": "ENG",
+  "pos": "MID",
+  "born": 1980,
+  "clubs": [
+   "Liverpool",
+   "LA Galaxy"
+  ]
+ },
+ {
+  "name": "Frank Lampard",
+  "country": "ENG",
+  "pos": "MID",
+  "born": 1978,
+  "clubs": [
+   "West Ham United",
+   "Chelsea",
+   "Manchester City",
+   "New York City"
+  ]
+ },
+ {
+  "name": "Paul Scholes",
+  "country": "ENG",
+  "pos": "MID",
+  "born": 1974,
+  "clubs": [
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "David Beckham",
+  "country": "ENG",
+  "pos": "MID",
+  "born": 1975,
+  "clubs": [
+   "Manchester United",
+   "Real Madrid",
+   "LA Galaxy",
+   "Paris Saint-Germain"
+  ]
+ },
+ {
+  "name": "Kaká",
+  "country": "BRA",
+  "pos": "MID",
+  "born": 1982,
+  "clubs": [
+   "São Paulo",
+   "Milan",
+   "Real Madrid",
+   "Orlando City"
+  ]
+ },
+ {
+  "name": "Toni Kroos",
+  "country": "GER",
+  "pos": "MID",
+  "born": 1990,
+  "clubs": [
+   "Bayern Munich",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Mesut Özil",
+  "country": "GER",
+  "pos": "MID",
+  "born": 1988,
+  "clubs": [
+   "Schalke 04",
+   "Werder Bremen",
+   "Real Madrid",
+   "Arsenal",
+   "Fenerbahçe"
+  ]
+ },
+ {
+  "name": "N'Golo Kanté",
+  "country": "FRA",
+  "pos": "MID",
+  "born": 1991,
+  "clubs": [
+   "Caen",
+   "Leicester City",
+   "Chelsea",
+   "Al-Ittihad"
+  ]
+ },
+ {
+  "name": "Jude Bellingham",
+  "country": "ENG",
+  "pos": "MID",
+  "born": 2003,
+  "clubs": [
+   "Birmingham City",
+   "Borussia Dortmund",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Pedri",
+  "country": "ESP",
+  "pos": "MID",
+  "born": 2002,
+  "clubs": [
+   "Las Palmas",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Bruno Fernandes",
+  "country": "POR",
+  "pos": "MID",
+  "born": 1994,
+  "clubs": [
+   "Udinese",
+   "Sampdoria",
+   "Sporting CP",
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "Bernardo Silva",
+  "country": "POR",
+  "pos": "MID",
+  "born": 1994,
+  "clubs": [
+   "Benfica",
+   "Monaco",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Martin Ødegaard",
+  "country": "NOR",
+  "pos": "MID",
+  "born": 1998,
+  "clubs": [
+   "Strømsgodset",
+   "Real Madrid",
+   "Real Sociedad",
+   "Arsenal"
+  ]
+ },
+ {
+  "name": "Rodri",
+  "country": "ESP",
+  "pos": "MID",
+  "born": 1996,
+  "clubs": [
+   "Villarreal",
+   "Atlético Madrid",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Michael Ballack",
+  "country": "GER",
+  "pos": "MID",
+  "born": 1976,
+  "clubs": [
+   "Kaiserslautern",
+   "Bayer Leverkusen",
+   "Bayern Munich",
+   "Chelsea"
+  ]
+ },
+ {
+  "name": "Clarence Seedorf",
+  "country": "NED",
+  "pos": "MID",
+  "born": 1976,
+  "clubs": [
+   "Ajax",
+   "Sampdoria",
+   "Real Madrid",
+   "Inter",
+   "Milan",
+   "Botafogo"
+  ]
+ },
+ {
+  "name": "Patrick Vieira",
+  "country": "FRA",
+  "pos": "MID",
+  "born": 1976,
+  "clubs": [
+   "Cannes",
+   "Milan",
+   "Arsenal",
+   "Juventus",
+   "Inter",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Sergio Busquets",
+  "country": "ESP",
+  "pos": "MID",
+  "born": 1988,
+  "clubs": [
+   "Barcelona",
+   "Inter Miami"
+  ]
+ },
+ {
+  "name": "Jamal Musiala",
+  "country": "GER",
+  "pos": "MID",
+  "born": 2003,
+  "clubs": [
+   "Bayern Munich"
+  ]
+ },
+ {
+  "name": "Florian Wirtz",
+  "country": "GER",
+  "pos": "MID",
+  "born": 2003,
+  "clubs": [
+   "Bayer Leverkusen",
+   "Liverpool"
+  ]
+ },
+ {
+  "name": "Frenkie de Jong",
+  "country": "NED",
+  "pos": "MID",
+  "born": 1997,
+  "clubs": [
+   "Willem II",
+   "Ajax",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Paul Pogba",
+  "country": "FRA",
+  "pos": "MID",
+  "born": 1993,
+  "clubs": [
+   "Manchester United",
+   "Juventus",
+   "Monaco"
+  ]
+ },
+ {
+  "name": "Odil Ahmedov",
+  "country": "UZB",
+  "pos": "MID",
+  "born": 1987,
+  "clubs": [
+   "Pakhtakor",
+   "Anzhi Makhachkala",
+   "Krasnodar",
+   "Shanghai SIPG"
+  ]
+ },
+ {
+  "name": "Server Djeparov",
+  "country": "UZB",
+  "pos": "MID",
+  "born": 1982,
+  "clubs": [
+   "Pakhtakor",
+   "Bunyodkor",
+   "FC Seoul",
+   "Al-Shabab",
+   "Seongnam"
+  ]
+ },
+ {
+  "name": "Abbosbek Fayzullaev",
+  "country": "UZB",
+  "pos": "MID",
+  "born": 2003,
+  "clubs": [
+   "Pakhtakor",
+   "CSKA Moscow"
+  ]
+ },
+ {
+  "name": "Virgil van Dijk",
+  "country": "NED",
+  "pos": "DEF",
+  "born": 1991,
+  "clubs": [
+   "Groningen",
+   "Celtic",
+   "Southampton",
+   "Liverpool"
+  ]
+ },
+ {
+  "name": "Sergio Ramos",
+  "country": "ESP",
+  "pos": "DEF",
+  "born": 1986,
+  "clubs": [
+   "Sevilla",
+   "Real Madrid",
+   "Paris Saint-Germain",
+   "Monterrey"
+  ]
+ },
+ {
+  "name": "Paolo Maldini",
+  "country": "ITA",
+  "pos": "DEF",
+  "born": 1968,
+  "clubs": [
+   "Milan"
+  ]
+ },
+ {
+  "name": "Franco Baresi",
+  "country": "ITA",
+  "pos": "DEF",
+  "born": 1960,
+  "clubs": [
+   "Milan"
+  ]
+ },
+ {
+  "name": "Fabio Cannavaro",
+  "country": "ITA",
+  "pos": "DEF",
+  "born": 1973,
+  "clubs": [
+   "Napoli",
+   "Parma",
+   "Inter",
+   "Juventus",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Carles Puyol",
+  "country": "ESP",
+  "pos": "DEF",
+  "born": 1978,
+  "clubs": [
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Gerard Piqué",
+  "country": "ESP",
+  "pos": "DEF",
+  "born": 1987,
+  "clubs": [
+   "Manchester United",
+   "Barcelona"
+  ]
+ },
+ {
+  "name": "Roberto Carlos",
+  "country": "BRA",
+  "pos": "DEF",
+  "born": 1973,
+  "clubs": [
+   "Palmeiras",
+   "Inter",
+   "Real Madrid",
+   "Fenerbahçe"
+  ]
+ },
+ {
+  "name": "Cafu",
+  "country": "BRA",
+  "pos": "DEF",
+  "born": 1970,
+  "clubs": [
+   "São Paulo",
+   "Roma",
+   "Milan"
+  ]
+ },
+ {
+  "name": "Dani Alves",
+  "country": "BRA",
+  "pos": "DEF",
+  "born": 1983,
+  "clubs": [
+   "Sevilla",
+   "Barcelona",
+   "Juventus",
+   "Paris Saint-Germain"
+  ]
+ },
+ {
+  "name": "Philipp Lahm",
+  "country": "GER",
+  "pos": "DEF",
+  "born": 1983,
+  "clubs": [
+   "Bayern Munich"
+  ]
+ },
+ {
+  "name": "Rio Ferdinand",
+  "country": "ENG",
+  "pos": "DEF",
+  "born": 1978,
+  "clubs": [
+   "West Ham United",
+   "Leeds United",
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "John Terry",
+  "country": "ENG",
+  "pos": "DEF",
+  "born": 1980,
+  "clubs": [
+   "Chelsea",
+   "Aston Villa"
+  ]
+ },
+ {
+  "name": "Thiago Silva",
+  "country": "BRA",
+  "pos": "DEF",
+  "born": 1984,
+  "clubs": [
+   "Fluminense",
+   "Milan",
+   "Paris Saint-Germain",
+   "Chelsea"
+  ]
+ },
+ {
+  "name": "Marcelo",
+  "country": "BRA",
+  "pos": "DEF",
+  "born": 1988,
+  "clubs": [
+   "Fluminense",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Achraf Hakimi",
+  "country": "MAR",
+  "pos": "DEF",
+  "born": 1998,
+  "clubs": [
+   "Real Madrid",
+   "Borussia Dortmund",
+   "Inter",
+   "Paris Saint-Germain"
+  ]
+ },
+ {
+  "name": "Trent Alexander-Arnold",
+  "country": "ENG",
+  "pos": "DEF",
+  "born": 1998,
+  "clubs": [
+   "Liverpool",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Rúben Dias",
+  "country": "POR",
+  "pos": "DEF",
+  "born": 1997,
+  "clubs": [
+   "Benfica",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Franz Beckenbauer",
+  "country": "FRG",
+  "pos": "DEF",
+  "born": 1945,
+  "clubs": [
+   "Bayern Munich",
+   "New York Cosmos",
+   "Hamburg"
+  ]
+ },
+ {
+  "name": "Alessandro Nesta",
+  "country": "ITA",
+  "pos": "DEF",
+  "born": 1976,
+  "clubs": [
+   "Lazio",
+   "Milan"
+  ]
+ },
+ {
+  "name": "Mats Hummels",
+  "country": "GER",
+  "pos": "DEF",
+  "born": 1988,
+  "clubs": [
+   "Bayern Munich",
+   "Borussia Dortmund",
+   "Roma"
+  ]
+ },
+ {
+  "name": "Joško Gvardiol",
+  "country": "CRO",
+  "pos": "DEF",
+  "born": 2002,
+  "clubs": [
+   "Dinamo Zagreb",
+   "RB Leipzig",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Gianluigi Buffon",
+  "country": "ITA",
+  "pos": "GK",
+  "born": 1978,
+  "clubs": [
+   "Parma",
+   "Juventus",
+   "Paris Saint-Germain"
+  ]
+ },
+ {
+  "name": "Manuel Neuer",
+  "country": "GER",
+  "pos": "GK",
+  "born": 1986,
+  "clubs": [
+   "Schalke 04",
+   "Bayern Munich"
+  ]
+ },
+ {
+  "name": "Iker Casillas",
+  "country": "ESP",
+  "pos": "GK",
+  "born": 1981,
+  "clubs": [
+   "Real Madrid",
+   "Porto"
+  ]
+ },
+ {
+  "name": "Thibaut Courtois",
+  "country": "BEL",
+  "pos": "GK",
+  "born": 1992,
+  "clubs": [
+   "Genk",
+   "Chelsea",
+   "Atlético Madrid",
+   "Real Madrid"
+  ]
+ },
+ {
+  "name": "Alisson Becker",
+  "country": "BRA",
+  "pos": "GK",
+  "born": 1992,
+  "clubs": [
+   "Internacional",
+   "Roma",
+   "Liverpool"
+  ]
+ },
+ {
+  "name": "Peter Schmeichel",
+  "country": "DEN",
+  "pos": "GK",
+  "born": 1963,
+  "clubs": [
+   "Brøndby",
+   "Manchester United",
+   "Sporting CP",
+   "Aston Villa",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Lev Yashin",
+  "country": "URS",
+  "pos": "GK",
+  "born": 1929,
+  "clubs": [
+   "Dynamo Moscow"
+  ]
+ },
+ {
+  "name": "Oliver Kahn",
+  "country": "GER",
+  "pos": "GK",
+  "born": 1969,
+  "clubs": [
+   "Karlsruher SC",
+   "Bayern Munich"
+  ]
+ },
+ {
+  "name": "Petr Čech",
+  "country": "CZE",
+  "pos": "GK",
+  "born": 1982,
+  "clubs": [
+   "Rennes",
+   "Chelsea",
+   "Arsenal"
+  ]
+ },
+ {
+  "name": "Edwin van der Sar",
+  "country": "NED",
+  "pos": "GK",
+  "born": 1970,
+  "clubs": [
+   "Ajax",
+   "Juventus",
+   "Fulham",
+   "Manchester United"
+  ]
+ },
+ {
+  "name": "Gianluigi Donnarumma",
+  "country": "ITA",
+  "pos": "GK",
+  "born": 1999,
+  "clubs": [
+   "Milan",
+   "Paris Saint-Germain",
+   "Manchester City"
+  ]
+ },
+ {
+  "name": "Emiliano Martínez",
+  "country": "ARG",
+  "pos": "GK",
+  "born": 1992,
+  "clubs": [
+   "Arsenal",
+   "Aston Villa"
+  ]
+ },
+ {
+  "name": "Jan Oblak",
+  "country": "SVN",
+  "pos": "GK",
+  "born": 1993,
+  "clubs": [
+   "Benfica",
+   "Atlético Madrid"
+  ]
+ },
+ {
+  "name": "Marc-André ter Stegen",
+  "country": "GER",
+  "pos": "GK",
+  "born": 1992,
+  "clubs": [
+   "Borussia Mönchengladbach",
+   "Barcelona"
+  ]
+ }
+]

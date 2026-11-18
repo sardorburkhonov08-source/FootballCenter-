@@ -278,3 +278,10 @@ input[type=search].input { margin-bottom: 4px; }
 .cm-dside b { max-width: 100%; font-size: 13px; }
 .cm-dpts { font-size: 24px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
 .cm-vs { font-weight: 800; color: var(--muted); flex: none; }
+.du-vs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; text-align: center; margin-top: 8px; font-size: 17px; }
+.du-vs.small { font-size: 13px; margin-top: 2px; }
+.du-final.win h2 { color: var(--gold); }
+.du-final { padding: 20px 0; }
+.du-link { font-size: 13px; word-break: break-all; padding: 10px 12px; border-radius: 10px; background: var(--surface2); border: 1px dashed var(--border); }
+.du-clues { margin-top: 10px; }
+.du-clues .kv b { max-width: 65%; }

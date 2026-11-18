@@ -130,6 +130,7 @@ const JOBS = [
   { name: 'quiz', every: 60, fn: quizTick },
   { name: 'score_games', every: 300, fn: () => manager.scoreFinished() },
   { name: 'score_predict', every: 300, fn: () => scorePredict.scoreFinished() },
+  { name: 'duels', every: 60, fn: () => require('../services/duels').tick() },
   { name: 'premium_expiry', every: 300, fn: premiumExpiry },
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
