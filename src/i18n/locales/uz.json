@@ -359,5 +359,20 @@
   "a_fancard_saved": "✅ Karta yangilandi.",
   "a_fancard_birth_year": "Tug'ilgan yil",
   "a_set_fan_card_club_change_price": "Klubni almashtirish narxi (so'm)",
-  "a_set_fan_card_first_fans": "\"Birinchi N muxlis\" belgisi (N)"
+  "a_set_fan_card_first_fans": "\"Birinchi N muxlis\" belgisi (N)",
+  "community_request_admin": "👥 <b>Yangi fan community so'rovi #{id}</b>\n\n⚽ Klub: {club}\n🏷 Nomi: {name}\n📝 Tavsif: {desc}\n👤 Egasi: {user} (<code>{tgid}</code>)\n💰 Narx: {price} so'm\n💳 Egasining balansi: {balance} so'm",
+  "a_cm_reject_reason_enter": "✍️ #{id} so'rovni rad etish sababini yozing:",
+  "a_cm_approved_done": "✅ Tasdiqlandi ({admin})",
+  "a_cm_rejected_done": "❌ Rad etildi ({admin}): {reason}",
+  "a_cm_err_no_money": "⚠️ Egasining balansida mablag' yetarli emas. So'rov kutishda qoladi.",
+  "a_cm_err_owner_club_changed": "⚠️ Egasi muxlislik kartasidagi klubini almashtirgan — so'rovni rad eting.",
+  "a_cm_err_owner_already_member": "⚠️ Egasi allaqachon boshqa fan community a'zosi — so'rovni rad eting.",
+  "community_approved": "🎉 «{name}» fan community'ngiz ochildi! Mini App → Community bo'limida a'zolarni kuting va e'lon yozing.",
+  "community_approved_paid": "🎉 «{name}» fan community'ngiz ochildi! Balansingizdan {price} so'm yechildi. Mini App → Community bo'limida.",
+  "community_rejected": "❌ «{name}» fan community so'rovingiz rad etildi.\nSabab: {reason}",
+  "community_closed": "🔒 «{name}» fan community admin tomonidan yopildi.",
+  "community_kicked": "🚫 Siz «{name}» fan community'sidan chiqarildingiz.",
+  "community_weekly_winner": "🏆 Haftaning fan klubi — {club} muxlislari «{name}»!\n⭐ Hafta davomida {points} points to'plashdi. Tabriklaymiz! 👏\n\n👥 Fan reytingi — Mini App → Community.",
+  "a_btn_community_settings": "👥 Fan community sozlamalari",
+  "a_set_community_extra_price": "Klubning keyingi fan community narxi (so'm)"
 }

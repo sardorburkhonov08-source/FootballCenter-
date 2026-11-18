@@ -66,7 +66,9 @@ const DEFAULTS = {
 
   // 🪪 Muxlislik kartasi (faqat Premium)
   fan_card_club_change_price: 50000,   // klubni almashtirish narxi (balansdan yechiladi)
-  fan_card_first_fans: 100,            // klubning birinchi N muxlisi kartasida maxsus belgi
+  fan_card_first_fans: 100,
+  // 👥 Fan community: klubning birinchi community'si bepul, keyingilari shu narxda (tasdiqlanganda balansdan yechiladi)
+  community_extra_price: 1000000,            // klubning birinchi N muxlisi kartasida maxsus belgi
   // GOAT tanlash uchun takliflar ro'yxati (foydalanuvchi qidirib tanlaydi)
   // Klub ranglari (API-Football jamoa ID → { primary, secondary }). Bu ro'yxatdagi klublar uchun rang logotipdan
   // aniqlanmaydi — rasmiy rang ishlatiladi. Web admin → "🪪 Muxlislik kartalari" → "Klub ranglari" orqali o'zgartiriladi.

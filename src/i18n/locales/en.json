@@ -357,5 +357,20 @@
   "a_fancard_saved": "✅ Card updated.",
   "a_fancard_birth_year": "Birth year",
   "a_set_fan_card_club_change_price": "Club change price (UZS)",
-  "a_set_fan_card_first_fans": "\"First N fans\" badge (N)"
+  "a_set_fan_card_first_fans": "\"First N fans\" badge (N)",
+  "community_request_admin": "👥 <b>New fan community request #{id}</b>\n\n⚽ Club: {club}\n🏷 Name: {name}\n📝 Description: {desc}\n👤 Owner: {user} (<code>{tgid}</code>)\n💰 Price: {price} UZS\n💳 Owner's balance: {balance} UZS",
+  "a_cm_reject_reason_enter": "✍️ Write the reason for rejecting request #{id}:",
+  "a_cm_approved_done": "✅ Approved ({admin})",
+  "a_cm_rejected_done": "❌ Rejected ({admin}): {reason}",
+  "a_cm_err_no_money": "⚠️ The owner does not have enough balance. The request stays pending.",
+  "a_cm_err_owner_club_changed": "⚠️ The owner changed the club on their fan card — please reject the request.",
+  "a_cm_err_owner_already_member": "⚠️ The owner is already in another fan community — please reject the request.",
+  "community_approved": "🎉 Your fan community “{name}” is open! Mini App → Community.",
+  "community_approved_paid": "🎉 Your fan community “{name}” is open! {price} UZS was deducted from your balance. Mini App → Community.",
+  "community_rejected": "❌ Your fan community request “{name}” was rejected.\nReason: {reason}",
+  "community_closed": "🔒 The fan community “{name}” was closed by an admin.",
+  "community_kicked": "🚫 You were removed from the fan community “{name}”.",
+  "community_weekly_winner": "🏆 Fan club of the week — {club} fans “{name}”!\n⭐ They earned {points} points this week. Congratulations! 👏\n\n👥 Fan ranking — Mini App → Community.",
+  "a_btn_community_settings": "👥 Fan community settings",
+  "a_set_community_extra_price": "Price of a club's next fan community (UZS)"
 }

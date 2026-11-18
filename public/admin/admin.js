@@ -34,7 +34,8 @@
     bad_last_name: '⚠️ Familiya noto\'g\'ri (faqat harflar, 30 tagacha)', bad_first_name: '⚠️ Ism noto\'g\'ri (faqat harflar, 30 tagacha)',
     bad_birth_year: '⚠️ Tug\'ilgan yil noto\'g\'ri (yoshi 5–100)', bad_since: '⚠️ Muxlislik yili tug\'ilgan yildan oldin yoki kelajakda bo\'lmasin',
     bad_goat: '⚠️ GOAT 2–40 belgi bo\'lsin', bad_player: '⚠️ Sevimli futbolchi 2–40 belgi bo\'lsin', bad_gender: '⚠️ Jins noto\'g\'ri', bad_region: '⚠️ Hudud noto\'g\'ri',
-    not_active: '⚠️ Karta topilmadi', bad_team_colors: '⚠️ Rang formati: #rrggbb', bad_fan_card_settings: '⚠️ Narx va N — 0 yoki musbat butun son; GOAT ro\'yxati 300 tagacha',
+    not_active: '⚠️ Karta topilmadi', no_money: '⚠️ Egasining balansida mablag\' yetarli emas', not_pending: '⚠️ So\'rov allaqachon ko\'rib chiqilgan',
+    owner_club_changed: '⚠️ Egasi kartadagi klubini almashtirgan — rad eting', owner_already_member: '⚠️ Egasi boshqa community a\'zosi — rad eting', bad_price: '⚠️ Narx — 0 yoki musbat butun son', bad_team_colors: '⚠️ Rang formati: #rrggbb', bad_fan_card_settings: '⚠️ Narx va N — 0 yoki musbat butun son; GOAT ro\'yxati 300 tagacha',
   };
 
   async function api(path, opts = {}) {
@@ -71,7 +72,7 @@
   // ---------- Bo'limlar
   const SECTIONS = [
     ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['prizes', '🏆 Sovrinlar'],
-    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['stats', '📊 Statistika'],
+    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['communities', '👥 Fan community'], ['stats', '📊 Statistika'],
   ];
   let current = 'banners';
 
@@ -84,7 +85,58 @@
   async function show() {
     const v = $('view');
     v.replaceChildren(el('div', { class: 'skeleton' }));
-    try { await ({ banners, featured, games, prizes, quiz, tactics, fancards, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+    try { await ({ banners, featured, games, prizes, quiz, tactics, fancards, communities, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+  }
+
+  // 👥 Fan community'lar — so'rovlar (tasdiqlash: pul shu paytda egasining balansidan yechiladi), faollarini yopish, narx
+  async function communities(v) {
+    const d = await api('/communities');
+    const price = el('input', { class: 'input', type: 'number', min: '0', value: d.price });
+    const savePrice = el('button', { class: 'btn', text: '💾 Saqlash' });
+    savePrice.addEventListener('click', async () => {
+      try { await api('/community-settings', { method: 'PUT', body: { price: Number(price.value) } }); toast('✅ Saqlandi'); } catch (e) { fail(e); }
+    });
+    const STATUS = { pending: '⏳ Kutilmoqda', active: '🟢 Faol', rejected: '❌ Rad etilgan', closed: '🔒 Yopilgan' };
+    const money = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const item = (c) => {
+      const actions = [];
+      if (c.status === 'pending') {
+        actions.push(el('button', { class: 'mini ok', text: '✅ Tasdiqlash', onclick: async () => {
+          if (!window.confirm(c.price ? `Tasdiqlansinmi? Egasining balansidan ${money(c.price)} so'm yechiladi (klubda faol community bo'lsa).` : 'Tasdiqlansinmi?')) return;
+          try { await api(`/communities/${c.id}/approve`, { method: 'POST' }); toast('✅ Tasdiqlandi'); communities(v).catch(fail); } catch (e) { fail(e); }
+        } }));
+        actions.push(el('button', { class: 'mini danger', text: '❌ Rad etish', onclick: async () => {
+          const reason = window.prompt('Rad etish sababi:');
+          if (reason === null) return;
+          try { await api(`/communities/${c.id}/reject`, { method: 'POST', body: { reason } }); toast('✅ Rad etildi'); communities(v).catch(fail); } catch (e) { fail(e); }
+        } }));
+      }
+      if (c.status === 'active') {
+        actions.push(el('button', { class: 'mini danger', text: '🔒 Yopish', onclick: async () => {
+          if (!window.confirm(`«${c.name}» yopilsinmi? Barcha a'zolar chiqariladi.`)) return;
+          try { await api(`/communities/${c.id}/close`, { method: 'POST' }); toast('✅ Yopildi'); communities(v).catch(fail); } catch (e) { fail(e); }
+        } }));
+      }
+      return el('div', { class: 'card' },
+        el('div', { class: 'row between', style: 'flex-wrap:wrap' },
+          el('b', { text: `${c.name} · ${c.team}` }), el('span', { class: 'small', text: STATUS[c.status] || c.status })),
+        c.description ? el('p', { class: 'small', style: 'margin:6px 0', text: c.description }) : null,
+        el('div', { class: 'small muted', text: [`Egasi: ${c.owner.name}${c.owner.username ? ` (@${c.owner.username})` : ''}`, `ID ${c.owner.telegramId}`,
+          `balans ${money(c.owner.balance)} so'm`, `a'zolar ${c.members}`, c.wins ? `🏆 ${c.wins}` : null, c.price ? `narx ${money(c.price)} so'm` : 'bepul',
+          `so'rov ${fmt(c.createdAt)}`, c.rejectReason ? `sabab: ${c.rejectReason}` : null].filter(Boolean).join(' · ') }),
+        actions.length ? el('div', { class: 'row', style: 'margin-top:8px' }, actions) : null);
+    };
+    const pending = d.communities.filter((c) => c.status === 'pending');
+    const rest = d.communities.filter((c) => c.status !== 'pending');
+    v.replaceChildren(
+      el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⚙️ Narx' }),
+        el('p', { class: 'small muted', text: 'Klubning birinchi fan community\'si bepul. Shu klub uchun keyingilari — shu narxda, admin tasdiqlaganda egasining balansidan yechiladi.' }),
+        el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Keyingi community narxi (so\'m)' }), price), savePrice)),
+      el('h2', { text: `⏳ So'rovlar (${pending.length})` }),
+      pending.length ? el('div', { class: 'list' }, pending.map(item)) : el('div', { class: 'card center muted', text: '📭 Yangi so\'rov yo\'q' }),
+      el('h2', { text: `Barcha community'lar (${rest.length})` }),
+      rest.length ? el('div', { class: 'list' }, rest.map(item)) : el('div', { class: 'card center muted', text: '📭 Hali yo\'q' }),
+    );
   }
 
   // 🪪 Muxlislik kartalari — nomaqbul rasmni o'chirish, xato ma'lumotni tuzatish, sozlamalar

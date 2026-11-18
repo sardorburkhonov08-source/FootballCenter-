@@ -707,13 +707,183 @@
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
   ];
 
-  // ================= 👥 COMMUNITY — mazmuni keyin belgilanadi (egasi bilan kelishilgan: hozircha «Tez orada»)
-  function renderCommunity(view) {
-    view.append(el('h2', { style: 'margin:4px 2px 12px', text: t('community_title') }),
-      el('div', { class: 'card', style: 'text-align:center;padding:36px 16px' },
-        el('div', { style: 'font-size:44px', text: '👥' }),
-        el('h3', { text: t('community_soon_title') }),
-        el('p', { class: 'muted', style: 'margin-bottom:0', text: t('community_soon_text') })));
+  // ================= 👥 COMMUNITY — klub fan community'lari va haftalik fan reytingi
+  function cmError(err) {
+    const code = err && err.body && err.body.error;
+    haptic('error');
+    if (code === 'premium_required') { premiumModal(t('cm_need_premium')); return; }
+    toast(I.DICTS.uz[`cm_err_${code}`] ? t(`cm_err_${code}`) : t('error_generic'));
+  }
+
+  /** Community "kartochkasi": klub rangida tasma, logotip, nom, chempion belgisi */
+  function cmBand(c, big) {
+    const col = c.colors || {};
+    return el('div', { class: `cm-band${big ? ' big' : ''}`, style: `background:${col.primary};color:${col.text};border-bottom:4px solid ${col.secondary}` },
+      el('span', { class: 'cm-logo' }, c.team.logo ? el('img', { src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : '⚽'),
+      el('span', { class: 'grow', style: 'min-width:0' },
+        el('b', { class: 'ellipsis', style: 'display:block', text: c.name }),
+        el('span', { class: 'small', style: 'opacity:.85', text: c.team.name })),
+      c.champion ? el('span', { class: 'cm-champ', title: t('cm_champion'), text: '🏆' }) : null,
+      c.wins ? el('span', { class: 'cm-wins', text: `🏆×${c.wins}` }) : null);
+  }
+
+  async function renderCommunity(view) {
+    view.append(el('h2', { style: 'margin:4px 2px 4px', text: t('community_title') }),
+      el('p', { class: 'small muted', style: 'margin:0 2px 12px', text: t('cm_subtitle') }));
+    const box = el('div', null, skeleton(3));
+    view.append(box);
+    let d;
+    try { d = await api('/community'); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
+    const open = (id) => push({ render: (v) => renderCommunityPage(v, id) });
+    const parts = [];
+    if (d.champion) {
+      parts.push(el('button', { class: 'card cm-champion', type: 'button', onclick: () => open(d.champion.id) },
+        el('div', { class: 'small', style: 'font-weight:800;color:var(--gold)', text: t('cm_last_champion') }), cmBand(d.champion)));
+    }
+    const my = d.my && d.standings.find((c) => c.id === d.my.id);
+    if (my) {
+      parts.push(el('h3', { style: 'margin:14px 2px 8px', text: t('cm_my') }),
+        el('button', { class: 'cm-card', type: 'button', onclick: () => open(my.id) }, cmBand(my),
+          el('div', { class: 'cm-meta' }, el('span', { text: t('cm_place', { place: my.place }) }), el('span', { text: t('cm_points', { points: my.points }) }), el('span', { text: t('cm_members', { n: my.members }) }))));
+    } else if (d.pending) {
+      parts.push(el('div', { class: 'card', style: 'border-color:var(--gold)' }, el('b', { text: t('cm_pending_title') }),
+        el('p', { class: 'small muted', style: 'margin:6px 0 0', text: t('cm_pending_text', { name: d.pending.name }) })));
+    } else if (!d.premium || !d.card) {
+      parts.push(el('div', { class: 'card' }, el('b', { text: t('cm_need_title') }),
+        el('p', { class: 'small muted', style: 'margin:6px 0 10px', text: t(d.premium ? 'cm_need_card' : 'cm_need_premium') }),
+        el('button', { class: 'btn block', text: d.premium ? t('cm_go_card') : t('buy_premium_btn'), onclick: () => {
+          if (!d.premium) { openBot('premium'); return; }
+          S.tab = 'profile'; S.stacks.profile = []; render();
+        } })));
+    } else {
+      const mine = d.standings.filter((c) => c.team.id === d.card.teamId);
+      parts.push(el('h3', { style: 'margin:14px 2px 8px', text: t('cm_club_communities', { club: d.card.teamName }) }));
+      if (mine.length) {
+        parts.push(el('div', { class: 'list' }, mine.map((c) => el('div', { class: 'cm-card' },
+          el('button', { type: 'button', style: 'display:block;width:100%;text-align:left', onclick: () => open(c.id) }, cmBand(c)),
+          el('div', { class: 'cm-meta' }, el('span', { text: t('cm_members', { n: c.members }) }), el('span', { text: t('cm_points', { points: c.points }) }),
+            el('button', { class: 'btn', style: 'height:34px;margin-left:auto', text: t('cm_join'), onclick: async (e) => {
+              e.target.disabled = true;
+              try { await api(`/community/${c.id}/join`, { method: 'POST' }); haptic('success'); toast(t('cm_joined')); render(); } catch (err) { cmError(err); e.target.disabled = false; }
+            } }))))));
+      } else parts.push(el('p', { class: 'small muted', style: 'margin:0 2px', text: t('cm_none_for_club') }));
+      parts.push(el('button', { class: 'btn ghost block', style: 'margin-top:10px', text: t('cm_create', { club: d.card.teamName }), onclick: () => push({ render: (v) => renderCommunityCreate(v, d) }) }),
+        el('p', { class: 'small muted', style: 'margin:6px 2px 0', text: d.createPrice ? t('cm_price_paid', { price: money(d.createPrice) }) : t('cm_price_free') }));
+    }
+    parts.push(el('h3', { style: 'margin:18px 2px 4px', text: t('cm_ranking') }),
+      el('p', { class: 'small muted', style: 'margin:0 2px 8px', text: t('cm_ranking_hint', { from: ddmmyyyy(d.week.start), to: ddmmyyyy(new Date(new Date(d.week.end).getTime() - 1).toISOString()) }) }));
+    parts.push(d.standings.length ? el('div', { class: 'list' }, d.standings.map((c) => el('button', { class: `item cm-row${my && my.id === c.id ? ' on' : ''}`, type: 'button', onclick: () => open(c.id) },
+      el('span', { class: 'cm-place', text: c.place <= 3 ? ['🥇', '🥈', '🥉'][c.place - 1] : String(c.place) }),
+      el('span', { class: 'cm-logo sm' }, c.team.logo ? el('img', { src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : '⚽'),
+      el('span', { class: 'grow', style: 'min-width:0' }, el('b', { class: 'ellipsis', style: 'display:block', text: `${c.name}${c.champion ? ' 🏆' : ''}` }),
+        el('span', { class: 'small muted', text: `${c.team.name} · ${t('cm_members', { n: c.members })}` })),
+      el('b', { class: 'gold', text: c.points })))) : el('div', { class: 'card center muted', text: t('cm_ranking_empty') }));
+    box.replaceChildren(...parts);
+  }
+
+  function renderCommunityCreate(view, d) {
+    const name = el('input', { class: 'input', maxlength: '40', placeholder: t('cm_name_ph') });
+    const desc = el('textarea', { class: 'input', rows: '3', maxlength: '300', placeholder: t('cm_desc_ph') });
+    const send = el('button', { class: 'btn block', style: 'margin-top:14px', text: t('cm_send_request') });
+    send.addEventListener('click', async () => {
+      if ([...name.value.trim()].length < 3) { toast(t('cm_err_bad_name')); return; }
+      send.disabled = true;
+      try {
+        await api('/community', { method: 'POST', body: { name: name.value.trim(), description: desc.value.trim() } });
+        haptic('success'); toast(t('cm_request_sent')); goBack();
+      } catch (err) { cmError(err); send.disabled = false; }
+    });
+    view.replaceChildren(backBar(t('cm_create_title')),
+      el('div', { class: 'card' },
+        el('div', { class: 'kv' }, el('span', { text: t('cm_club') }), el('b', { text: d.card.teamName })),
+        el('div', { class: 'kv' }, el('span', { text: t('cm_price') }), el('b', { class: d.createPrice ? 'gold' : '', text: d.createPrice ? `${money(d.createPrice)} ${t('som')}` : t('cm_free') }))),
+      el('label', { class: 'field-label', text: t('cm_name') }), name,
+      el('label', { class: 'field-label', style: 'margin-top:10px', text: t('cm_desc') }), desc,
+      el('p', { class: 'small muted', style: 'margin:10px 2px 0', text: d.createPrice ? t('cm_create_hint_paid', { price: money(d.createPrice) }) : t('cm_create_hint_free') }),
+      send);
+  }
+
+  async function renderCommunityPage(view, id) {
+    view.append(backBar(t('community_title')));
+    const box = el('div', null, skeleton(4));
+    view.append(box);
+    let c;
+    try { c = await api(`/community/${id}`, { fresh: true }); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
+    const refresh = () => render();
+    const st = c.stats;
+    const statLine = (label, value) => el('div', { class: 'kv' }, el('span', { text: label }), el('b', { text: value }));
+    const topList = (items) => (items.length ? items.map((x) => `${x.name} (${x.n})`).join(', ') : '—');
+    const parts = [
+      el('div', { class: 'cm-card' }, cmBand(c, true), c.description ? el('p', { style: 'margin:10px 14px 0', text: c.description }) : null,
+        el('div', { class: 'small muted', style: 'margin:8px 14px 12px', text: t('cm_owner', { name: c.owner.name }) })),
+      el('div', { class: 'stats3', style: 'margin-top:10px' },
+        el('div', { class: 'stat' }, el('b', { text: c.place ? `${c.place}/${c.totalCommunities}` : '—' }), el('span', { text: t('cm_stat_place') })),
+        el('div', { class: 'stat' }, el('b', { class: 'gold', text: c.points }), el('span', { text: t('cm_stat_points') })),
+        el('div', { class: 'stat' }, el('b', { text: c.members }), el('span', { text: t('cm_stat_members') }))),
+      el('div', { class: 'card', style: 'margin-top:10px' }, el('h3', { style: 'margin-top:0', text: t('cm_stats_title') }),
+        statLine(t('cm_avg_age'), st.avg_age ?? '—'),
+        statLine(t('cm_gender'), `${t('fc_male')}: ${st.male} · ${t('fc_female')}: ${st.female}`),
+        statLine(t('cm_avg_since'), st.avg_since ?? '—'),
+        statLine(t('cm_top_regions'), topList(st.regions)),
+        statLine(t('cm_top_goats'), topList(st.goats)),
+        statLine(t('cm_top_players'), topList(st.players))),
+    ];
+    // E'lonlar (egasi yozadi)
+    const posts = el('div', { class: 'list' }, c.posts.length ? c.posts.map((p) => el('div', { class: 'card' },
+      el('div', { style: 'white-space:pre-wrap', text: p.text }),
+      el('div', { class: 'row between', style: 'margin-top:6px' }, el('span', { class: 'small muted', text: `${ddmmyyyy(p.created_at)} ${hhmm(p.created_at)}` }),
+        c.isOwner ? el('button', { class: 'mini danger', text: '🗑', onclick: async () => {
+          try { await api(`/community/posts/${p.id}`, { method: 'DELETE' }); refresh(); } catch (err) { cmError(err); }
+        } }) : null))) : [el('div', { class: 'card center muted', text: t('cm_no_posts') })]);
+    parts.push(el('h3', { style: 'margin:16px 2px 8px', text: t('cm_posts') }));
+    if (c.isOwner) {
+      const text = el('textarea', { class: 'input', rows: '3', maxlength: '1000', placeholder: t('cm_post_ph') });
+      const send = el('button', { class: 'btn', style: 'margin-top:6px', text: t('cm_post_send') });
+      send.addEventListener('click', async () => {
+        if (!text.value.trim()) return;
+        send.disabled = true;
+        try { await api(`/community/${c.id}/posts`, { method: 'POST', body: { text: text.value } }); haptic('success'); refresh(); } catch (err) { cmError(err); send.disabled = false; }
+      });
+      parts.push(el('div', { class: 'card' }, text, send));
+    }
+    parts.push(posts);
+    // A'zolar
+    parts.push(el('h3', { style: 'margin:16px 2px 8px', text: t('cm_members_title', { n: c.members }) }),
+      el('div', { class: 'list' }, c.memberList.length ? c.memberList.map((m, i) => el('div', { class: 'item' },
+        el('span', { class: 'muted', style: 'width:22px', text: String(i + 1) }),
+        el('span', { class: 'grow ellipsis', text: `${m.name}${m.role === 'owner' ? ` · ${t('cm_owner_badge')}` : ''}` }),
+        el('b', { class: 'gold', text: m.points }),
+        c.isOwner && m.role !== 'owner' ? el('button', { class: 'mini danger', text: t('cm_kick'), onclick: () => {
+          modal(t('cm_kick'), t('cm_kick_confirm', { name: m.name }), [
+            el('button', { class: 'btn block', text: t('cm_kick'), onclick: async () => {
+              closeModal();
+              try { await api(`/community/${c.id}/kick`, { method: 'POST', body: { userId: m.id } }); toast(t('cm_kicked')); refresh(); } catch (err) { cmError(err); }
+            } }),
+            el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
+        } }) : null)) : []));
+    // Amallar
+    if (c.isOwner) {
+      parts.push(el('button', { class: 'btn ghost block', style: 'margin-top:12px', text: t('cm_edit'), onclick: () => {
+        const name = el('input', { class: 'input', maxlength: '40', value: c.name });
+        const desc = el('textarea', { class: 'input', rows: '3', maxlength: '300' });
+        desc.value = c.description;
+        modal(t('cm_edit'), null, [name, desc,
+          el('button', { class: 'btn block', text: t('save'), onclick: async () => {
+            try { await api(`/community/${c.id}`, { method: 'PATCH', body: { name: name.value.trim(), description: desc.value.trim() } }); closeModal(); toast(t('fc_saved')); refresh(); } catch (err) { cmError(err); }
+          } }),
+          el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
+      } }));
+    } else if (c.isMember) {
+      parts.push(el('button', { class: 'btn ghost block', style: 'margin-top:12px', text: t('cm_leave'), onclick: () => {
+        modal(t('cm_leave'), t('cm_leave_confirm', { name: c.name }), [
+          el('button', { class: 'btn block', text: t('cm_leave'), onclick: async () => {
+            closeModal();
+            try { await api('/community/leave', { method: 'POST' }); toast(t('cm_left')); goBack(); } catch (err) { cmError(err); }
+          } }),
+          el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
+      } }));
+    }
+    box.replaceChildren(...parts);
   }
 
   function renderGames(view) {

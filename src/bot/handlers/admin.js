@@ -10,6 +10,7 @@ const notify = require('../../services/notify');
 const promo = require('../../services/promo');
 const donations = require('../../services/donations');
 const fancard = require('../../services/fancard');
+const community = require('../../services/community');
 const { formatDate, formatDateTime, parseDate, dayStart, ymd } = require('../../services/time');
 const state = require('../state');
 const ui = require('../ui');
@@ -31,6 +32,7 @@ const SECTIONS = {
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
+  community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -70,7 +72,7 @@ function adminMenuKb(lang) {
     [ui.btn(L('a_btn_tariff'), 'a:tariff'), ui.btn(L('a_btn_tickets'), 'a:tickets')],
     [ui.btn(L('a_btn_faq'), 'a:faq'), ui.btn(L('a_btn_admins'), 'a:admins')],
     [ui.btn(L('a_btn_users'), 'a:users')],
-    [ui.btn(L('a_btn_fancard_settings'), 'a:fancard')],
+    [ui.btn(L('a_btn_fancard_settings'), 'a:fancard'), ui.btn(L('a_btn_community_settings'), 'a:community')],
     [ui.btn(L('a_btn_maintenance'), 'a:maintenance')],
     [ui.btn(L('a_btn_stats'), 'a:stats'), ui.btn(L('a_btn_export'), 'a:export')],
     [ui.btn(L('a_btn_broadcast'), 'a:broadcast')],
@@ -268,7 +270,7 @@ function register(bot) {
     await ui.show(ctx, L(ctx, 'a_title'), adminMenuKb(ctx.lang));
   });
 
-  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard)$/, async (ctx) => {
+  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard|community)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.clear(ctx.from.id);
     await renderSection(ctx, ctx.match[1]);
@@ -541,6 +543,25 @@ function register(bot) {
     return fanCardAdmin(ctx, u);
   });
 
+  // 👥 Fan community so'rovlari
+  admin.callbackQuery(/^cm:ok:(\d+)$/, async (ctx) => {
+    try {
+      await community.approveAndNotify(Number(ctx.match[1]));
+    } catch (e) {
+      if (!(e instanceof community.CommunityError)) throw e;
+      const key = e.message === 'not_pending' ? 'a_already_processed' : `a_cm_err_${e.message}`;
+      return ctx.answerCallbackQuery({ text: L(ctx, key), show_alert: true });
+    }
+    await ctx.answerCallbackQuery();
+    return markProcessed(ctx, L(ctx, 'a_cm_approved_done', { admin: users.displayName(ctx.user) }));
+  });
+  admin.callbackQuery(/^cm:no:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const msg = ctx.callbackQuery.message;
+    await state.set(ctx.from.id, 'admin_cm_reject', { id: Number(ctx.match[1]), chatId: msg && msg.chat.id, messageId: msg && msg.message_id, text: msg && msg.text });
+    return ctx.reply(L(ctx, 'a_cm_reject_reason_enter', { id: ctx.match[1] }));
+  });
+
   // Statistika, eksport
   admin.callbackQuery('a:stats', async (ctx) => { await ctx.answerCallbackQuery(); await stats(ctx); });
   admin.callbackQuery('a:export', async (ctx) => { await ctx.answerCallbackQuery(); await exportUsers(ctx); });
@@ -771,6 +792,23 @@ const states = {
     await state.clear(ctx.from.id);
     await ctx.reply(t(ctx.lang, 'a_fancard_saved'));
     return fanCardAdmin(ctx, u);
+  },
+
+  async admin_cm_reject(ctx, data) {
+    const reason = needText(ctx).slice(0, 500);
+    if (!reason) return ctx.reply(t(ctx.lang, 'a_cm_reject_reason_enter', { id: data.id }));
+    await state.clear(ctx.from.id);
+    try {
+      await community.rejectAndNotify(data.id, reason);
+    } catch (e) {
+      if (e instanceof community.CommunityError) return ctx.reply(t(ctx.lang, 'a_already_processed'));
+      throw e;
+    }
+    const suffix = t(ctx.lang, 'a_cm_rejected_done', { admin: users.displayName(ctx.user), reason });
+    if (data.chatId && data.messageId) {
+      await ctx.api.editMessageText(data.chatId, data.messageId, `${data.text || ''}\n\n${suffix}`, { reply_markup: { inline_keyboard: [] } }).catch(() => {});
+    }
+    return ctx.reply(suffix);
   },
 
   async admin_broadcast(ctx) {

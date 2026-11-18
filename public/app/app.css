@@ -21,7 +21,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 15px; line-height: 1.4; overscroll-behavior-y: none;
 }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; padding: 0; }
 img { display: block; }
 [hidden] { display: none !important; }
@@ -240,3 +240,18 @@ input[type=search].input { margin-bottom: 4px; }
 /* 🎮 Games — o'yinlar ro'yxati */
 .game-item { padding: 14px; }
 .game-ico { font-size: 30px; width: 44px; text-align: center; flex: none; }
+/* 👥 Fan community */
+.cm-card { display: block; width: 100%; padding: 0; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.cm-card + .cm-card { margin-top: 8px; }
+.cm-band { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.cm-band.big { padding: 18px 14px; font-size: 17px; }
+.cm-logo { width: 40px; height: 40px; flex: none; border-radius: 50%; background: #fff; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; font-size: 20px; }
+.cm-band.big .cm-logo { width: 56px; height: 56px; }
+.cm-logo img { width: 80%; height: 80%; object-fit: contain; }
+.cm-logo.sm { width: 30px; height: 30px; font-size: 16px; border: 1px solid var(--border); }
+.cm-champ { font-size: 24px; }
+.cm-wins { font-size: 12px; font-weight: 800; padding: 3px 8px; border-radius: 10px; background: rgba(0,0,0,.18); }
+.cm-meta { display: flex; align-items: center; gap: 12px; padding: 10px 14px; font-size: 13px; color: var(--muted); }
+.cm-champion { display: block; width: 100%; text-align: left; padding: 10px; }
+.cm-champion .cm-band { border-radius: 12px; margin-top: 8px; }
+.cm-row .cm-place { width: 28px; text-align: center; font-weight: 800; font-size: 16px; flex: none; }
