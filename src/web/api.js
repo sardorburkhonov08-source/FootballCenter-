@@ -210,30 +210,41 @@ router.post('/quiz/answer', requirePremium, express.json(), wrap(async (req, res
   return r.error ? res.status(409).json(r) : res.json(r);
 }));
 
-// ---------- 🪪 Muxlislik kartasi
+// ---------- 🪪 Muxlislik kartasi (faqat Premium; Premium bo'lmaganlarga namunaviy karta ko'rsatiladi)
 async function fanCardResponse(user) {
-  const card = await fancard.getCard(user);
+  const data = await fancard.getCard(user);
   const u = await users.byId(user.id);
-  const v = card.updatedAt ? new Date(card.updatedAt).getTime() : 0;
   return {
-    card,
+    ...data,
+    balance: Number(u.balance),
     refLink: config.botUsername && u.ref_code ? `https://t.me/${config.botUsername}?start=ref_${u.ref_code}` : null,
-    imageUrl: config.publicUrl ? `${config.publicUrl}${fancard.imagePath(u.telegram_id)}?v=${v}-${card.premium ? 1 : 0}` : null,
+    storyUrl: data.images && config.publicUrl ? `${config.publicUrl}${data.images.story}` : null,
   };
 }
 
-router.get('/fan-card', wrap(async (req, res) => res.json(await fanCardResponse(req.user))));
+/** Karta amallari: xatolar bir xil formatda qaytadi */
+function cardRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      await fn(req);
+    } catch (e) {
+      if (e instanceof fancard.CardError) {
+        const status = e.message === 'premium_required' ? 402 : ['no_money', 'already_active', 'photo_locked', 'same_team'].includes(e.message) ? 409 : 400;
+        return res.status(status).json({ error: e.message });
+      }
+      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
+      throw e;
+    }
+    return res.json(await fanCardResponse(req.user));
+  });
+}
+const photoJson = express.json({ limit: '3mb' });
 
-router.put('/fan-card', express.json(), wrap(async (req, res) => {
-  try {
-    await fancard.update(req.user, req.body || {});
-  } catch (e) {
-    if (e instanceof fancard.CardError) return res.status(400).json({ error: e.message });
-    if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
-    throw e;
-  }
-  return res.json(await fanCardResponse(req.user));
-}));
+router.get('/fan-card', wrap(async (req, res) => res.json(await fanCardResponse(req.user))));
+router.post('/fan-card/activate', photoJson, cardRoute((req) => fancard.activate(req.user, req.body || {})));
+router.patch('/fan-card', express.json(), cardRoute((req) => fancard.updateFavorites(req.user, req.body || {})));
+router.post('/fan-card/photo', photoJson, cardRoute((req) => fancard.uploadPhoto(req.user, req.body && req.body.photo)));
+router.post('/fan-card/club', express.json(), cardRoute((req) => fancard.changeClub(req.user, req.body && req.body.teamId)));
 
 // Sevimli futbolchi uchun taklif ro'yxati — tanlangan klub tarkibidan
 router.get('/teams/:id/squad', footballRoute(async (req) => {

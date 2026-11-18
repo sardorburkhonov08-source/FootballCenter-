@@ -9,6 +9,7 @@ const users = require('../../services/users');
 const notify = require('../../services/notify');
 const promo = require('../../services/promo');
 const donations = require('../../services/donations');
+const fancard = require('../../services/fancard');
 const { formatDate, formatDateTime, parseDate, dayStart, ymd } = require('../../services/time');
 const state = require('../state');
 const ui = require('../ui');
@@ -19,7 +20,7 @@ const { RULE_KEYS, tariffLabel } = require('./sections');
 const BOOL_KEYS = ['force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
 const TEXT_KEYS = ['donation_channel_id'];
 const MIN1_KEYS = ['premium_price', 'premium_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
-  'donation_announce_timeout_minutes'];
+  'donation_announce_timeout_minutes', 'fan_card_club_change_price', 'fan_card_first_fans'];
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
 const SECTIONS = {
@@ -29,6 +30,7 @@ const SECTIONS = {
   tariff: { title: 'a_btn_tariff', keys: ['premium_price', 'premium_days', 'ai_limit_free', 'ai_limit_premium'] },
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
+  fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -68,6 +70,7 @@ function adminMenuKb(lang) {
     [ui.btn(L('a_btn_tariff'), 'a:tariff'), ui.btn(L('a_btn_tickets'), 'a:tickets')],
     [ui.btn(L('a_btn_faq'), 'a:faq'), ui.btn(L('a_btn_admins'), 'a:admins')],
     [ui.btn(L('a_btn_users'), 'a:users')],
+    [ui.btn(L('a_btn_fancard_settings'), 'a:fancard')],
     [ui.btn(L('a_btn_maintenance'), 'a:maintenance')],
     [ui.btn(L('a_btn_stats'), 'a:stats'), ui.btn(L('a_btn_export'), 'a:export')],
     [ui.btn(L('a_btn_broadcast'), 'a:broadcast')],
@@ -135,7 +138,35 @@ async function userCard(ctx, u) {
     status: t(lang, u.is_blocked ? 'a_status_blocked' : 'a_status_active'),
   });
   const action = u.is_blocked ? ui.btn(t(lang, 'a_btn_unblock'), `us:u:${u.telegram_id}`) : ui.btn(t(lang, 'a_btn_block'), `us:b:${u.telegram_id}`);
-  return ui.show(ctx, text, ui.kb([[action], [ui.btn(t(lang, 'a_btn_users'), 'a:users')], [ui.btn(t(lang, 'back'), 'm:admin')]]));
+  return ui.show(ctx, text, ui.kb([[action], [ui.btn(t(lang, 'a_btn_fancard'), `fc:v:${u.telegram_id}`)],
+    [ui.btn(t(lang, 'a_btn_users'), 'a:users')], [ui.btn(t(lang, 'back'), 'm:admin')]]));
+}
+
+// ---------- 🪪 Muxlislik kartasi: nomaqbul rasmni o'chirish, xato ma'lumotni tuzatish
+const FC_TEXT_FIELDS = { lastName: 'card_l_surname', firstName: 'card_l_name', birthYear: 'a_fancard_birth_year', since: 'card_l_since', goat: 'card_l_goat', player: 'card_l_player' };
+
+async function fanCardAdmin(ctx, u) {
+  const lang = ctx.lang;
+  const c = await fancard.cardRow(u.id);
+  const back = [ui.btn(t(lang, 'back'), `fc:u:${u.telegram_id}`)];
+  if (!c) return ui.show(ctx, t(lang, 'a_fancard_none'), ui.kb([back]));
+  const text = t(lang, 'a_fancard_info', {
+    user: users.displayName(u), club: c.team_name, number: String(c.fan_number).padStart(6, '0'),
+    last: c.last_name, first: c.first_name, year: c.birth_year, gender: t(lang, `card_gender_${c.gender}`),
+    region: t(lang, `region_${c.region}`), since: c.fan_since, goat: c.goat, player: c.fav_player,
+    photo: t(lang, c.photo_path ? 'a_fancard_photo_yes' : 'a_fancard_photo_no'), date: formatDate(c.activated_at),
+  });
+  const tg = u.telegram_id;
+  const edit = (field, key) => ui.btn(`✏️ ${t(lang, key)}`, `fc:e:${tg}:${field}`);
+  const rows = [
+    [edit('lastName', 'card_l_surname'), edit('firstName', 'card_l_name')],
+    [edit('birthYear', 'a_fancard_birth_year'), edit('gender', 'card_l_gender')],
+    [edit('region', 'card_l_region'), edit('since', 'card_l_since')],
+    [edit('goat', 'card_l_goat'), edit('player', 'card_l_player')],
+    c.photo_path ? [ui.btn(t(lang, 'a_btn_fancard_photo_remove'), `fc:rp:${tg}`)] : null,
+    back,
+  ];
+  return ui.show(ctx, text, ui.kb(rows));
 }
 
 async function stats(ctx) {
@@ -237,7 +268,7 @@ function register(bot) {
     await ui.show(ctx, L(ctx, 'a_title'), adminMenuKb(ctx.lang));
   });
 
-  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub)$/, async (ctx) => {
+  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.clear(ctx.from.id);
     await renderSection(ctx, ctx.match[1]);
@@ -449,6 +480,65 @@ function register(bot) {
     const updated = await db.one('UPDATE users SET is_blocked = $2 WHERE id = $1 RETURNING *', [u.id, block]);
     await ctx.answerCallbackQuery({ text: L(ctx, block ? 'a_blocked_done' : 'a_unblocked_done') });
     return userCard(ctx, updated);
+  });
+
+  // 🪪 Muxlislik kartasi
+  const fcUser = async (ctx) => {
+    const u = await users.byTelegramId(Number(ctx.match[1]));
+    if (!u) await ctx.answerCallbackQuery({ text: L(ctx, 'a_user_not_found'), show_alert: true });
+    return u;
+  };
+  admin.callbackQuery(/^fc:u:(\d+)$/, async (ctx) => {
+    const u = await fcUser(ctx); if (!u) return undefined;
+    await ctx.answerCallbackQuery(); await state.clear(ctx.from.id);
+    return userCard(ctx, u);
+  });
+  admin.callbackQuery(/^fc:v:(\d+)$/, async (ctx) => {
+    const u = await fcUser(ctx); if (!u) return undefined;
+    await ctx.answerCallbackQuery(); await state.clear(ctx.from.id);
+    return fanCardAdmin(ctx, u);
+  });
+  admin.callbackQuery(/^fc:rp:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    return ui.show(ctx, L(ctx, 'a_fancard_photo_confirm'), ui.kb([[ui.btn(L(ctx, 'confirm_btn'), `fc:rpy:${ctx.match[1]}`), ui.btn(L(ctx, 'cancel_btn'), `fc:v:${ctx.match[1]}`)]]));
+  });
+  admin.callbackQuery(/^fc:rpy:(\d+)$/, async (ctx) => {
+    const u = await fcUser(ctx); if (!u) return undefined;
+    try { await fancard.adminRemovePhoto(u.id); } catch (e) { if (!(e instanceof fancard.CardError)) throw e; }
+    await ctx.answerCallbackQuery({ text: L(ctx, 'a_fancard_photo_removed') });
+    await notify.toUser(u, 'fancard_photo_removed');
+    return fanCardAdmin(ctx, u);
+  });
+  admin.callbackQuery(/^fc:e:(\d+):(\w+)$/, async (ctx) => {
+    const u = await fcUser(ctx); if (!u) return undefined;
+    await ctx.answerCallbackQuery();
+    const field = ctx.match[2];
+    const tg = u.telegram_id;
+    const back = [ui.btn(L(ctx, 'back'), `fc:v:${tg}`)];
+    if (field === 'gender') {
+      return ui.show(ctx, L(ctx, 'a_fancard_choose', { field: L(ctx, 'card_l_gender') }),
+        ui.kb([fancard.GENDERS.map((g) => ui.btn(L(ctx, `card_gender_${g}`), `fc:s:${tg}:gender:${g}`)), back]));
+    }
+    if (field === 'region') {
+      const rows = [];
+      for (let i = 0; i < fancard.REGIONS.length; i += 2) rows.push(fancard.REGIONS.slice(i, i + 2).map((r) => ui.btn(L(ctx, `region_${r}`), `fc:s:${tg}:region:${r}`)));
+      rows.push(back);
+      return ui.show(ctx, L(ctx, 'a_fancard_choose', { field: L(ctx, 'card_l_region') }), ui.kb(rows));
+    }
+    if (!FC_TEXT_FIELDS[field]) return undefined;
+    await state.set(ctx.from.id, 'admin_fancard_edit', { tg, field });
+    return ui.show(ctx, L(ctx, 'a_fancard_enter', { field: L(ctx, FC_TEXT_FIELDS[field]) }), ui.kb([back]));
+  });
+  admin.callbackQuery(/^fc:s:(\d+):(gender|region):(\w+)$/, async (ctx) => {
+    const u = await fcUser(ctx); if (!u) return undefined;
+    try {
+      await fancard.adminUpdate(u.id, { [ctx.match[2]]: ctx.match[3] });
+    } catch (e) {
+      if (e instanceof fancard.CardError) return ctx.answerCallbackQuery({ text: L(ctx, 'a_fancard_bad'), show_alert: true });
+      throw e;
+    }
+    await ctx.answerCallbackQuery({ text: L(ctx, 'a_fancard_saved') });
+    return fanCardAdmin(ctx, u);
   });
 
   // Statistika, eksport
@@ -666,6 +756,21 @@ const states = {
     if (!u) return ctx.reply(t(ctx.lang, 'a_user_not_found'));
     await state.clear(ctx.from.id);
     return userCard(ctx, u);
+  },
+
+  async admin_fancard_edit(ctx, { tg, field }) {
+    const text = needText(ctx);
+    const u = await users.byTelegramId(tg);
+    if (!u) { await state.clear(ctx.from.id); return ctx.reply(t(ctx.lang, 'a_user_not_found')); }
+    try {
+      await fancard.adminUpdate(u.id, { [field]: text });
+    } catch (e) {
+      if (e instanceof fancard.CardError) return ctx.reply(t(ctx.lang, 'a_fancard_bad'));
+      throw e;
+    }
+    await state.clear(ctx.from.id);
+    await ctx.reply(t(ctx.lang, 'a_fancard_saved'));
+    return fanCardAdmin(ctx, u);
   },
 
   async admin_broadcast(ctx) {

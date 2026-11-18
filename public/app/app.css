@@ -215,19 +215,25 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .search-bar { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; margin-top: 10px; padding: 0 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); text-align: left; font-size: 14px; }
 input[type=search].input { margin-bottom: 4px; }
 
-/* ---------- 🪪 Muxlislik kartasi (tekis ranglar, SPEC 19) */
-.fan-card { position: relative; overflow: hidden; border-radius: 22px; padding: 22px 20px 18px; min-height: 196px; border: 1px solid rgba(255,255,255,.06); }
-.fan-card .fc-stripe { position: absolute; left: 0; right: 0; top: 0; height: 6px; }
-.fc-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; }
-.fc-brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc-no { font-variant-numeric: tabular-nums; letter-spacing: .06em; font-size: 16px; }
-.fc-mid { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 16px; }
-.fc-name { font-size: 34px; font-weight: 800; line-height: 1.05; text-transform: uppercase; word-break: break-word; }
-.fc-logo { width: 64px; height: 64px; object-fit: contain; flex: none; }
-.fc-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
-.fc-wide { grid-column: 1 / -1; }
-.fc-field span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
-.fc-field b { display: block; font-size: 15px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc-badge { position: absolute; right: 16px; bottom: 12px; font-size: 11px; font-weight: 800; letter-spacing: .08em; opacity: .85; }
-.fan-card.premium .fc-fields { padding-right: 70px; }
-.fc-hint { display: block; width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(242,201,76,.1); color: var(--gold); font-size: 13px; font-weight: 600; text-align: left; }
+/* ---------- 🪪 Muxlislik kartasi — stadion chiptasi uslubida (tekis ranglar, SPEC 19) */
+@font-face { font-family: 'FC Display'; src: url('/app/fonts/Oswald-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+.fc-heading { margin: 6px 0 12px; }
+.fc-heading span { display: block; font-size: 12px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.fc-heading b { display: block; font-family: 'FC Display', 'Inter', sans-serif; font-size: 34px; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; }
+/* 🪪 ID karta: rasmlar serverda chiziladi, bu yerda aylantiriladi */
+.idc-flip { display: block; width: 100%; padding: 0; border: 0; background: none; perspective: 1400px; aspect-ratio: 1200 / 756; cursor: pointer; }
+.idc-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+.idc-flip.flipped .idc-inner { transform: rotateY(180deg); }
+.idc-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 3.4% / 5.3%; box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+.idc-back { transform: rotateY(180deg); }
+.idc-locked, .idc-preview { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; aspect-ratio: 1200 / 756; overflow: hidden; border-radius: 3.4% / 5.3%; }
+.idc-locked img, .idc-preview img { width: 100%; height: 100%; display: block; }
+.idc-locked img { filter: blur(5px) saturate(.6); opacity: .55; transform: scale(1.04); }
+.idc-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 44px; }
+.gold-btn { background: var(--gold); color: #0c1712; }
+.idc-progress { height: 4px; border-radius: 4px; background: var(--surface, #1e3226); overflow: hidden; margin-top: 4px; }
+.idc-progress i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+.idc-photo { width: 150px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; display: inline-block; }
+.idc-photo.ph { display: inline-flex; align-items: center; justify-content: center; font-size: 54px; background: var(--surface, #1e3226); }
+.idc-photo.small { width: 96px; margin-bottom: 8px; }
+.item.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }

@@ -53,9 +53,15 @@ test/                   avtomatik testlar
 
 ## 🪪 Muxlislik kartasi (SPEC'dan tashqari, egasi talabi bilan)
 
-- Profil bo'limida (Mini App). Karta raqami — `users.id`. Maydonlar (ixtiyoriy): sevimli klub (API'dan qidirib), sevimli futbolchi, hudud (14 hudud + xorij), qachondan muxlis. Statistika: shu klub muxlislari, shu hududdagilar, jami a'zolar.
-- Oddiy tarif — FootballCenter uslubidagi oddiy karta. Premium — klub logotipi va klub ranglari (`team_colors`: rang logotipdan avtomatik aniqlanadi, logotip ham saqlanadi).
-- Ulashish — referral havolasi bilan; Stories — server karta rasmini chizadi (`/card/<tgId>-<imzo>.png`, `@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`).
+- **Faqat Premium.** Premiumi yo'qlar profilda xira, qulflangan namunani (`/card/sample-<til>.png`) va "💎 Premium bilan oching" tugmasini ko'radi. Premium tugasa karta yashiriladi, ma'lumot saqlanadi.
+- **O'zbekiston ID kartasi uslubida, ikki tomonli** (Mini App'da bosilsa aylanadi). Bayroq o'rnida klub logotipi, karta klub rangida (`team_colors`: rang logotipdan aniqlanadi). Premium belgisi — tagligi bilan oltin to'p (ikkala tomonda).
+  - Old: "[Klub] klubi muxlislik kartasi", rasm, familiya, ism, GOAT (otasining ismi o'rnida), yosh (tug'ilgan yildan hisoblanadi), jins, sevimli futbolchi (fuqarolik o'rnida), muxlislik boshlangan yil, klub, karta raqami = klubning nechanchi muxlisi. Imzo yo'q. Klubning birinchi N muxlisi — "★ Birinchi N muxlis ★".
+  - Orqa: hudud, muxlis raqami, points (Mini Manager + Quiz), faollashtirilgan sana, berilgan joyi — FootballCenter, klub reytingi (shu klub muxlislari orasida points bo'yicha; 1–3-o'rin medal bilan), xira kichik rasm, bot havolasining Code 128 shtrix-kodi (`src/services/barcode.js`).
+  - Yozuvlar foydalanuvchi tilida (`card_*` kalitlari).
+- **Faollashtirish**: ogohlantirish → savollar birma-bir (rasm, familiya, ism, tug'ilgan yil, jins, klub, shu klubdan sevimli futbolchi, GOAT, muxlislik yili, hudud) — hammasi majburiy. Rasm brauzerda 3:4, 600×800 JPEG qilib kichraytiriladi.
+- Keyin faqat **GOAT va sevimli futbolchi** o'zgaradi. **Klubni almashtirish pullik** (`fan_card_club_change_price`, balansdan yechiladi, `fan_card_club_changes` jurnali); yangi klubda raqam navbat oxiridan (`fan_team_counters`, raqam qayta berilmaydi).
+- **Admin** (bot: foydalanuvchi → 🪪; web: "🪪 Muxlislik kartalari"): nomaqbul rasmni o'chiradi (foydalanuvchiga xabar, u yangi rasm yuklaydi), xato ma'lumotni tuzatadi; narx, N va GOAT takliflari — sozlamalar.
+- Rasmlar serverda chiziladi (`@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`, `public/app/fonts/Oswald-Bold.ttf`): `/card/<tgId>-<imzo>-{front|back|story}.png`, xotira keshi bilan. Ma'lumot — `fan_cards` jadvali (005-migratsiya); 004 dagi `users.fav_*`/`fan_*` ustunlari endi ishlatilmaydi.
 
 ## Bosqichlar
 

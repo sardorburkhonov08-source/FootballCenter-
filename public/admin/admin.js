@@ -31,6 +31,10 @@
     bad_prize: '⚠️ Turi, davri va matnini to\'ldiring', bad_question: '⚠️ Barcha maydonlarni to\'ldiring', bad_tactics: '⚠️ Taktika formati: 4-4-2 (jami 10 ta futbolchi)', bad_leagues: '⚠️ Ro\'yxat noto\'g\'ri (ko\'pi bilan 50 ta liga)', bad_popular: '⚠️ Qiymatlar noto\'g\'ri: kun 1–90, liga 0–30, foydalanuvchi ≥ 1',
     already_finished: '⚠️ Tugagan o\'yinni o\'chirib bo\'lmaydi', quiz_api_unavailable: '⚠️ Quiz API mavjud emas', bad_credentials: '❌ Login yoki parol noto\'g\'ri',
     too_many_attempts: '⏳ Juda ko\'p urinish. 15 daqiqadan keyin qayta urinib ko\'ring',
+    bad_last_name: '⚠️ Familiya noto\'g\'ri (faqat harflar, 30 tagacha)', bad_first_name: '⚠️ Ism noto\'g\'ri (faqat harflar, 30 tagacha)',
+    bad_birth_year: '⚠️ Tug\'ilgan yil noto\'g\'ri (yoshi 5–100)', bad_since: '⚠️ Muxlislik yili tug\'ilgan yildan oldin yoki kelajakda bo\'lmasin',
+    bad_goat: '⚠️ GOAT 2–40 belgi bo\'lsin', bad_player: '⚠️ Sevimli futbolchi 2–40 belgi bo\'lsin', bad_gender: '⚠️ Jins noto\'g\'ri', bad_region: '⚠️ Hudud noto\'g\'ri',
+    not_active: '⚠️ Karta topilmadi', bad_fan_card_settings: '⚠️ Narx va N — 0 yoki musbat butun son; GOAT ro\'yxati 300 tagacha',
   };
 
   async function api(path, opts = {}) {
@@ -55,7 +59,7 @@
   // ---------- Bo'limlar
   const SECTIONS = [
     ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['prizes', '🏆 Sovrinlar'],
-    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['stats', '📊 Statistika'],
+    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['stats', '📊 Statistika'],
   ];
   let current = 'banners';
 
@@ -68,7 +72,67 @@
   async function show() {
     const v = $('view');
     v.replaceChildren(el('div', { class: 'skeleton' }));
-    try { await ({ banners, featured, games, prizes, quiz, tactics, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+    try { await ({ banners, featured, games, prizes, quiz, tactics, fancards, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+  }
+
+  // 🪪 Muxlislik kartalari — nomaqbul rasmni o'chirish, xato ma'lumotni tuzatish, sozlamalar
+  async function fancards(v, query) {
+    const q = query || '';
+    const [d, st] = await Promise.all([api(`/fan-cards?q=${encodeURIComponent(q)}`), api('/fan-card-settings')]);
+    const price = el('input', { class: 'input', type: 'number', min: '0', value: st.price });
+    const firstFans = el('input', { class: 'input', type: 'number', min: '0', value: st.firstFans });
+    const goats = el('textarea', { class: 'input', rows: '6' });
+    goats.value = st.goats.join('\n');
+    const saveSt = el('button', { class: 'btn', text: '💾 Saqlash' });
+    saveSt.addEventListener('click', async () => {
+      try {
+        await api('/fan-card-settings', { method: 'PUT', body: { price: Number(price.value), firstFans: Number(firstFans.value), goats: goats.value.split('\n').map((x) => x.trim()).filter(Boolean) } });
+        toast('✅ Saqlandi');
+      } catch (e) { fail(e); }
+    });
+    const search = el('input', { class: 'input', placeholder: 'Ism, familiya, @username, Telegram ID yoki klub', value: q });
+    search.addEventListener('keydown', (e) => { if (e.key === 'Enter') fancards(v, search.value.trim()).catch(fail); });
+    const GENDERS = { male: 'Erkak', female: 'Ayol' };
+    const cardItem = (c) => {
+      const inp = (key, value, attrs) => { const i = el('input', { class: 'input', value: value ?? '', ...(attrs || {}) }); i.dataset.key = key; return i; };
+      const sel = (key, options, value) => { const s2 = el('select', { class: 'input' }, options.map(([k, label]) => el('option', { value: k, text: label, selected: k === value }))); s2.dataset.key = key; return s2; };
+      const fields = [
+        ['Familiya', inp('lastName', c.lastName)], ['Ism', inp('firstName', c.firstName)],
+        ['Tug\'ilgan yil', inp('birthYear', c.birthYear, { type: 'number' })], ['Jins', sel('gender', Object.entries(GENDERS), c.gender)],
+        ['Hudud', sel('region', d.regions.map((r) => [r.code, r.name]), c.region)], ['Muxlislik boshlangan', inp('since', c.since, { type: 'number' })],
+        ['GOAT', inp('goat', c.goat)], ['Sevimli futbolchi', inp('player', c.player)],
+      ];
+      const save = el('button', { class: 'mini ok', text: '💾 Saqlash' });
+      save.addEventListener('click', async () => {
+        const body = {};
+        for (const [, input] of fields) body[input.dataset.key] = ['birthYear', 'since'].includes(input.dataset.key) ? Number(input.value) : input.value;
+        try { await api(`/fan-cards/${c.userId}`, { method: 'PATCH', body }); toast('✅ Karta yangilandi'); } catch (e) { fail(e); }
+      });
+      const removePhoto = c.photoUrl ? el('button', { class: 'mini danger', text: '🗑 Rasmni o\'chirish', onclick: async () => {
+        if (!window.confirm('Rasm o\'chirilsinmi? Foydalanuvchiga yangi rasm yuklash haqida xabar boradi.')) return;
+        try { await api(`/fan-cards/${c.userId}/photo`, { method: 'DELETE' }); toast('✅ Rasm o\'chirildi'); fancards(v, q).catch(fail); } catch (e) { fail(e); }
+      } }) : null;
+      return el('div', { class: 'card' },
+        el('div', { class: 'row', style: 'align-items:flex-start;flex-wrap:wrap' },
+          c.photoUrl ? el('div', { class: 'thumb' }, el('img', { src: c.photoUrl, alt: '' })) : el('div', { class: 'thumb', title: 'Rasm yo\'q — foydalanuvchi yangisini yuklashi kerak' }, '🖼'),
+          el('div', { class: 'grow', style: 'min-width:200px' },
+            el('b', { text: `${c.team.name} · № ${String(c.fanNumber).padStart(6, '0')}` }),
+            el('div', { class: 'small muted', text: [c.username ? `@${c.username}` : null, `ID ${c.telegramId}`, `faollashtirilgan ${fmt(c.activatedAt)}`, c.premium ? '💎 Premium' : 'Premium tugagan'].filter(Boolean).join(' · ') }))),
+        el('div', { class: 'form-grid', style: 'margin-top:8px' }, fields.map(([label, input]) => el('div', null, el('label', { class: 'field-label', text: label }), input))),
+        el('div', { class: 'row', style: 'margin-top:8px' }, save, removePhoto));
+    };
+    v.replaceChildren(
+      el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⚙️ Sozlamalar' }),
+        el('div', { class: 'form-grid' },
+          el('div', null, el('label', { class: 'field-label', text: 'Klubni almashtirish narxi (so\'m)' }), price),
+          el('div', null, el('label', { class: 'field-label', text: '"Birinchi N muxlis" belgisi — N' }), firstFans),
+          el('div', { style: 'grid-column:1/-1' }, el('label', { class: 'field-label', text: 'GOAT takliflari (har qatorda bitta)' }), goats),
+          saveSt)),
+      el('div', { class: 'card' }, el('label', { class: 'field-label', text: '🔍 Qidirish (Enter)' }), search),
+      el('h2', { text: `Kartalar (${d.cards.length})` }),
+      el('p', { class: 'small muted', text: 'Rasmi o\'chirilgan kartalar ro\'yxat boshida. Klub va karta raqamini o\'zgartirib bo\'lmaydi.' }),
+      d.cards.length ? el('div', { class: 'list' }, d.cards.map(cardItem)) : el('div', { class: 'card center muted', text: '📭 Kartalar yo\'q' }),
+    );
   }
 
   // 🎬 Bannerlar
