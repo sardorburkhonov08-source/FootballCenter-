@@ -72,3 +72,20 @@ test("baza tugasa — eng eski savol nusxa sifatida qayta chiqadi (30 kun ichida
   const next = await quiz.publishNext();
   assert.notStrictEqual(next.question, again.question);
 });
+
+test("deploydan oldin chiqqan inglizcha (API) savol soat kutmasdan 4 tilli savolga almashtiriladi", async () => {
+  const { quizTick } = require('../src/jobs/scheduler');
+  await db.query("UPDATE quiz_questions SET published_at = now() - interval '60 days' WHERE published_at IS NOT NULL");
+  const old = await db.one(
+    `INSERT INTO quiz_questions (question, option_a, option_b, option_c, option_d, correct_option, source, published_at)
+     VALUES ('Who won the 1930 World Cup (API)?', 'Uruguay', 'Brazil', 'Italy', 'Spain', 'A', 'api', now() - interval '5 minutes') RETURNING *`,
+  );
+  assert.strictEqual((await quiz.current()).id, old.id);
+  await quizTick();
+  const cur = await quiz.current();
+  assert.notStrictEqual(cur.id, old.id);
+  assert.ok(['bank', 'bank_repeat'].includes(cur.source));
+  // 4 tilli savol esa soat to'lmaguncha almashtirilmaydi
+  await quizTick();
+  assert.strictEqual((await quiz.current()).id, cur.id);
+});
