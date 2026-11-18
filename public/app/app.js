@@ -982,131 +982,286 @@
   }
 
   // ================= 👤 PROFIL
-  // ================= 🪪 MUXLISLIK KARTASI
-  // Rangni qoraytirish/oqartirish (k: -1..1) — tekis ranglar bilan "o'rilgan maysa" chiziqlari uchun
-  function shade(hexColor, k) {
-    const n = parseInt(hexColor.slice(1), 16);
-    const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k));
-    return `#${ch.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+  // ================= 🪪 MUXLISLIK KARTASI (faqat Premium, ID karta uslubida)
+  // Karta rasmlari serverda chiziladi (old/orqa tomon, Stories) — bu yerda faqat ko'rsatiladi va aylantiriladi.
+  /** Bo'sh (null) bo'laklarsiz almashtirish */
+  function put(box, ...nodes) { box.replaceChildren(...nodes.flat().filter(Boolean)); }
+  const NAME_RE = /^\p{L}[\p{L}\p{M} '’ʻʼ`-]*$/u;
+  const yearNow = () => new Date(Date.now() + TZ_OFFSET).getUTCFullYear();
+  const validName = (v) => { const s = String(v || '').trim(); return !!s && [...s].length <= 30 && NAME_RE.test(s); };
+  const validText = (v) => { const n = [...String(v || '').trim()].length; return n >= 2 && n <= 40; };
+
+  function cardError(err) {
+    const code = err && err.body && err.body.error;
+    if (code === 'no_money') {
+      modal(t('fc_no_money'), null, [
+        el('button', { class: 'btn block', text: t('fc_topup'), onclick: () => { closeModal(); openBot(); } }),
+        el('button', { class: 'btn ghost block', text: t('close_btn'), onclick: closeModal })]);
+      return;
+    }
+    if (code === 'premium_required') { premiumModal(); return; }
+    haptic('error');
+    if (err && err.status === 503) { toast(t('football_unavailable')); return; }
+    toast(I.DICTS.uz[`fc_err_${code}`] ? t(`fc_err_${code}`) : t('error_generic'));
   }
 
-  /** Futbol maydoni chiziqlari: o'rta chiziq, markaziy doira, jarima maydoni */
-  function pitchSvg(line) {
-    const ns = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('viewBox', '0 0 316 148');
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.setAttribute('class', 'fc-pitch');
-    const add = (tag, attrs) => { const e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); svg.appendChild(e); };
-    const common = { fill: 'none', stroke: line, 'stroke-width': '1.4' };
-    add('line', { x1: 196, y1: 0, x2: 196, y2: 148, ...common });
-    add('circle', { cx: 196, cy: 80, r: 44, ...common });
-    add('circle', { cx: 196, cy: 80, r: 2.6, fill: line });
-    add('rect', { x: 272, y: 30, width: 60, height: 100, ...common });
-    add('path', { d: 'M272 56 A 26 26 0 0 0 272 104', ...common });
-    return svg;
+  /** Rasm tanlash: markazdan 3:4 qirqiladi, 600×800 JPEG qilib kichraytiriladi (serverga ~100 KB ketadi) */
+  function pickPhoto(onPicked) {
+    const input = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      input.remove();
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const W = 600; const H = 800;
+        const k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+        const sw = W / k; const sh = H / k;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        canvas.getContext('2d').drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, W, H);
+        URL.revokeObjectURL(url);
+        onPicked(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); toast(t('fc_err_bad_photo')); };
+      img.src = url;
+    });
+    document.body.append(input);
+    input.click();
   }
 
-  function fanCardView(c) {
-    const st = c.style;
-    const bg = st.bg === '#16241d' ? '#12301f' : st.bg; // oddiy karta — maydon yashili
-    const dark = st.text !== '#0c1712';
-    const stripe = shade(bg, dark ? 0.05 : -0.05);
-    const line = dark ? 'rgba(255,255,255,.22)' : 'rgba(12,23,18,.22)';
-    const field = (label, value) => el('div', { class: 'fc-field' }, el('span', { text: label }), el('b', { text: value || '—' }));
-    const logo = c.premium && c.team && c.team.logo;
-    return el('div', { class: `fan-card${c.premium ? ' premium' : ''}`, style: `--fc-bg:${bg};--fc-stripe:${stripe};--fc-text:${st.text};--fc-accent:${st.accent}` },
-      pitchSvg(line),
-      logo ? el('img', { class: 'fc-watermark', src: logo, alt: '', referrerpolicy: 'no-referrer' }) : null,
-      el('div', { class: 'fc-main' },
-        el('div', { class: 'fc-top' },
-          el('span', { class: 'fc-brand', text: '⚽ FootballCenter' }),
-          el('span', { class: 'fc-pass' }, el('small', { text: 'FAN PASS' }), el('b', { text: `№ ${String(c.number).padStart(4, '0')}` }))),
-        el('div', { class: 'fc-name', text: c.name }),
-        c.team ? el('div', { class: 'fc-club' }, logo ? el('img', { src: logo, alt: '', referrerpolicy: 'no-referrer' }) : el('span', { text: '♥' }), el('span', { text: c.team.name })) : null),
-      el('div', { class: 'fc-stub' },
-        field(t('fc_since'), c.since ? t('fc_since_value', { year: c.since }) : null),
-        field(t('fc_player_short'), c.player),
-        field(t('fc_region'), c.region && c.region.name)),
-      c.premium ? el('div', { class: 'fc-badge', text: 'PREMIUM' }) : null);
+  /** Matn maydoni + mos takliflar ro'yxati (ro'yxatdan tanlash yoki o'zi yozish) */
+  function suggestInput({ placeholder, value, items, onChange }) {
+    const input = el('input', { class: 'input', placeholder, value: value || '', maxlength: '40', autocomplete: 'off' });
+    const list = el('div', { class: 'list', style: 'margin-top:6px' });
+    const draw = () => {
+      const q = norm(input.value.trim());
+      const all = items();
+      const found = (q ? all.filter((x) => norm(x).includes(q)) : all).slice(0, 8);
+      list.replaceChildren(...found.map((name) => el('button', { class: `item${name === input.value.trim() ? ' on' : ''}`, type: 'button', onclick: () => { input.value = name; haptic(); onChange(name); draw(); } }, el('span', { class: 'grow ellipsis', text: name }))));
+    };
+    input.addEventListener('input', () => { onChange(input.value.trim()); draw(); });
+    draw();
+    return { box: el('div', null, input, list), redraw: draw };
   }
 
-  async function fanCardSection(container) {
-    container.replaceChildren(el('div', { class: 'skeleton', style: 'height:200px' }));
-    let d;
-    try { d = await api('/fan-card'); } catch (err) { container.replaceChildren(errorBox(err)); return; }
-    const c = d.card;
-    const stat = (value, label) => el('div', { class: 'stat fc-stat' }, el('b', { text: value ?? '—' }), el('span', { text: label }));
-    const editBox = el('div');
-    const share = el('button', { class: 'btn ghost', text: t('fc_share'), onclick: () => {
-      const text = t('fc_share_text');
-      const url = d.refLink || (S.botUsername ? `https://t.me/${S.botUsername}` : '');
-      const link = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
-      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank', 'noopener');
-    } });
-    const story = el('button', { class: 'btn', text: t('fc_story'), onclick: () => {
-      if (!d.imageUrl || !tg || typeof tg.shareToStory !== 'function') { toast(t('fc_story_unsupported')); return; }
-      try {
-        tg.shareToStory(d.imageUrl, { text: `${t('fc_share_text')} ${d.refLink || ''}`.trim().slice(0, 200) });
-      } catch (e) { toast(t('fc_story_unsupported')); }
-    } });
-    container.replaceChildren(...[
-      el('div', { class: 'fc-heading' }, el('span', { text: t('fc_kicker') }), el('b', { text: t('fc_headline') })),
-      fanCardView(c),
-      !c.premium && c.team ? el('button', { class: 'fc-hint', onclick: premiumModal, text: t('fc_premium_hint') }) : null,
-      el('div', { class: 'stats3', style: 'margin-top:10px' },
-        stat(c.stats.sameTeam, c.team ? t('fc_stat_club', { club: c.team.name }) : t('fc_club')),
-        stat(c.stats.sameRegion, t('fc_stat_region')),
-        stat(c.stats.total, t('fc_stat_total'))),
-      el('div', { class: 'card row between', style: 'margin-top:10px' },
-        el('div', null, el('b', { text: t('fc_profile') }), el('div', { class: 'small muted', text: t('fc_profile_hint') })),
-        el('button', { class: 'btn ghost fc-edit', text: `${c.filled}/${c.fields} ✏️`, onclick: () => { haptic(); editBox.childElementCount ? editBox.replaceChildren() : editBox.replaceChildren(fanCardForm(c, () => fanCardSection(container))); } })),
-      editBox,
-      el('div', { class: 'grid2', style: 'margin-top:10px' }, share, story),
-    ].filter(Boolean));
-  }
-
-  function fanCardForm(c, onSaved) {
-    let teamId = c.team ? c.team.id : null;
-    const teamLabel = el('div', { class: 'small', style: 'margin-top:6px', text: c.team ? `✅ ${c.team.name}` : '' });
-    const teamInput = el('input', { class: 'input', placeholder: t('fc_club_search'), autocomplete: 'off' });
-    const teamResults = el('div');
-    const player = el('input', { class: 'input', maxlength: '40', placeholder: t('fc_player_ph'), value: c.player || '', list: 'fc-players' });
-    const players = el('datalist', { id: 'fc-players' });
-    const loadSquad = (id) => { if (!id) return; api(`/teams/${id}/squad`).then((r) => players.replaceChildren(...r.players.map((n) => el('option', { value: n })))).catch(() => {}); };
-    loadSquad(teamId);
+  /** Klub qidirish (API-Football) */
+  function clubSearch(onPick) {
+    const input = el('input', { class: 'input', placeholder: t('fc_club_search'), autocomplete: 'off' });
+    const results = el('div', { class: 'list', style: 'margin-top:6px' });
     let timer = null;
-    teamInput.addEventListener('input', () => {
+    input.addEventListener('input', () => {
       clearTimeout(timer);
-      const q = teamInput.value.trim();
-      if (q.length < 3) { teamResults.replaceChildren(); return; }
+      const q = input.value.trim();
+      if (q.length < 3) { results.replaceChildren(); return; }
       timer = setTimeout(async () => {
         try {
           const r = await api(`/search/teams?q=${encodeURIComponent(q)}`);
-          teamResults.replaceChildren(...r.teams.slice(0, 8).map((tm) => el('button', { class: 'item', type: 'button', onclick: () => {
-            teamId = tm.id; teamLabel.textContent = `✅ ${tm.name}`; teamResults.replaceChildren(); teamInput.value = ''; loadSquad(tm.id); haptic();
-          } }, tm.logo ? crest(tm.logo) : el('span', { class: 'crest-ph' }), el('span', { class: 'grow ellipsis' }, tm.name, tm.country ? el('span', { class: 'muted small', text: ` · ${tm.country}` }) : null))));
-        } catch (err) { teamResults.replaceChildren(errorBox(err)); }
+          results.replaceChildren(...r.teams.slice(0, 8).map((tm) => el('button', { class: 'item', type: 'button', onclick: () => { haptic(); onPick(tm); } },
+            tm.logo ? crest(tm.logo) : el('span', { class: 'crest-ph' }),
+            el('span', { class: 'grow ellipsis' }, tm.name, tm.country ? el('span', { class: 'muted small', text: ` · ${tm.country}` }) : null))));
+        } catch (err) { results.replaceChildren(errorBox(err)); }
       }, 600);
     });
-    const region = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
-      c.regions.map((r) => el('option', { value: r.code, text: r.name, selected: c.region && c.region.code === r.code })));
-    const yearNow = new Date(Date.now() + 5 * 3600e3).getUTCFullYear();
-    const since = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
-      Array.from({ length: yearNow - 1949 }, (_, i) => yearNow - i).map((y) => el('option', { value: y, text: y, selected: c.since === y })));
-    const save = el('button', { class: 'btn block', style: 'margin-top:12px', text: t('save') });
+    return el('div', null, input, results);
+  }
+
+  const squadCache = new Map();
+  function loadSquad(teamId, after) {
+    if (!teamId || squadCache.has(teamId)) { after(); return; }
+    api(`/teams/${teamId}/squad`).then((r) => { squadCache.set(teamId, r.players || []); after(); }).catch(() => { squadCache.set(teamId, []); after(); });
+  }
+
+  /** Karta: ikki tomon, bosilsa aylanadi */
+  function flipCard(images) {
+    const box = el('button', { class: 'idc-flip', type: 'button', 'aria-label': t('fc_flip_hint') },
+      el('div', { class: 'idc-inner' },
+        el('img', { class: 'idc-face', src: images.front, alt: '' }),
+        el('img', { class: 'idc-face idc-back', src: images.back, alt: '' })));
+    box.addEventListener('click', () => { haptic(); box.classList.toggle('flipped'); });
+    return box;
+  }
+
+  async function fanCardSection(container) {
+    put(container, el('div', { class: 'skeleton', style: 'height:220px' }));
+    let d;
+    try { d = await api('/fan-card', { fresh: true }); } catch (err) { put(container, errorBox(err, () => fanCardSection(container))); return; }
+    const heading = el('div', { class: 'fc-heading' }, el('span', { text: t('fc_kicker') }), el('b', { text: t('fc_headline') }));
+    const refresh = () => fanCardSection(container);
+
+    if (!d.premium) {
+      put(container, heading,
+        el('button', { class: 'idc-locked', type: 'button', onclick: premiumModal },
+          el('img', { src: d.sampleUrl, alt: '' }), el('span', { class: 'idc-lock', text: '🔒' })),
+        el('p', { class: 'small muted', style: 'margin:10px 2px', text: t('fc_locked_text') }),
+        d.activated ? el('p', { class: 'small', style: 'margin:0 2px 10px', text: t('fc_locked_saved') }) : null,
+        el('button', { class: 'btn block gold-btn', text: t('fc_locked_btn'), onclick: premiumModal }));
+      return;
+    }
+
+    if (!d.activated) {
+      put(container, heading,
+        el('div', { class: 'idc-preview' }, el('img', { src: d.sampleUrl, alt: '' })),
+        el('p', { class: 'small muted', style: 'margin:10px 2px', text: t('fc_activate_hint') }),
+        el('button', { class: 'btn block', text: t('fc_activate'), onclick: () => activationWarning(d, refresh) }));
+      return;
+    }
+
+    const c = d.card;
+    const share = el('button', { class: 'btn ghost', text: t('fc_share'), onclick: () => {
+      const url = d.refLink || (S.botUsername ? `https://t.me/${S.botUsername}` : '');
+      const link = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(t('fc_share_text'))}`;
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, '_blank', 'noopener');
+    } });
+    const story = el('button', { class: 'btn', text: t('fc_story'), onclick: () => {
+      if (!d.storyUrl || !tg || typeof tg.shareToStory !== 'function') { toast(t('fc_story_unsupported')); return; }
+      try { tg.shareToStory(d.storyUrl, { text: `${t('fc_share_text')} ${d.refLink || ''}`.trim().slice(0, 200) }); } catch (e) { toast(t('fc_story_unsupported')); }
+    } });
+    const save = el('button', { class: 'btn ghost', text: t('fc_save_img'), onclick: () => {
+      if (!d.storyUrl || !tg || typeof tg.downloadFile !== 'function') { toast(t('fc_save_unsupported')); return; }
+      try { tg.downloadFile({ url: d.storyUrl, file_name: `fan-card-${c.fanNumber}.png` }); } catch (e) { toast(t('fc_save_unsupported')); }
+    } });
+    const photoWarn = c.hasPhoto ? null : el('div', { class: 'card', style: 'margin:0 0 10px;border-color:var(--gold)' },
+      el('p', { style: 'margin-top:0', text: t('fc_photo_removed') }),
+      el('button', { class: 'btn block', text: t('fc_photo_upload'), onclick: () => pickPhoto(async (photo) => {
+        try { await api('/fan-card/photo', { method: 'POST', body: { photo } }); haptic('success'); toast(t('fc_saved')); refresh(); } catch (err) { cardError(err); }
+      }) }));
+    put(container, heading, photoWarn,
+      flipCard(d.images),
+      el('div', { class: 'small muted', style: 'margin:8px 0 10px;text-align:center', text: `↻ ${t('fc_flip_hint')}` }),
+      el('div', { class: 'grid2' }, story, share),
+      el('div', { class: 'grid2', style: 'margin-top:8px' }, save,
+        el('button', { class: 'btn ghost', text: t('fc_edit'), onclick: () => push({ render: (v) => renderFavoritesEdit(v, d) }) })),
+      el('button', { class: 'btn ghost block', style: 'margin-top:8px', text: t('fc_change_club'), onclick: () => clubChange(d) }));
+  }
+
+  function activationWarning(d, done) {
+    haptic('warning');
+    modal(t('fc_warn_title'), t('fc_warn_text', { price: money(d.clubChangePrice) }), [
+      el('button', { class: 'btn block', text: t('fc_warn_ok'), onclick: () => { closeModal(); push({ render: (v) => renderActivation(v, d, done) }); } }),
+      el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
+  }
+
+  /** Faollashtirish: savollar birma-bir, hammasi majburiy */
+  function renderActivation(view, d, done) {
+    const f = { photo: null, lastName: '', firstName: '', birthYear: null, gender: null, team: null, player: '', goat: '', since: null, region: null };
+    const regionName = (code) => (d.regions.find((r) => r.code === code) || {}).name || '';
+    const years = (from) => Array.from({ length: yearNow() - from + 1 }, (_, i) => yearNow() - i);
+    const choice = (items, current, onPick) => el('div', { class: 'list' }, items.map(([value, label]) =>
+      el('button', { class: `item${value === current ? ' on' : ''}`, type: 'button', onclick: () => { haptic(); onPick(value); } }, el('span', { class: 'grow', text: label }), value === current ? el('span', { text: '✓' }) : null)));
+    const textStep = (key, hint) => ({
+      title: t(key === 'lastName' ? 'fc_q_last' : 'fc_q_first'), hint,
+      body: (next) => {
+        const input = el('input', { class: 'input', value: f[key], maxlength: '30', autocomplete: key === 'lastName' ? 'family-name' : 'given-name' });
+        input.addEventListener('input', () => { f[key] = input.value.trim(); next.disabled = !validName(f[key]); });
+        setTimeout(() => input.focus(), 50);
+        return input;
+      },
+      valid: () => validName(f[key]),
+    });
+    const steps = [
+      { title: t('fc_q_photo'), hint: t('fc_photo_hint'), valid: () => !!f.photo, body: (next, redraw) => el('div', { style: 'text-align:center' },
+        f.photo ? el('img', { class: 'idc-photo', src: f.photo, alt: '' }) : el('div', { class: 'idc-photo ph', text: '👤' }),
+        el('button', { class: 'btn ghost', style: 'margin-top:10px', text: f.photo ? t('fc_photo_change') : t('fc_photo_pick'), onclick: () => pickPhoto((p) => { f.photo = p; redraw(); }) })) },
+      textStep('lastName', t('fc_name_hint')),
+      textStep('firstName', t('fc_name_hint')),
+      { title: t('fc_q_birth'), hint: t('fc_birth_hint'), valid: () => !!f.birthYear, body: (next) => {
+        const sel = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
+          years(yearNow() - 100).filter((y) => y <= yearNow() - 5).map((y) => el('option', { value: y, text: y, selected: f.birthYear === y })));
+        sel.addEventListener('change', () => { f.birthYear = Number(sel.value) || null; if (f.since && f.birthYear && f.since < f.birthYear) f.since = null; next.disabled = !f.birthYear; });
+        return sel;
+      } },
+      { title: t('fc_q_gender'), valid: () => !!f.gender, body: (next, redraw) => choice([['male', t('fc_male')], ['female', t('fc_female')]], f.gender, (g) => { f.gender = g; redraw(); }) },
+      { title: t('fc_q_club'), valid: () => !!f.team, body: (next, redraw) => el('div', null,
+        f.team ? el('div', { class: 'item on', style: 'margin-bottom:8px' }, f.team.logo ? crest(f.team.logo) : el('span', { class: 'crest-ph' }), el('b', { class: 'grow', text: f.team.name }), el('span', { text: '✓' })) : null,
+        clubSearch((tm) => { if (!f.team || f.team.id !== tm.id) f.player = ''; f.team = tm; redraw(); })) },
+      { title: t('fc_q_player'), valid: () => validText(f.player), body: (next) => {
+        const s = suggestInput({ placeholder: t('fc_player_ph'), value: f.player, items: () => squadCache.get(f.team.id) || [], onChange: (v) => { f.player = v; next.disabled = !validText(v); } });
+        loadSquad(f.team.id, s.redraw);
+        return s.box;
+      } },
+      { title: t('fc_q_goat'), valid: () => validText(f.goat), body: (next) => suggestInput({ placeholder: t('fc_goat_ph'), value: f.goat, items: () => d.goats, onChange: (v) => { f.goat = v; next.disabled = !validText(v); } }).box },
+      { title: t('fc_q_since'), valid: () => !!f.since, body: (next) => {
+        const sel = el('select', { class: 'input' }, el('option', { value: '', text: t('fc_choose') }),
+          years(f.birthYear).map((y) => el('option', { value: y, text: y, selected: f.since === y })));
+        sel.addEventListener('change', () => { f.since = Number(sel.value) || null; next.disabled = !f.since; });
+        return sel;
+      } },
+      { title: t('fc_q_region'), valid: () => !!f.region, body: (next, redraw) => choice(d.regions.map((r) => [r.code, r.name]), f.region, (r) => { f.region = r; redraw(); }) },
+      { title: t('fc_q_confirm'), hint: t('fc_confirm_hint'), valid: () => true, final: true, body: () => el('div', { class: 'card' },
+        el('div', { style: 'text-align:center' }, el('img', { class: 'idc-photo small', src: f.photo, alt: '' })),
+        [[t('fc_l_surname'), f.lastName], [t('fc_l_name'), f.firstName], [t('fc_l_birth'), f.birthYear], [t('fc_l_gender'), t(f.gender === 'male' ? 'fc_male' : 'fc_female')],
+          [t('fc_l_club'), f.team && f.team.name], [t('fc_l_player'), f.player], [t('fc_l_goat'), f.goat], [t('fc_l_since'), f.since], [t('fc_l_region'), regionName(f.region)]]
+          .map(([k, v]) => el('div', { class: 'kv' }, el('span', { text: k }), el('b', { text: v })))) },
+    ];
+    let i = 0;
+    const draw = () => {
+      const st = steps[i];
+      const next = el('button', { class: 'btn', text: st.final ? t('fc_activate_btn') : t('fc_next') });
+      next.disabled = !st.valid();
+      next.addEventListener('click', async () => {
+        if (!st.valid()) return;
+        if (!st.final) { i += 1; haptic(); draw(); return; }
+        next.disabled = true;
+        try {
+          await api('/fan-card/activate', { method: 'POST', body: {
+            photo: f.photo, lastName: f.lastName, firstName: f.firstName, birthYear: f.birthYear, gender: f.gender,
+            teamId: f.team.id, player: f.player, goat: f.goat, since: f.since, region: f.region,
+          } });
+          haptic("success"); toast(t("fc_activated")); goBack();
+        } catch (err) { cardError(err); next.disabled = false; }
+      });
+      put(view, backBar(t('fc_title')),
+        el('div', { class: 'idc-progress' }, el('i', { style: `width:${((i + 1) / steps.length) * 100}%` })),
+        el('div', { class: 'small muted', style: 'margin:8px 2px 2px', text: `${i + 1}/${steps.length}` }),
+        el('h2', { style: 'margin:4px 2px 4px', text: st.title }),
+        st.hint ? el('p', { class: 'small muted', style: 'margin:0 2px 12px', text: st.hint }) : null,
+        st.body(next, draw),
+        el('div', { class: 'grid2', style: 'margin-top:16px' },
+          i ? el('button', { class: 'btn ghost', text: t('fc_prev'), onclick: () => { i -= 1; draw(); } }) : el('span'), next));
+    };
+    draw();
+  }
+
+  /** Faqat GOAT va sevimli futbolchi o'zgaradi */
+  function renderFavoritesEdit(view, d) {
+    const c = d.card;
+    let player = c.player;
+    let goat = c.goat;
+    const save = el('button', { class: 'btn block', style: 'margin-top:16px', text: t('save') });
+    const check = () => { save.disabled = !validText(player) || !validText(goat); };
+    const p = suggestInput({ placeholder: t('fc_player_ph'), value: player, items: () => squadCache.get(c.team.id) || [], onChange: (v) => { player = v; check(); } });
+    loadSquad(c.team.id, p.redraw);
+    const g = suggestInput({ placeholder: t('fc_goat_ph'), value: goat, items: () => d.goats, onChange: (v) => { goat = v; check(); } });
     save.addEventListener('click', async () => {
       save.disabled = true;
-      try {
-        await api('/fan-card', { method: 'PUT', body: { teamId, player: player.value.trim() || null, region: region.value || null, since: since.value ? Number(since.value) : null } });
-        haptic('success'); toast(t('fc_saved')); onSaved();
-      } catch (err) { haptic('error'); toast(t('error_generic')); save.disabled = false; }
+      try { await api('/fan-card', { method: 'PATCH', body: { player, goat } }); haptic('success'); toast(t('fc_saved')); goBack(); } catch (err) { cardError(err); check(); }
     });
-    return el('div', { class: 'card', style: 'margin-top:8px' },
-      el('label', { class: 'field-label', text: t('fc_club') }), teamInput, teamResults, teamLabel,
-      el('label', { class: 'field-label', text: t('fc_player') }), player, players,
-      el('label', { class: 'field-label', text: t('fc_region') }), region,
-      el('label', { class: 'field-label', text: t('fc_since') }), since, save);
+    put(view, backBar(t('fc_edit')),
+      el('label', { class: 'field-label', text: t('fc_l_player') }), p.box,
+      el('label', { class: 'field-label', style: 'margin-top:12px', text: t('fc_l_goat') }), g.box, save);
+  }
+
+  /** Klubni almashtirish: narx oldindan aytiladi, tasdiqdan keyin balansdan yechiladi */
+  function clubChange(d) {
+    haptic('warning');
+    modal(t('fc_change_club'), t('fc_club_change_text', { price: money(d.clubChangePrice), balance: money(d.balance) }), [
+      el('button', { class: 'btn block', text: t('fc_continue'), onclick: () => {
+        closeModal();
+        if (d.balance < d.clubChangePrice) { cardError({ body: { error: 'no_money' } }); return; }
+        push({ render: (v) => put(v, backBar(t('fc_change_club')), el('h2', { style: 'margin:4px 2px 10px', text: t('fc_q_club') }),
+          clubSearch((tm) => {
+            if (tm.id === d.card.team.id) { toast(t('fc_err_same_team')); return; }
+            modal(t('fc_change_club'), t('fc_club_change_confirm', { club: tm.name, price: money(d.clubChangePrice) }), [
+              el('button', { class: 'btn block', text: t('fc_continue'), onclick: async (e) => {
+                e.target.disabled = true;
+                try { await api('/fan-card/club', { method: 'POST', body: { teamId: tm.id } }); closeModal(); haptic('success'); toast(t('fc_club_change_done')); goBack(); } catch (err) { closeModal(); cardError(err); }
+              } }),
+              el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
+          })) });
+      } }),
+      el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
   }
 
   async function renderProfile(view) {

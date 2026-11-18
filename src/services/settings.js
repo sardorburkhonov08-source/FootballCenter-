@@ -61,6 +61,19 @@ const DEFAULTS = {
   popular_leagues_limit: 10,
   popular_leagues_min_users: 3,
   leaderboard_top: 30,
+
+  // 🪪 Muxlislik kartasi (faqat Premium)
+  fan_card_club_change_price: 50000,   // klubni almashtirish narxi (balansdan yechiladi)
+  fan_card_first_fans: 100,            // klubning birinchi N muxlisi kartasida maxsus belgi
+  // GOAT tanlash uchun takliflar ro'yxati (foydalanuvchi qidirib tanlaydi)
+  fan_card_goats: ['Lionel Messi', 'Cristiano Ronaldo', 'Pelé', 'Diego Maradona', 'Johan Cruyff', 'Zinedine Zidane',
+    'Ronaldo Nazário', 'Ronaldinho', 'Franz Beckenbauer', 'Alfredo Di Stéfano', 'Ferenc Puskás', 'George Best',
+    'Michel Platini', 'Marco van Basten', 'Paolo Maldini', 'Thierry Henry', 'Kaká', 'Andrés Iniesta', 'Xavi',
+    'Zlatan Ibrahimović', 'Neymar', 'Kylian Mbappé', 'Erling Haaland', 'Luka Modrić', 'Karim Benzema',
+    'Robert Lewandowski', 'Mohamed Salah', 'Kevin De Bruyne', 'Gianluigi Buffon', 'Lev Yashin', 'Eusébio',
+    'Gerd Müller', 'Roberto Baggio', 'Francesco Totti', 'Steven Gerrard', 'Wayne Rooney', 'Sergio Ramos',
+    'Iker Casillas', 'Andriy Shevchenko', 'Lamine Yamal', 'Jude Bellingham', 'Vinícius Júnior', 'Eldor Shomurodov',
+    'Server Djeparov', 'Abbosbek Fayzullayev'],
 };
 
 const cache = new Map();

@@ -12,6 +12,8 @@ const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const popularity = require('../services/popularity');
 const users = require('../services/users');
+const fancard = require('../services/fancard');
+const notify = require('../services/notify');
 const { ymd, dayStart } = require('../services/time');
 const { requireAdmin, checkPassword, signSession, SESSION_TTL } = require('./auth');
 
@@ -191,6 +193,64 @@ router.put('/featured-leagues', express.json(), wrap(async (req, res) => {
   if (!ids || ids.length > 50) return res.status(400).json({ error: 'bad_leagues' });
   await settings.set('featured_leagues', ids);
   return res.json(ids);
+}));
+
+// ---- 🪪 Muxlislik kartalari: nomaqbul rasmni o'chirish, xato ma'lumotni tuzatish, sozlamalar
+function cardJson(r) {
+  return {
+    userId: r.user_id, telegramId: r.telegram_id, username: r.username, premium: users.isPremium(r),
+    team: { id: r.team_id, name: r.team_name }, fanNumber: r.fan_number,
+    lastName: r.last_name, firstName: r.first_name, birthYear: r.birth_year, gender: r.gender, region: r.region,
+    since: r.fan_since, goat: r.goat, player: r.fav_player, photoUrl: r.photo_path ? `/uploads/${r.photo_path}` : null,
+    activatedAt: r.activated_at,
+  };
+}
+router.get('/fan-cards', wrap(async (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 60);
+  const params = [];
+  let where = '';
+  if (q) {
+    params.push(`%${q.replace(/^@/, '').toLowerCase()}%`, /^\d+$/.test(q) ? Number(q) : -1);
+    where = `WHERE lower(c.last_name || ' ' || c.first_name || ' ' || coalesce(u.username, '') || ' ' || c.team_name) LIKE $1 OR u.telegram_id = $2`;
+  }
+  const rows = await db.many(
+    `SELECT c.*, u.telegram_id, u.username, u.premium_expires_at FROM fan_cards c JOIN users u ON u.id = c.user_id
+     ${where} ORDER BY (c.photo_path IS NULL) DESC, c.activated_at DESC LIMIT 50`, params,
+  );
+  res.json({ cards: rows.map(cardJson), regions: fancard.regionsList('uz') });
+}));
+function cardError(res, e) {
+  if (e instanceof fancard.CardError) return res.status(400).json({ error: e.message });
+  throw e;
+}
+router.patch('/fan-cards/:userId', express.json(), wrap(async (req, res) => {
+  const b = req.body || {};
+  const body = Object.fromEntries(fancard.ADMIN_FIELDS.filter((k) => k in b).map((k) => [k, b[k]]));
+  try { await fancard.adminUpdate(Number(req.params.userId), body); } catch (e) { return cardError(res, e); }
+  return res.json({ ok: true });
+}));
+router.delete('/fan-cards/:userId/photo', wrap(async (req, res) => {
+  const id = Number(req.params.userId);
+  try { await fancard.adminRemovePhoto(id); } catch (e) { return cardError(res, e); }
+  await notify.toUser(await users.byId(id), 'fancard_photo_removed').catch(() => {});
+  return res.json({ ok: true });
+}));
+router.get('/fan-card-settings', wrap(async (req, res) => {
+  const s = await settings.getMany(['fan_card_club_change_price', 'fan_card_first_fans', 'fan_card_goats']);
+  res.json({ price: s.fan_card_club_change_price, firstFans: s.fan_card_first_fans, goats: s.fan_card_goats || [] });
+}));
+router.put('/fan-card-settings', express.json(), wrap(async (req, res) => {
+  const b = req.body || {};
+  const price = Number(b.price);
+  const firstFans = Number(b.firstFans);
+  const goats = Array.isArray(b.goats) ? [...new Set(b.goats.map((g) => String(g).replace(/[<>]/g, '').trim()).filter((g) => g.length >= 2 && g.length <= 40))] : null;
+  if (!Number.isInteger(price) || price < 0 || !Number.isInteger(firstFans) || firstFans < 0 || !goats || goats.length > 300) {
+    return res.status(400).json({ error: 'bad_fan_card_settings' });
+  }
+  await settings.set('fan_card_club_change_price', price);
+  await settings.set('fan_card_first_fans', firstFans);
+  await settings.set('fan_card_goats', goats);
+  return res.json({ price, firstFans, goats });
 }));
 
 router.get('/tactics', wrap(async (req, res) => res.json(await settings.get('tactics'))));

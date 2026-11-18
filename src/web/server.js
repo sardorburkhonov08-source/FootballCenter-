@@ -25,15 +25,21 @@ function createApp({ bot } = {}) {
 
   app.get('/healthz', (req, res) => res.json({ ok: true }));
 
-  // 🪪 Muxlislik kartasi rasmi (Telegram Stories uni shu manzildan yuklab oladi). Manzil imzolangan.
+  // 🪪 Muxlislik kartasi rasmlari (old/orqa tomon, Stories). Manzil imzolangan — Telegram Stories
+  // rasmni o'zi yuklab oladi. Premium bo'lmaganlar uchun namunaviy karta: /card/sample-<til>.png
   app.get('/card/:file', async (req, res, next) => {
     try {
       const fancard = require('../services/fancard');
-      const tgId = fancard.verifyImagePath(req.params.file);
-      if (!tgId) return res.status(404).end();
-      const png = await fancard.renderPng(tgId);
+      const sample = /^sample-(uz|uz_cyrl|ru|en)\.png$/.exec(req.params.file);
+      if (sample) {
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.type('png').send(fancard.samplePng(sample[1]));
+      }
+      const ref = fancard.verifyImagePath(req.params.file);
+      if (!ref) return res.status(404).end();
+      const png = await fancard.renderPng(ref.telegramId, ref.side);
       if (!png) return res.status(404).end();
-      res.set('Cache-Control', 'public, max-age=300');
+      res.set('Cache-Control', 'private, max-age=300');
       return res.type('png').send(png);
     } catch (e) { return next(e); }
   });
