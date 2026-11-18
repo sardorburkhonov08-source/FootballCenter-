@@ -10,6 +10,7 @@ const leaderboard = require('../services/leaderboard');
 const referral = require('../services/referral');
 const popularity = require('../services/popularity');
 const fancard = require('../services/fancard');
+const community = require('../services/community');
 const { ymd } = require('../services/time');
 const { requireTelegramUser } = require('./auth');
 const config = require('../config');
@@ -251,6 +252,38 @@ router.get('/teams/:id/squad', footballRoute(async (req) => {
   if (!/^\d+$/.test(req.params.id)) return { players: [] };
   return { players: (await football.squad(req.params.id)).map((p) => p.name) };
 }));
+
+// ---------- 👥 Fan community
+function communityRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof community.CommunityError) {
+        const status = e.message === 'premium_required' ? 402 : e.message === 'not_found' ? 404 : ['not_owner'].includes(e.message) ? 403 : 409;
+        return res.status(['bad_name', 'bad_description', 'bad_post'].includes(e.message) ? 400 : status).json({ error: e.message });
+      }
+      throw e;
+    }
+  });
+}
+router.get('/community', communityRoute((req) => community.overview(req.user)));
+router.get('/community/:id', communityRoute((req) => community.detail(req.user, req.params.id)));
+router.post('/community', express.json(), communityRoute(async (req) => {
+  const r = await community.requestCreate(req.user, req.body || {});
+  community.notifyAdmins(r).catch((e) => console.error('[community notify]', e));
+  return { ok: true, id: r.id, price: Number(r.price) };
+}));
+router.post('/community/leave', communityRoute(async (req) => { await community.leave(req.user); return { ok: true }; }));
+router.post('/community/:id/join', communityRoute(async (req) => { await community.join(req.user, req.params.id); return { ok: true }; }));
+router.patch('/community/:id', express.json(), communityRoute(async (req) => { await community.updateInfo(req.user, req.params.id, req.body || {}); return { ok: true }; }));
+router.post('/community/:id/kick', express.json(), communityRoute(async (req) => {
+  const r = await community.kick(req.user, req.params.id, req.body && req.body.userId);
+  if (r.user) require('../services/notify').toUser(r.user, 'community_kicked', { name: r.community.name }).catch(() => {});
+  return { ok: true };
+}));
+router.post('/community/:id/posts', express.json(), communityRoute(async (req) => community.addPost(req.user, req.params.id, req.body && req.body.text)));
+router.delete('/community/posts/:postId', communityRoute(async (req) => { await community.deletePost(req.user, req.params.postId); return { ok: true }; }));
 
 // ---------- 👤 Profil
 router.get('/profile', wrap(async (req, res) => {

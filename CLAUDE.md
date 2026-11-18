@@ -70,10 +70,19 @@ test/                   avtomatik testlar
 - Inglizcha Open Trivia DB avtomatik ishlatilmaydi (`settings.quiz_api_enabled = false`).
 - Yangi savol qo'shilganda: faktlar aniq, 4 variant har xil, to'g'ri javob — birinchi; `test/quizbank.test.js` tekshiradi.
 
+## 👥 Fan community (SPEC'dan tashqari, egasi talabi bilan)
+
+- `src/services/community.js`, 010-migratsiya (`communities`, `community_members`, `community_bans`, `community_posts`, `community_weekly_winners`), Mini App → **Community** bo'limi.
+- **Ochish**: Premium + muxlislik kartasi; klub — kartadagi klub; foydalanuvchi nom (3—40) va tavsif kiritadi → adminga so'rov (bot: `cm:ok/cm:no` tugmalari, web admin: "👥 Fan community"). Klubning birinchi community'si bepul, keyingilari `settings.community_extra_price` (standart 1 000 000) — **pul admin tasdiqlaganda** egasining balansidan yechiladi; yetmasa so'rov kutishda qoladi.
+- **A'zolik**: faqat kartasi shu klubniki bo'lganlar; har kim bitta community'da. Kartada klub almashtirilsa a'zo chiqariladi; egasi klubni almashtira olmaydi.
+- **Egasi**: e'lon yozadi/o'chiradi, a'zoni chiqaradi (qayta qo'shila olmaydi), nom/tavsifni tahrirlaydi; o'zi chiqa olmaydi. **Admin** community'ni yopadi (a'zolar chiqariladi).
+- Community sahifasi klub logotipi va ranglarida (`fancard.clubColors`); statistika a'zolarning muxlislik kartalaridan (yosh, jins, hudud, GOAT, sevimli futbolchi, muxlislik yili).
+- **Haftalik fan reytingi** — a'zolarning hafta (seshanba 12:00 dan) davomidagi points yig'indisi (Mini Manager + Quiz). Hafta tugagach (`finalizePeriods`) g'olib bir marta yoziladi, `wins + 1`, **hamma foydalanuvchiga** xabar ketadi; g'olib keyingi hafta 🏆 belgisi bilan ko'rsatiladi, jami g'alabalar — 🏆×N.
+
 ## Egasi talabi bilan SPEC'dan farqlar
 
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
-- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager va Football Quiz (Quiz alohida menyu bo'limi emas); yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Profil.
+- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager va Football Quiz (Quiz alohida menyu bo'limi emas); yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Community, Profil.
 - 🎮 **Mini Manager — faqat Premium** (SPEC'da hamma uchun): API `requirePremium`, Mini App'da yopiq bo'lim, profilda yopiq blok. Oldin berilgan taxminlar va ballar saqlanadi.
 - Mini App'dagi "💎 Premium sotib olish" tugmalari botni `?start=premium` bilan ochadi — Premium sahifasi darhol chiqadi.
 

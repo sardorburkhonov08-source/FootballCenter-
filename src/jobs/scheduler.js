@@ -6,6 +6,7 @@ const users = require('../services/users');
 const notify = require('../services/notify');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
+const community = require('../services/community');
 const donations = require('../services/donations');
 const leaderboard = require('../services/leaderboard');
 const referral = require('../services/referral');
@@ -94,6 +95,10 @@ async function finalizePeriods(now = new Date()) {
       }
     }
   }
+
+  // 👥 Haftaning fan klubi — fan community'lar reytingi g'olibi (bir marta), hamma foydalanuvchiga xabar (orqa fonda)
+  const cmWin = await community.finalizeWeek(now, PERIOD_GRACE_MS);
+  if (cmWin) community.announceWinner(cmWin).catch((e) => console.error('[community winner]', e));
 
   // 🏆 Referral League — o'tgan oy g'olibiga Premium
   const m = prevRange('monthly', now);

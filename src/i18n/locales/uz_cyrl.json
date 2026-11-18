@@ -359,5 +359,20 @@
   "a_fancard_saved": "✅ Карта янгиланди.",
   "a_fancard_birth_year": "Туғилган йил",
   "a_set_fan_card_club_change_price": "Клубни алмаштириш нархи (сўм)",
-  "a_set_fan_card_first_fans": "\"Биринчи Н мухлис\" белгиси (Н)"
+  "a_set_fan_card_first_fans": "\"Биринчи Н мухлис\" белгиси (Н)",
+  "community_request_admin": "👥 <b>Янги фан цоммунитй сўрови #{id}</b>\n\n⚽ Клуб: {club}\n🏷 Номи: {name}\n📝 Тавсиф: {desc}\n👤 Эгаси: {user} (<code>{tgid}</code>)\n💰 Нарх: {price} сўм\n💳 Эгасининг баланси: {balance} сўм",
+  "a_cm_reject_reason_enter": "✍️ #{id} сўровни рад этиш сабабини ёзинг:",
+  "a_cm_approved_done": "✅ Тасдиқланди ({admin})",
+  "a_cm_rejected_done": "❌ Рад этилди ({admin}): {reason}",
+  "a_cm_err_no_money": "⚠️ Эгасининг балансида маблағ етарли эмас. Сўров кутишда қолади.",
+  "a_cm_err_owner_club_changed": "⚠️ Эгаси мухлислик картасидаги клубини алмаштирган — сўровни рад этинг.",
+  "a_cm_err_owner_already_member": "⚠️ Эгаси аллақачон бошқа фан цоммунитй аъзоси — сўровни рад этинг.",
+  "community_approved": "🎉 «{name}» фан цоммунитйънгиз очилди! Мини Апп → Цоммунитй бўлимида аъзоларни кутинг ва эълон ёзинг.",
+  "community_approved_paid": "🎉 «{name}» фан цоммунитйънгиз очилди! Балансингиздан {price} сўм ечилди. Мини Апп → Цоммунитй бўлимида.",
+  "community_rejected": "❌ «{name}» фан цоммунитй сўровингиз рад этилди.\nСабаб: {reason}",
+  "community_closed": "🔒 «{name}» фан цоммунитй админ томонидан ёпилди.",
+  "community_kicked": "🚫 Сиз «{name}» фан цоммунитйъсидан чиқарилдингиз.",
+  "community_weekly_winner": "🏆 Ҳафтанинг фан клуби — {club} мухлислари «{name}»!\n⭐ Ҳафта давомида {points} поинтс тўплашди. Табриклаймиз! 👏\n\n👥 Фан рейтинги — Мини Апп → Цоммунитй.",
+  "a_btn_community_settings": "👥 Фан цоммунитй созламалари",
+  "a_set_community_extra_price": "Клубнинг кейинги фан цоммунитй нархи (сўм)"
 }

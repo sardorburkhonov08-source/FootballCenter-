@@ -357,5 +357,20 @@
   "a_fancard_saved": "✅ Карта обновлена.",
   "a_fancard_birth_year": "Год рождения",
   "a_set_fan_card_club_change_price": "Стоимость смены клуба (сум)",
-  "a_set_fan_card_first_fans": "Знак «Первые N болельщиков» (N)"
+  "a_set_fan_card_first_fans": "Знак «Первые N болельщиков» (N)",
+  "community_request_admin": "👥 <b>Новая заявка на фан-сообщество #{id}</b>\n\n⚽ Клуб: {club}\n🏷 Название: {name}\n📝 Описание: {desc}\n👤 Владелец: {user} (<code>{tgid}</code>)\n💰 Цена: {price} сум\n💳 Баланс владельца: {balance} сум",
+  "a_cm_reject_reason_enter": "✍️ Напишите причину отказа по заявке #{id}:",
+  "a_cm_approved_done": "✅ Одобрено ({admin})",
+  "a_cm_rejected_done": "❌ Отклонено ({admin}): {reason}",
+  "a_cm_err_no_money": "⚠️ На балансе владельца недостаточно средств. Заявка остаётся в ожидании.",
+  "a_cm_err_owner_club_changed": "⚠️ Владелец сменил клуб в карте болельщика — отклоните заявку.",
+  "a_cm_err_owner_already_member": "⚠️ Владелец уже состоит в другом фан-сообществе — отклоните заявку.",
+  "community_approved": "🎉 Ваше фан-сообщество «{name}» открыто! Mini App → Community.",
+  "community_approved_paid": "🎉 Ваше фан-сообщество «{name}» открыто! С баланса списано {price} сум. Mini App → Community.",
+  "community_rejected": "❌ Заявка на фан-сообщество «{name}» отклонена.\nПричина: {reason}",
+  "community_closed": "🔒 Фан-сообщество «{name}» закрыто администратором.",
+  "community_kicked": "🚫 Вас исключили из фан-сообщества «{name}».",
+  "community_weekly_winner": "🏆 Фан-клуб недели — болельщики {club} «{name}»!\n⭐ За неделю набрали {points} очков. Поздравляем! 👏\n\n👥 Фан-рейтинг — Mini App → Community.",
+  "a_btn_community_settings": "👥 Настройки фан-сообществ",
+  "a_set_community_extra_price": "Цена следующего фан-сообщества клуба (сум)"
 }

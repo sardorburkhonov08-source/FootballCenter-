@@ -347,6 +347,9 @@ async function changeClub(user, teamId) {
   requirePremium(u0);
   const card0 = await cardRow(u0.id);
   if (!card0) throw new CardError('not_active');
+  // Fan community egasi klubni almashtira olmaydi (community shu klubniki)
+  const community = require('./community');
+  try { await community.assertCanChangeClub(u0.id); } catch (e) { if (e instanceof community.CommunityError) throw new CardError('community_owner'); throw e; }
   const tm = await teamById(teamId);
   if (tm.id === card0.team_id) throw new CardError('same_team');
   const price = Number(await settings.get('fan_card_club_change_price'));
@@ -368,6 +371,7 @@ async function changeClub(user, teamId) {
       [u0.id, cur.team_id, tm.id, cur.fan_number, number, price],
     );
   });
+  await community.onClubChanged(u0.id); // eski klub community'sidan chiqariladi
   return getCard(u0);
 }
 

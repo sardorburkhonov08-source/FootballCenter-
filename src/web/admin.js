@@ -13,6 +13,7 @@ const quiz = require('../services/quiz');
 const popularity = require('../services/popularity');
 const users = require('../services/users');
 const fancard = require('../services/fancard');
+const community = require('../services/community');
 const notify = require('../services/notify');
 const { ymd, dayStart } = require('../services/time');
 const { requireAdmin, checkPassword, signSession, SESSION_TTL } = require('./auth');
@@ -284,6 +285,42 @@ router.delete('/fan-card-teams/:id', wrap(async (req, res) => {
   delete all[String(Number(req.params.id))];
   await settings.set('fan_card_team_colors', all);
   return res.json({ ok: true });
+}));
+
+// ---- 👥 Fan community'lar: so'rovlarni tasdiqlash/rad etish, yopish, narx
+function cmError(res, e) {
+  if (e instanceof community.CommunityError) return res.status(409).json({ error: e.message });
+  throw e;
+}
+router.get('/communities', wrap(async (req, res) => {
+  const status = ['pending', 'active', 'rejected', 'closed'].includes(req.query.status) ? req.query.status : null;
+  const rows = await community.list(status);
+  res.json({
+    price: Number(await settings.get('community_extra_price')),
+    communities: rows.map((c) => ({
+      id: c.id, status: c.status, name: c.name, description: c.description, team: c.team_name, members: c.members, wins: c.wins,
+      price: Number(c.price), owner: { name: users.displayName(c), username: c.username, telegramId: c.owner_tg, balance: Number(c.owner_balance) },
+      createdAt: c.created_at, rejectReason: c.reject_reason,
+    })),
+  });
+}));
+router.post('/communities/:id/approve', wrap(async (req, res) => {
+  try { await community.approveAndNotify(Number(req.params.id)); } catch (e) { return cmError(res, e); }
+  return res.json({ ok: true });
+}));
+router.post('/communities/:id/reject', express.json(), wrap(async (req, res) => {
+  try { await community.rejectAndNotify(Number(req.params.id), (req.body && req.body.reason) || ''); } catch (e) { return cmError(res, e); }
+  return res.json({ ok: true });
+}));
+router.post('/communities/:id/close', wrap(async (req, res) => {
+  try { await community.closeAndNotify(Number(req.params.id)); } catch (e) { return cmError(res, e); }
+  return res.json({ ok: true });
+}));
+router.put('/community-settings', express.json(), wrap(async (req, res) => {
+  const price = Number(req.body && req.body.price);
+  if (!Number.isInteger(price) || price < 0) return res.status(400).json({ error: 'bad_price' });
+  await settings.set('community_extra_price', price);
+  return res.json({ price });
 }));
 
 router.get('/tactics', wrap(async (req, res) => res.json(await settings.get('tactics'))));
