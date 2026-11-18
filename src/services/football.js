@@ -500,6 +500,36 @@ async function squad(teamId) {
   return players.map((p) => ({ id: p.id, name: p.name, position: p.position || null, group: positionGroup(p.position), nationality: null }));
 }
 
+/**
+ * Jamoa qidirish (API-Football /teams?search=, kamida 3 harf). So'rov matni normallashtiriladi,
+ * natija 7 kun keshlanadi — bir xil qidiruvlar API'ga qayta ketmaydi.
+ */
+function normalizeQuery(q) {
+  return String(q || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+
+async function searchTeams(q) {
+  const query = normalizeQuery(q);
+  if (query.length < 3) return [];
+  const data = await request('/teams', { search: query }, 7 * DAY);
+  return data.slice(0, 20).map((r) => ({
+    id: r.team.id, name: r.team.name, logo: r.team.logo || null, country: r.team.country || null, national: !!r.team.national,
+  }));
+}
+
+/** Jamoaning keyingi va oxirgi o'yinlari */
+async function teamMatches(teamId) {
+  const id = Number(teamId);
+  const [next, last] = await Promise.all([
+    request('/fixtures', { team: id, next: 10, timezone: TZ }, (d) => (d.length ? ttlForMatchList(d) : 6 * HOUR)),
+    request('/fixtures', { team: id, last: 10, timezone: TZ }, 30 * MIN),
+  ]);
+  return {
+    next: next.map(normMatch).sort((a, b) => a.utcDate.localeCompare(b.utcDate)),
+    last: last.map(normMatch).sort((a, b) => b.utcDate.localeCompare(a.utcDate)),
+  };
+}
+
 /** Admin uchun: sanalar oralig'idagi o'yinlar (har kun — bitta keshlangan so'rov, ko'pi bilan 14 kun) */
 async function matchesRange(fromYmd, toYmd) {
   const out = [];
@@ -514,4 +544,5 @@ module.exports = {
   FootballUnavailable, setFetch, clearCache, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
   matchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
   standings, competitionMatches, scorers, squad, matchesRange, normMatch, matchState, positionGroup,
+  searchTeams, teamMatches, normalizeQuery,
 };
