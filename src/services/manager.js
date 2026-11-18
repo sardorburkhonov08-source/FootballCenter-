@@ -185,6 +185,7 @@ async function scoreFinished() {
       }
       return preds;
     });
+    require('./achievements').checkLater(...scoredPreds.map((p) => p.user_id));
     if (!scoredPreds.length && !(await db.one("SELECT 1 AS x FROM mini_manager_games WHERE id = $1 AND status = 'finished'", [g.id]))) continue;
     scored += 1;
     const title = `${g.home_team_name} ${result.homeGoals}:${result.awayGoals} ${g.away_team_name}`;

@@ -424,6 +424,9 @@ async function finalizeWeek(now = new Date(), graceMs = 0) {
   );
   if (!ins || !top) return null;
   await db.query('UPDATE communities SET wins = wins + 1 WHERE id = $1', [top.id]);
+  // 🏅 Haftaning fan klubi a'zolariga yutuq
+  const members = await db.many('SELECT user_id FROM community_members WHERE community_id = $1', [top.id]);
+  await require('./achievements').award(members.map((m) => m.user_id), 'fan_club_week');
   return { community: top, points: top.points };
 }
 

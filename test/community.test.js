@@ -193,6 +193,11 @@ test("haftalik reyting: a'zolar points yig'indisi; hafta tugagach g'olib bir mar
   assert.strictEqual(win.points, 2);
   assert.strictEqual((await db.one('SELECT wins FROM communities WHERE id = $1', [city.id])).wins, 1);
   assert.strictEqual(await community.finalizeWeek(now), null, 'bir hafta — bir marta');
+  // 🏅 g'olib community a'zolariga yutuq (faqat bir marta)
+  assert.ok(await db.one("SELECT 1 FROM user_achievements WHERE user_id = $1 AND achievement = 'fan_club_week'", [await uid(B)]));
+  assert.ok(!(await db.one("SELECT 1 FROM user_achievements WHERE user_id = $1 AND achievement = 'fan_club_week'", [await uid(A)])), 'boshqa community a\'zosi olmaydi');
+  assert.match(h.lastText(B), /^🏅 Yangi yutuq: 👥 <b>Haftaning fan klubi a'zosi<\/b>/);
+  h.clear();
   await community.announceWinner(win);
   const texts = h.calls.filter((c) => c.method === 'sendMessage').map((c) => c.payload.text);
   assert.ok(texts.length >= 6, 'hamma foydalanuvchiga');
