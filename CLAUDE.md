@@ -73,7 +73,7 @@ test/                   avtomatik testlar
 ## Egasi talabi bilan SPEC'dan farqlar
 
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
-- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`), Mini Manager — ulardan biri; yangi o'yinlar shu ro'yxatga qo'shiladi.
+- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager va Football Quiz (Quiz alohida menyu bo'limi emas); yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Profil.
 - 🎮 **Mini Manager — faqat Premium** (SPEC'da hamma uchun): API `requirePremium`, Mini App'da yopiq bo'lim, profilda yopiq blok. Oldin berilgan taxminlar va ballar saqlanadi.
 - Mini App'dagi "💎 Premium sotib olish" tugmalari botni `?start=premium` bilan ochadi — Premium sahifasi darhol chiqadi.
 
