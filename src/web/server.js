@@ -44,6 +44,19 @@ function createApp({ bot } = {}) {
     } catch (e) { return next(e); }
   });
 
+  // 📤 Natija kartasi (Stories) — imzolangan manzil
+  app.get('/share/:file', async (req, res, next) => {
+    try {
+      const shareCard = require('../services/shareCard');
+      const tgId = shareCard.verifyImagePath(req.params.file);
+      if (!tgId) return res.status(404).end();
+      const png = await shareCard.renderPng(tgId);
+      if (!png) return res.status(404).end();
+      res.set('Cache-Control', 'private, max-age=300');
+      return res.type('png').send(png);
+    } catch (e) { return next(e); }
+  });
+
   app.use('/api/admin', require('./admin'));
   app.use('/api', require('./api'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'not_found' }));

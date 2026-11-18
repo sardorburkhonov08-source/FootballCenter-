@@ -5,6 +5,7 @@ const settings = require('../services/settings');
 const users = require('../services/users');
 const football = require('../services/football');
 const scorePredict = require('../services/scorePredict');
+const achievements = require('../services/achievements');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -223,6 +224,7 @@ router.post('/quiz/start', requirePremium, express.json(), wrap(async (req, res)
 }));
 router.post('/quiz/answer', requirePremium, express.json(), wrap(async (req, res) => {
   const r = await quiz.answer(req.user, req.body && req.body.questionId, req.body && req.body.option);
+  if (!r.error) achievements.checkLater(req.user.id);
   return r.error ? res.status(409).json(r) : res.json(r);
 }));
 
@@ -301,8 +303,12 @@ router.post('/community/:id/posts', express.json(), communityRoute(async (req) =
 router.post('/community/posts/:postId/react', express.json(), communityRoute(async (req) => community.react(req.user, req.params.postId, req.body && req.body.reaction)));
 router.delete('/community/posts/:postId', communityRoute(async (req) => { await community.deletePost(req.user, req.params.postId); return { ok: true }; }));
 
+// ---------- 🏅 Yutuqlar va 📤 natija kartasi
+router.get('/share', wrap(async (req, res) => res.json(await require('../services/shareCard').info(req.user))));
+
 // ---------- 👤 Profil
 router.get('/profile', wrap(async (req, res) => {
+  await achievements.check(req.user.id).catch((e) => console.error('[achievements]', e.message));
   const u = await users.byId(req.user.id);
   const stat = async (kind) => {
     const [w, m, overall] = await Promise.all([
@@ -326,6 +332,7 @@ router.get('/profile', wrap(async (req, res) => {
     manager: users.isPremium(u) ? { ...(await stat('manager')), predictions: counts.predictions } : null,
     quiz: users.isPremium(u) ? { ...(await stat('quiz')), answers: counts.answers, correct: counts.correct } : null,
     score: users.isPremium(u) ? { ...(await stat('score')), predictions: counts.score_predictions, hits: counts.score_hits } : null,
+    achievements: await achievements.forUser(u.id, u.language || 'uz'),
   });
 }));
 

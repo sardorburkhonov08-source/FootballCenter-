@@ -57,7 +57,10 @@ async function gift(fromUser, toUserId, plan = 'month') {
     return { ok: true, price, days, from, to: updated };
   });
   // Sovg'a Premium ham Premium hisoblanadi — do'stning referrali faollashadi
-  if (result.ok) await referral.activate(result.to.id, 'premium').catch((e) => console.error(e));
+  if (result.ok) {
+    await referral.activate(result.to.id, 'premium').catch((e) => console.error(e));
+    require('./achievements').checkLater(result.from.id);
+  }
   return result;
 }
 

@@ -83,6 +83,7 @@ async function finalizePeriods(now = new Date()) {
       );
       if (!ins || !winner) continue;
       const winnerUser = await users.byId(winner.id);
+      require('../services/achievements').checkLater(winner.id);
       const kindKey = kind === 'manager' ? 'kind_manager' : 'kind_quiz';
       await notify.toUser(winnerUser, 'leaderboard_winner_notify', {
         kind: t(winnerUser.language || 'uz', kindKey), period: t(winnerUser.language || 'uz', `period_${period}`),

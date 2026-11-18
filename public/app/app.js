@@ -1541,6 +1541,38 @@
       el('button', { class: 'btn ghost block', text: t('fc_cancel'), onclick: closeModal })]);
   }
 
+  // ================= 🏅 Yutuqlar va 📤 natija kartasi (Stories)
+  function achievementsBlock(a) {
+    if (!a) return null;
+    return el('div', { class: 'card' },
+      el('div', { class: 'row between' }, el('h3', { style: 'margin:0', text: t('ach_title') }), el('span', { class: 'badge gold', text: `${a.earned} / ${a.total}` })),
+      el('div', { class: 'ach-grid' }, a.list.map((x) => el('div', { class: `ach${x.earnedAt ? ' on' : ''}`, title: x.desc },
+        el('div', { class: 'ach-ico', text: x.icon }),
+        el('b', { class: 'ach-name', text: x.name }),
+        el('div', { class: 'ach-desc', text: x.earnedAt ? ddmmyyyy(x.earnedAt) : x.desc })))));
+  }
+
+  function shareBlock() {
+    const box = el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: t('share_title') }), el('p', { class: 'small muted', text: t('share_hint') }));
+    const img = el('img', { class: 'share-prev', alt: '' });
+    const story = el('button', { class: 'btn', text: t('fc_story') });
+    const save = el('button', { class: 'btn ghost', text: t('share_save') });
+    box.append(img, el('div', { class: 'grid2', style: 'margin-top:10px' }, story, save));
+    let info = null;
+    api('/share', { fresh: true }).then((d) => { info = d; img.src = d.path; }).catch(() => { box.hidden = true; });
+    story.addEventListener('click', () => {
+      if (!info || !info.url || !tg || typeof tg.shareToStory !== 'function') { toast(t('fc_story_unsupported')); return; }
+      try {
+        tg.shareToStory(info.url, { text: `${t('share_text')} ${info.refLink || ''}`.trim().slice(0, 200) });
+      } catch (e) { toast(t('fc_story_unsupported')); }
+    });
+    save.addEventListener('click', () => {
+      if (!info || !info.url || !tg || typeof tg.downloadFile !== 'function') { toast(t('fc_save_unsupported')); return; }
+      try { tg.downloadFile({ url: info.url, file_name: 'footballcenter-results.png' }); } catch (e) { toast(t('fc_save_unsupported')); }
+    });
+    return box;
+  }
+
   async function renderProfile(view) {
     const cardBox = el('div');
     view.append(cardBox);
@@ -1577,6 +1609,8 @@
       d.score
         ? statBlock(`🎯 ${t('sp_title')}`, d.score, [el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.score.predictions })), el('div', { class: 'kv' }, el('span', { text: t('sp_hits') }), el('b', { text: d.score.hits }))])
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: `🎯 ${t('sp_title')}` }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
+      achievementsBlock(d.achievements),
+      shareBlock(),
       ...(u.isAdmin ? [el('button', { class: 'btn ghost block', style: 'margin-top:10px', text: t('admin_panel'), onclick: () => { window.location.href = '/admin/'; } })] : []),
     );
   }

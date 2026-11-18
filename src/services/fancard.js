@@ -27,7 +27,7 @@ const MIN_AGE = 5;
 const MAX_AGE = 100;
 const PHOTO_DIR = 'fancards';
 const DEFAULT_COLOR = '#1f8a4c';
-const DESIGN = 2; // karta dizayni o'zgarsa oshiriladi — eski rasmlar keshdan chiqadi // logotip rangi aniqlanmasa — FootballCenter yashili
+const DESIGN = 3; // karta dizayni o'zgarsa oshiriladi — eski rasmlar keshdan chiqadi // logotip rangi aniqlanmasa — FootballCenter yashili
 
 class CardError extends Error {}
 
@@ -240,8 +240,9 @@ async function getCard(user, lang = user.language || 'uz') {
   if (!c) return { ...base, activated: false, card: null, images: null };
   const rank = await clubRank(c);
   const points = users.totalPoints(u);
+  const earned = await require('./achievements').count(u.id);
   const version = crypto.createHash('sha1')
-    .update([DESIGN, c.updated_at && new Date(c.updated_at).getTime(), points, rank.place, rank.total, lang, premium].join(':')).digest('hex').slice(0, 10);
+    .update([DESIGN, c.updated_at && new Date(c.updated_at).getTime(), points, rank.place, rank.total, lang, premium, earned].join(':')).digest('hex').slice(0, 10);
   return {
     ...base,
     activated: true,
@@ -313,6 +314,7 @@ async function activate(user, body = {}) {
     removePhotoFile(photoPath);
     throw e;
   }
+  require('./achievements').checkLater(u.id);
   return getCard(u);
 }
 
@@ -571,6 +573,7 @@ ${v.rank.place <= 3 ? medal(522, 334, v.rank.place) : ''}
 ${field(48, 60, L('card_l_region'), v.region, { size: 44, maxWidth: 420 })}${field(500, 60, L('card_l_points'), num(v.points), { size: 44, color: v.pal.accent, maxWidth: 360 })}
 ${field(48, 170, L('card_l_fan_number'), String(v.fanNumber).padStart(6, '0'), { size: 44, color: v.pal.accent, maxWidth: 420 })}${field(500, 170, L('card_l_activated'), v.activated, { size: 44, maxWidth: 360 })}
 ${field(48, 280, L('card_l_issued'), 'FootballCenter', { size: 44, maxWidth: 420 })}
+${v.achievements ? field(48, 380, L('card_l_achievements'), `${v.achievements.earned} / ${v.achievements.total}`, { size: 40, color: v.pal.accent, maxWidth: 420 }) : ''}
 ${rank}
 ${trophy(1088, 30, `${idp}t`)}
 ${photoBox(v, 960, 170, 170, 220, `${idp}p`, 0.35)}
@@ -623,17 +626,19 @@ function clearImageCache() { pngCache.clear(); }
 async function viewModel(u, lang) {
   const c = await cardRow(u.id);
   if (!c) return null;
-  const [colors, rank, firstLimit] = await Promise.all([
-    clubColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'),
+  const ach = require('./achievements');
+  const [colors, rank, firstLimit, earned] = await Promise.all([
+    clubColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'), ach.count(u.id),
   ]);
   return {
-    key: [DESIGN, colors.primary, colors.secondary, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, users.totalPoints(u), rank.place, rank.total, lang, firstLimit].join(':'),
+    key: [DESIGN, colors.primary, colors.secondary, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, users.totalPoints(u), rank.place, rank.total, lang, firstLimit, earned].join(':'),
     club: c.team_name, logoPng: colors.logoPng, pal: palette(colors.primary, colors.secondary),
     photo: readPhoto(c.photo_path),
     lastName: c.last_name, firstName: c.first_name, goat: c.goat, age: currentYear() - c.birth_year, gender: c.gender,
     player: c.fav_player, since: c.fan_since, fanNumber: c.fan_number, first: c.fan_number <= Number(firstLimit), firstLimit,
     region: regionName(lang, c.region), points: users.totalPoints(u),
     activated: formatDate(c.activated_at), rank, botUsername: config.botUsername || null,
+    achievements: { earned, total: ach.LIST.length },
   };
 }
 
@@ -666,4 +671,6 @@ module.exports = {
   REGIONS, GENDERS, ADMIN_FIELDS, CardError, setFetch, dominantColors, textOn, palette, teamColors, clubColors, regionsList, HEX_RE,
   getCard, activate, updateFavorites, uploadPhoto, changeClub, adminRemovePhoto, adminUpdate, cardRow, clubRank,
   imagePath, verifyImagePath, cardSvg, renderPng, samplePng, clearImageCache, FONT_FILES,
+  // 📤 Natija kartasi (shareCard.js) uchun umumiy chizish yordamchilari
+  draw: { esc, up, fit, num, toPng, plainT, cached, D, I },
 };

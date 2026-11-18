@@ -112,7 +112,7 @@ async function lockStarted() {
 /** Bitta o'yinga ball berish (bir marta) */
 async function finish(g, result) {
   const r = await rules();
-  return db.tx(async (c) => {
+  const users = await db.tx(async (c) => {
     const done = await c.query("UPDATE score_games SET status = 'finished', result = $2::jsonb WHERE id = $1 AND status = 'locked' RETURNING id",
       [g.id, JSON.stringify(result)]);
     if (!done.rowCount) return 0;
@@ -122,8 +122,10 @@ async function finish(g, result) {
       await c.query('UPDATE score_predictions SET points_earned = $2 WHERE id = $1', [p.id, pts]);
       if (pts) await c.query('UPDATE users SET points_score = points_score + $2 WHERE id = $1', [p.user_id, pts]);
     }
-    return preds.length;
+    return preds.map((p) => p.user_id);
   });
+  require('./achievements').checkLater(...users);
+  return users.length;
 }
 
 /** Tugagan o'yinlarni hisoblash: har bir kun uchun bitta API so'rovi */

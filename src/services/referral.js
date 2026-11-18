@@ -41,6 +41,7 @@ async function activate(referredUserId, reason) {
   if (res) {
     const referred = await users.byId(referredUserId);
     await notify.toUser(res.referrer, 'ref_activated_notify', { name: users.displayName(referred), amount: money(res.amount) }, { kind: 'payment' });
+    require('./achievements').checkLater(res.referrer.id);
   }
   return res;
 }

@@ -79,6 +79,13 @@ test/                   avtomatik testlar
 - **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
 - API yuklamasi: natijalar kun bo'yicha **bitta** `/fixtures?date=` so'rovida olinadi (kesh); kun ro'yxatida bo'lmagan yoki qoldirilgan o'yin alohida tekshiriladi va boshqa kunga ko'chirilgan bo'lsa qayta ochiladi.
 
+## 🏅 Yutuqlar va 📤 natija kartasi (SPEC'dan tashqari, egasi talabi bilan)
+
+- **Yutuqlar** — `src/services/achievements.js` (ro'yxat kodda, `LIST`), 013-migratsiya `user_achievements`. 13 ta: quiz (1 va 50 to'g'ri javob), Hisobni top (1 va 10 aniq hisob), Mini Manager (birinchi hisoblangan taxmin, bir o'yinda 100+), reyting chempioni, muxlislik kartasi, klubning birinchi N muxlisi, haftaning fan klubi a'zosi, 5 faol referral, Premium sovg'a, 1000 points.
+- Mavjud ma'lumotdan **bitta so'rov** bilan aniqlanadi (`check`): voqealardan keyin orqa fonda (`checkLater` — quiz javobi, o'yin hisoblanishi, karta, referral, sovg'a, reyting g'olibi) va profil ochilganda. Har bir yangi yutuq bir marta yoziladi va botda `ach_unlocked` xabari keladi. "Haftaning fan klubi a'zosi" — `community.finalizeWeek` da g'olib a'zolariga (`award`).
+- Ko'rinishi: Mini App → Profil → 🏅 Yutuqlar (olinganlari sana bilan, qolganlari xira); muxlislik kartasi orqa tomonida "Yutuqlar N / 13". Nomlar — `ach_<id>`, `ach_<id>_desc` (4 tilda).
+- **📤 Natija kartasi** — `src/services/shareCard.js`: 1080×1920 PNG (umumiy points, 3 o'yindagi haftalik points va o'rin, yutuqlar, referral havolaning shtrix-kodi). Imzolangan manzil `/share/<tgId>-<imzo>.png`, xotira keshi; `GET /api/share`. Mini App → Profil → "📸 Stories" (`shareToStory`, matnda referral havola) va "⬇️ Saqlash". Matnlar — `share_*`.
+
 ## 👥 Fan community (SPEC'dan tashqari, egasi talabi bilan)
 
 - `src/services/community.js`, 010-migratsiya (`communities`, `community_members`, `community_bans`, `community_posts`, `community_weekly_winners`), Mini App → **Community** bo'limi.

@@ -5,7 +5,7 @@
 
 const KEEP = ['FootballCenter', 'Football Quiz', 'Mini Manager', 'Referral League', 'Web App', 'Quiz', 'Premium',
   'Username', 'Points', 'Telegram ID', 'Humo', 'Uzcard', 'Visa', 'Mastercard', 'Broadcast', 'FAQ', 'CSV',
-  'ON', 'OFF', 'AI', 'ID', 'FOOTBALL2026', 'GOAT', 'Stories'];
+  'ON', 'OFF', 'AI', 'ID', 'FOOTBALL2026', 'GOAT', 'Stories', 'points'];
 
 const PROTECT = new RegExp(
   '(\\{[a-z_0-9]+\\}|<[^>]+>|&[a-z]+;|https?:\\/\\/\\S+|@\\w+|\\/\\w+|'
