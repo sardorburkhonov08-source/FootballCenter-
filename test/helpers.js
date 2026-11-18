@@ -18,6 +18,8 @@ async function resetDb() {
   await db.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   await migrate();
   settings.invalidate();
+  // Testlarda yangi foydalanuvchi standart holatda Oddiy tarifda (sovg'a Premium alohida testda)
+  await settings.set('welcome_premium_days', 0);
 }
 
 /** grammY bot + barcha API chaqiruvlarini yozib boruvchi soxta API */

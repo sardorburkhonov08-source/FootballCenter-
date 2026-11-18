@@ -374,5 +374,7 @@
   "community_kicked": "🚫 Сиз «{name}» фан цоммунитйъсидан чиқарилдингиз.",
   "community_weekly_winner": "🏆 Ҳафтанинг фан клуби — {club} мухлислари «{name}»!\n⭐ Ҳафта давомида {points} поинтс тўплашди. Табриклаймиз! 👏\n\n👥 Фан рейтинги — Мини Апп → Цоммунитй.",
   "a_btn_community_settings": "👥 Фан цоммунитй созламалари",
-  "a_set_community_extra_price": "Клубнинг кейинги фан цоммунитй нархи (сўм)"
+  "a_set_community_extra_price": "Клубнинг кейинги фан цоммунитй нархи (сўм)",
+  "welcome_premium": "🎁 Хуш келибсиз! Сизга <b>{days} кунлик Premium</b> совға қилинди — {date} гача барча имкониятлар очиқ: Mini Manager, Football Quiz, мухлислик картаси, фан цоммунитй ва бошқалар.",
+  "a_set_welcome_premium_days": "Янги фойдаланувчига бепул Premium (кун, 0 — ўчиқ)"
 }

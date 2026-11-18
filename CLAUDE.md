@@ -84,6 +84,7 @@ test/                   avtomatik testlar
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
 - 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager va Football Quiz (Quiz alohida menyu bo'limi emas); yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Community, Profil.
 - 🎮 **Mini Manager — faqat Premium** (SPEC'da hamma uchun): API `requirePremium`, Mini App'da yopiq bo'lim, profilda yopiq blok. Oldin berilgan taxminlar va ballar saqlanadi.
+- 🎁 **Yangi foydalanuvchiga bepul Premium** (standart 3 kun, `settings.welcome_premium_days`, 0 — o'chiq; bot admin → 💎 Tarif sozlamalari): bot yoki Mini App orqali birinchi kirganda bir marta beriladi (`users.welcomePremium`, `premium_purchases.source = 'welcome'`), til tanlagach botda xabar. Testlarda standart 0 (`test/helpers.js`).
 - Mini App'dagi "💎 Premium sotib olish" tugmalari botni `?start=premium` bilan ochadi — Premium sahifasi darhol chiqadi.
 
 ## Bosqichlar

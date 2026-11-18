@@ -32,13 +32,26 @@ async function upsertFromTelegram(from) {
          ON CONFLICT (telegram_id) DO NOTHING RETURNING *`,
         [from.id, from.username || null, from.first_name || null, from.last_name || null, newRefCode(), isOwner],
       );
-      if (user) return { user, created: true };
+      if (user) return { user: await welcomePremium(user), created: true };
       return { user: await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]), created: false };
     } catch (e) {
       if (e.code !== '23505') throw e; // ref_code to'qnashuvi — qayta urinish
     }
   }
   throw new Error('ref_code yaratib bo\'lmadi');
+}
+
+/** 🎁 Yangi foydalanuvchiga sovg'a Premium (settings.welcome_premium_days; 0 — o'chiq) */
+async function welcomePremium(user) {
+  const settings = require('./settings');
+  const days = Number(await settings.get('welcome_premium_days'));
+  if (!Number.isInteger(days) || days <= 0) return user;
+  return grantPremium(db, user.id, days, 'welcome');
+}
+
+/** Foydalanuvchi sovg'a Premium olganmi */
+async function gotWelcomePremium(userId) {
+  return !!(await db.one("SELECT 1 FROM premium_purchases WHERE user_id = $1 AND source = 'welcome' LIMIT 1", [userId]));
 }
 
 async function byTelegramId(id) {
@@ -108,6 +121,7 @@ async function activeReferralCount(userId) {
 }
 
 module.exports = {
+  welcomePremium, gotWelcomePremium,
   upsertFromTelegram, byTelegramId, byId, find, isPremium, isOwner, isAdmin, premiumDaysLeft, displayName,
   grantPremium, setLanguage, activeReferralCount,
 };

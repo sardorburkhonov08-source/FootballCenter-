@@ -16,6 +16,8 @@ const DEFAULTS = {
   // Tarif
   premium_price: 30000,
   premium_days: 30,
+  // 🎁 Botga yangi kirgan foydalanuvchiga necha kunlik bepul Premium (0 — o'chiq)
+  welcome_premium_days: 3,
 
   // AI limitlari (24 soatlik sirpanuvchi oyna)
   ai_limit_free: 1,
