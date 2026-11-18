@@ -20,7 +20,7 @@ const { RULE_KEYS, tariffLabel } = require('./sections');
 // ---------- Sozlamalar muharriri (umumiy)
 const BOOL_KEYS = ['force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
 const TEXT_KEYS = ['donation_channel_id'];
-const MIN1_KEYS = ['premium_price', 'premium_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
+const MIN1_KEYS = ['premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'fan_card_club_change_price', 'fan_card_first_fans'];
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
@@ -28,7 +28,7 @@ const SECTIONS = {
   referral: { title: 'a_btn_referral', keys: ['referral_enabled', 'referral_bonus_free', 'referral_bonus_premium', 'referral_fake_protection', 'referral_league_premium_days'] },
   bonus: { title: 'a_btn_bonus', keys: ['bonus_free_min', 'bonus_free_max', 'bonus_free_per_day', 'bonus_premium_min', 'bonus_premium_max', 'bonus_premium_per_day'] },
   donation: { title: 'a_btn_donation', keys: ['donation_channel_id', 'donation_big_threshold', 'donation_announce_timeout_minutes'] },
-  tariff: { title: 'a_btn_tariff', keys: ['premium_price', 'premium_days', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
+  tariff: { title: 'a_btn_tariff', keys: ['premium_week_price', 'premium_week_days', 'premium_price', 'premium_days', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
@@ -177,7 +177,7 @@ async function stats(ctx) {
     `SELECT (SELECT count(*)::int FROM users) AS total,
             (SELECT count(*)::int FROM users WHERE registered_at >= $1) AS today,
             (SELECT count(*)::int FROM users WHERE premium_expires_at > now()) AS premium,
-            (SELECT count(*)::int FROM premium_purchases WHERE source = 'purchase') AS purchases,
+            (SELECT count(*)::int FROM premium_purchases WHERE source IN ('purchase', 'gift')) AS purchases,
             (SELECT count(*)::int FROM users WHERE is_blocked) AS blocked,
             (SELECT COALESCE(sum(amount),0) FROM balance_topups WHERE status = 'approved') AS topups,
             (SELECT COALESCE(sum(amount),0) FROM donations WHERE status = 'approved') AS donations,

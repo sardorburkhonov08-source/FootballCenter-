@@ -75,7 +75,8 @@ test/                   avtomatik testlar
 - `src/services/community.js`, 010-migratsiya (`communities`, `community_members`, `community_bans`, `community_posts`, `community_weekly_winners`), Mini App → **Community** bo'limi.
 - **Ochish**: Premium + muxlislik kartasi; klub — kartadagi klub; foydalanuvchi nom (3—40) va tavsif kiritadi → adminga so'rov (bot: `cm:ok/cm:no` tugmalari, web admin: "👥 Fan community"). Klubning birinchi community'si bepul, keyingilari `settings.community_extra_price` (standart 1 000 000) — **pul admin tasdiqlaganda** egasining balansidan yechiladi; yetmasa so'rov kutishda qoladi.
 - **A'zolik**: faqat kartasi shu klubniki bo'lganlar; har kim bitta community'da. Kartada klub almashtirilsa a'zo chiqariladi; egasi klubni almashtira olmaydi.
-- **Egasi**: e'lon yozadi/o'chiradi, a'zoni chiqaradi (qayta qo'shila olmaydi), nom/tavsifni tahrirlaydi; o'zi chiqa olmaydi. **Admin** community'ni yopadi (a'zolar chiqariladi).
+- **Egasi**: post yozadi/o'chiradi ("e'lon" emas — "post"), a'zoni chiqaradi (qayta qo'shila olmaydi), nom/tavsifni tahrirlaydi; o'zi chiqa olmaydi. **Admin** community'ni yopadi (a'zolar chiqariladi).
+- **Post reaksiyalari** 👍 ⚽ 🔥 (`community_post_reactions`, 011-migratsiya): faqat a'zolar (egasi ham), har kim postga bitta reaksiya — boshqasini bossa almashadi, o'shani qayta bossa olib tashlanadi.
 - Community sahifasi klub logotipi va ranglarida (`fancard.clubColors`); statistika a'zolarning muxlislik kartalaridan (yosh, jins, hudud, GOAT, sevimli futbolchi, muxlislik yili).
 - **Haftalik fan reytingi** — a'zolarning hafta (seshanba 12:00 dan) davomidagi points yig'indisi (Mini Manager + Quiz). Hafta tugagach (`finalizePeriods`) g'olib bir marta yoziladi, `wins + 1`, **hamma foydalanuvchiga** xabar ketadi; g'olib keyingi hafta 🏆 belgisi bilan ko'rsatiladi, jami g'alabalar — 🏆×N.
 
@@ -85,6 +86,8 @@ test/                   avtomatik testlar
 - 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager va Football Quiz (Quiz alohida menyu bo'limi emas); yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Community, Profil.
 - 🎮 **Mini Manager — faqat Premium** (SPEC'da hamma uchun): API `requirePremium`, Mini App'da yopiq bo'lim, profilda yopiq blok. Oldin berilgan taxminlar va ballar saqlanadi.
 - 🎁 **Yangi foydalanuvchiga bepul Premium** (standart 3 kun, `settings.welcome_premium_days`, 0 — o'chiq; bot admin → 💎 Tarif sozlamalari): bot yoki Mini App orqali birinchi kirganda bir marta beriladi (`users.welcomePremium`, `premium_purchases.source = 'welcome'`), til tanlagach botda xabar. Testlarda standart 0 (`test/helpers.js`).
+- 💎 **Ikki tarif: 7 kunlik (standart 10 000 so'm) va 30 kunlik (30 000 so'm)** — `premium_week_price/premium_week_days`, `premium_price/premium_days` (bot admin → 💎 Tarif sozlamalari); `premium.plans()`, tugmalar `tf:buy:week|month`.
+- 🎁 **Do'stga Premium sovg'a qilish** (bot → 💎 Premium → 🎁): tarif → do'stning @username yoki ID → tasdiqlash; pul sovg'a qiluvchining balansidan yechiladi, do'st Premium oladi va xabar keladi (`premium.gift`, `premium_purchases.source = 'gift'`, `from_user_id`). Do'stning referrali ham faollashadi.
 - Mini App'dagi "💎 Premium sotib olish" tugmalari botni `?start=premium` bilan ochadi — Premium sahifasi darhol chiqadi.
 
 ## Bosqichlar

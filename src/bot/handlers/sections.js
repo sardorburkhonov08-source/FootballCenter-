@@ -107,13 +107,45 @@ function register(bot) {
     await showPremiumInfo(ctx);
   });
 
-  bot.callbackQuery('tf:buy', async (ctx) => {
+  // tf:buy — eski xabarlardagi tugma (30 kunlik)
+  bot.callbackQuery(/^tf:buy(?::(week|month))?$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    const r = await premium.buy(ctx.user);
-    if (!r.ok) {
-      return ui.show(ctx, t(ctx.lang, 'premium_no_money'), ui.kb([[ui.btn(t(ctx.lang, 'btn_topup'), 'bal:topup')], [ui.btn(t(ctx.lang, 'back'), 'm:tariff')]]));
-    }
+    const r = await premium.buy(ctx.user, ctx.match[1] || 'month');
+    if (!r.ok) return showNoMoney(ctx);
     return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
+  });
+
+  // ---- 🎁 Do'stga Premium sovg'a qilish: tarif → do'st (@username / ID) → tasdiqlash
+  bot.callbackQuery('tf:gift', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await state.clear(ctx.from.id);
+    const p = await premium.plans();
+    await ui.show(ctx, t(ctx.lang, 'gift_choose_plan'), ui.kb([
+      ...Object.values(p).map((x) => [ui.btn(t(ctx.lang, 'btn_buy_plan', { days: x.days, price: money(x.price) }), `tf:gift:${x.plan}`)]),
+      [ui.btn(t(ctx.lang, 'back'), 'tf:premium')],
+    ]));
+  });
+
+  bot.callbackQuery(/^tf:gift:(week|month)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await state.set(ctx.from.id, 'premium_gift', { plan: ctx.match[1] });
+    await ui.show(ctx, t(ctx.lang, 'gift_enter_friend'), ui.cancelKb(ctx.lang));
+  });
+
+  bot.callbackQuery('tf:giftok', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const s = await state.get(ctx.from.id);
+    if (!s || s.state !== 'premium_gift_confirm') return showPremiumInfo(ctx);
+    await state.clear(ctx.from.id);
+    const r = await premium.gift(ctx.user, s.data.to, s.data.plan);
+    if (!r.ok) {
+      if (r.reason === 'no_money') return showNoMoney(ctx);
+      return showPremiumInfo(ctx);
+    }
+    const date = formatDate(r.to.premium_expires_at);
+    await ui.show(ctx, t(ctx.lang, 'gift_sent', { name: users.displayName(r.to), date, price: money(r.price) }), ui.backKb(ctx.lang));
+    await notify.toUser(r.to, 'gift_received', { name: users.displayName(r.from), days: r.days, date: date });
+    return undefined;
   });
 
   // ---- ⚙️ Sozlamalar
@@ -200,6 +232,19 @@ function register(bot) {
 }
 
 const states = {
+  async premium_gift(ctx, data) {
+    const lang = ctx.lang;
+    const friend = await users.find(ctx.message.text);
+    if (!friend || friend.is_blocked) return ctx.reply(t(lang, 'gift_not_found'), { reply_markup: ui.cancelKb(lang) });
+    if (friend.id === ctx.user.id) return ctx.reply(t(lang, 'gift_self'), { reply_markup: ui.cancelKb(lang) });
+    const plan = await premium.planInfo(data.plan);
+    await state.set(ctx.from.id, 'premium_gift_confirm', { plan: plan.plan, to: friend.id });
+    return ctx.reply(t(lang, 'gift_confirm', { name: users.displayName(friend), days: plan.days, price: money(plan.price) }), {
+      ...ui.HTML,
+      reply_markup: ui.kb([[ui.btn(t(lang, 'btn_gift_confirm'), 'tf:giftok')], [ui.btn(t(lang, 'back'), 'tf:premium')]]),
+    });
+  },
+
   async support_message(ctx) {
     const text = String(ctx.message.text || '').trim();
     if (!text) return ctx.reply(t(ctx.lang, 'problem_enter'), { reply_markup: ui.cancelKb(ctx.lang) });
@@ -232,12 +277,19 @@ const states = {
 /** 💎 Premium haqida va sotib olish tugmasi (Mini App'dan ?start=premium havolasi ham shu sahifani ochadi) */
 async function showPremiumInfo(ctx) {
   const lang = ctx.lang;
-  const s = await settings.getMany(['premium_price', 'premium_days']);
+  const p = await premium.plans();
   const description = await editableText('premium_description', lang, 'premium_description_default');
-  await ui.show(ctx, t(lang, 'premium_info', { days: s.premium_days, price: money(s.premium_price), description: raw(description) }), ui.kb([
-    [ui.btn(t(lang, 'btn_activate'), 'tf:buy')],
+  await ui.show(ctx, t(lang, 'premium_info', {
+    week_days: p.week.days, week_price: money(p.week.price), days: p.month.days, price: money(p.month.price), description: raw(description),
+  }), ui.kb([
+    ...Object.values(p).map((x) => [ui.btn(t(lang, 'btn_buy_plan', { days: x.days, price: money(x.price) }), `tf:buy:${x.plan}`)]),
+    [ui.btn(t(lang, 'btn_gift_premium'), 'tf:gift')],
     [ui.btn(t(lang, 'back'), 'm:tariff')],
   ]));
+}
+
+function showNoMoney(ctx) {
+  return ui.show(ctx, t(ctx.lang, 'premium_no_money'), ui.kb([[ui.btn(t(ctx.lang, 'btn_topup'), 'bal:topup')], [ui.btn(t(ctx.lang, 'back'), 'tf:premium')]]));
 }
 
 module.exports = { register, states, RULE_KEYS, tariffLabel, showPremiumInfo };

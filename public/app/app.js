@@ -828,9 +828,23 @@
         statLine(t('cm_top_goats'), topList(st.goats)),
         statLine(t('cm_top_players'), topList(st.players))),
     ];
-    // E'lonlar (egasi yozadi)
+    // Postlar (egasi yozadi) + reaksiyalar (👍 ⚽ 🔥, faqat a'zolar)
+    const REACTS = [['like', '👍'], ['ball', '⚽'], ['fire', '🔥']];
+    const reactBar = (p) => {
+      const bar = el('div', { class: 'cm-reacts' });
+      const draw = () => put(bar, ...REACTS.map(([k, icon]) => el('button', {
+        class: `cm-react${p.myReaction === k ? ' on' : ''}`, text: `${icon} ${p.reactions[k] || 0}`,
+        onclick: async () => {
+          if (!c.isMember) { toast(t('cm_react_members_only')); return; }
+          try { Object.assign(p, await api(`/community/posts/${p.id}/react`, { method: 'POST', body: { reaction: k } })); haptic(); draw(); } catch (err) { cmError(err); }
+        },
+      })));
+      draw();
+      return bar;
+    };
     const posts = el('div', { class: 'list' }, c.posts.length ? c.posts.map((p) => el('div', { class: 'card' },
       el('div', { style: 'white-space:pre-wrap', text: p.text }),
+      reactBar(p),
       el('div', { class: 'row between', style: 'margin-top:6px' }, el('span', { class: 'small muted', text: `${ddmmyyyy(p.created_at)} ${hhmm(p.created_at)}` }),
         c.isOwner ? el('button', { class: 'mini danger', text: '🗑', onclick: async () => {
           try { await api(`/community/posts/${p.id}`, { method: 'DELETE' }); refresh(); } catch (err) { cmError(err); }
