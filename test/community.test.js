@@ -208,6 +208,50 @@ test("haftalik reyting: a'zolar points yig'indisi; hafta tugagach g'olib bir mar
   assert.ok(weekRange(now).start > prev.start);
 });
 
+test("daraja: XP = tugagan haftalar + joriy hafta points; chegaralar sozlamada", async () => {
+  const th = [500, 2000, 5000, 10000, 20000, 50000];
+  assert.deepStrictEqual(community.levelOf(0, th), { level: 1, xp: 0, from: 0, next: 500 });
+  assert.deepStrictEqual(community.levelOf(500, th), { level: 2, xp: 500, from: 500, next: 2000 });
+  assert.deepStrictEqual(community.levelOf(60000, th), { level: 7, xp: 60000, from: 50000, next: null });
+  const red = await db.one("SELECT id, xp FROM communities WHERE name = 'Red Army UZ'");
+  const city = await db.one("SELECT id, xp FROM communities WHERE name = 'Cityzens'");
+  // O'tgan hafta: Cityzens 2, Red 1 — finalizeWeek bir marta qo'shgan
+  assert.deepStrictEqual([Number(city.xp), Number(red.xp)], [2, 1]);
+  await community.finalizeWeek(new Date());
+  assert.strictEqual(Number((await db.one('SELECT xp FROM communities WHERE id = $1', [city.id])).xp), 2, 'qayta qo\'shilmaydi');
+  const page = await call(`/api/community/${red.id}`, A);
+  assert.deepStrictEqual([page.body.level.level, page.body.level.xp], [1, 1 + page.body.points]);
+  await settings.set('community_level_xp', [3, 100]);
+  assert.strictEqual((await call(`/api/community/${red.id}`, A)).body.level.level, 2);
+  await settings.set('community_level_xp', th);
+});
+
+test("⚔️ derbi: hafta boshida qo'shnilar juftlanadi, hafta oxirida g'olib 👑 oladi", async () => {
+  const red = await db.one("SELECT id FROM communities WHERE name = 'Red Army UZ'");
+  const city = await db.one("SELECT id FROM communities WHERE name = 'Cityzens'");
+  const now = new Date();
+  const active = (await db.one("SELECT count(*)::int AS n FROM communities WHERE status = 'active'")).n;
+  assert.strictEqual(await community.ensureDerbies(now), Math.floor(active / 2));
+  assert.strictEqual(await community.ensureDerbies(now), 0, 'bir hafta — bir marta');
+  const d = await db.one('SELECT * FROM community_derbies WHERE home_id = $1 OR away_id = $1', [city.id]);
+  assert.deepStrictEqual([d.home_id, d.away_id], [city.id, red.id], "o'tgan hafta 1-o'rin va 2-o'rin");
+  const page = await call(`/api/community/${red.id}`, A);
+  assert.strictEqual(page.body.derby.opponent.name, 'Cityzens');
+  assert.strictEqual(page.body.derby.my, page.body.points);
+  assert.strictEqual(page.body.crown, false);
+  assert.strictEqual(await community.resolveDerbies(now), 0, 'hafta tugamagan');
+  const after = new Date(weekRange(now).end.getTime() + 1000);
+  assert.strictEqual(await community.resolveDerbies(after), 1);
+  const done = await db.one('SELECT * FROM community_derbies WHERE id = $1', [d.id]);
+  assert.strictEqual(done.status, 'finished');
+  // Joriy hafta: Red (A 2 + M1 1) > Cityzens (B 2)
+  assert.deepStrictEqual([done.home_points, done.away_points, done.winner_id], [2, 3, red.id]);
+  assert.strictEqual(await community.resolveDerbies(after), 0);
+  const ov = await call('/api/community', A);
+  const byId = Object.fromEntries(ov.body.standings.map((c) => [c.id, c]));
+  assert.deepStrictEqual([byId[red.id].crown, byId[city.id].crown], [true, false]);
+});
+
 test("kartada klub almashtirilsa — a'zo community'dan chiqadi; egasi klubni almashtira olmaydi", async () => {
   await db.query('UPDATE users SET balance = 100000 WHERE telegram_id IN ($1, $2)', [M1, A]);
   const r = await call('/api/fan-card/club', M1, { method: 'POST', body: { teamId: 60 } });
@@ -234,5 +278,10 @@ test("admin rad etadi (sabab bilan) va yopadi; narx sozlamasi", async () => {
   assert.strictEqual((await db.one('SELECT count(*)::int AS n FROM community_members WHERE community_id = $1', [city.id])).n, 0);
   assert.strictEqual((await call(`/api/community/${city.id}`, B)).status, 404);
   assert.strictEqual((await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { price: -5 } })).status, 400);
-  assert.deepStrictEqual((await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { price: 750000 } })).body, { price: 750000 });
+  assert.strictEqual((await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { price: 750000 } })).body.price, 750000);
+  // Daraja chegaralari: o'sib boruvchi musbat sonlar
+  assert.strictEqual((await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { levels: [100, 50] } })).status, 400);
+  assert.strictEqual((await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { levels: [] } })).status, 400);
+  const lv = await call('/api/admin/community-settings', OWNER, { method: 'PUT', body: { levels: [100, 300, 900] } });
+  assert.deepStrictEqual([lv.body.levels, lv.body.price], [[100, 300, 900], 750000]);
 });

@@ -100,6 +100,9 @@ async function finalizePeriods(now = new Date()) {
 
   // 👥 Haftaning fan klubi — fan community'lar reytingi g'olibi (bir marta), hamma foydalanuvchiga xabar (orqa fonda)
   const cmWin = await community.finalizeWeek(now, PERIOD_GRACE_MS);
+  // ⚔️ Derbi: tugagan haftani hisoblash, yangi hafta juftliklarini tuzish
+  await community.resolveDerbies(now, PERIOD_GRACE_MS);
+  await community.ensureDerbies(now);
   if (cmWin) community.announceWinner(cmWin).catch((e) => console.error('[community winner]', e));
 
   // 🏆 Referral League — o'tgan oy g'olibiga Premium

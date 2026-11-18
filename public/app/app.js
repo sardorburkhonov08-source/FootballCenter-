@@ -718,13 +718,41 @@
   }
 
   /** Community "kartochkasi": klub rangida tasma, logotip, nom, chempion belgisi */
+  function cmLevelLabel(lv) { return `Lv ${lv.level} · ${t(`cm_lv${lv.level}`)}`; }
+
+  /** Daraja: nom, XP va keyingi darajagacha progress */
+  function cmLevelCard(lv) {
+    const pct = lv.next ? Math.max(0, Math.min(100, Math.round(((lv.xp - lv.from) / (lv.next - lv.from)) * 100))) : 100;
+    return el('div', { class: 'card', style: 'margin-top:10px' },
+      el('div', { class: 'row between' }, el('h3', { style: 'margin:0', text: t('cm_level_title') }), el('span', { class: 'badge gold', text: cmLevelLabel(lv) })),
+      el('div', { class: 'cm-progress' }, el('span', { style: `width:${pct}%` })),
+      el('div', { class: 'row between small muted' }, el('span', { text: t('cm_xp', { xp: money(lv.xp) }) }),
+        el('span', { text: lv.next ? t('cm_next', { left: money(lv.next - lv.xp), n: lv.level + 1 }) : t('cm_max') })));
+  }
+
+  /** ⚔️ Haftalik derbi: jonli hisob */
+  function cmDerbyCard(c) {
+    const d = c.derby;
+    const card = el('div', { class: 'card', style: 'margin-top:10px' }, el('div', { class: 'row between' }, el('h3', { style: 'margin:0', text: t('cm_derby') }),
+      c.crown ? el('span', { class: 'badge gold', text: t('cm_crown') }) : null));
+    if (!d) { card.append(el('p', { class: 'small muted', style: 'margin:8px 0 0', text: t('cm_derby_none') })); return card; }
+    const lead = d.my > d.their ? 'win' : d.my < d.their ? 'lose' : 'draw';
+    const side = (name, logo, pts, mine) => el('div', { class: `cm-dside${mine ? ' me' : ''}` },
+      el('span', { class: 'cm-logo sm' }, logo ? el('img', { src: logo, alt: '', referrerpolicy: 'no-referrer' }) : '⚽'),
+      el('b', { class: 'ellipsis', text: name }), el('div', { class: 'cm-dpts', text: pts }));
+    card.append(el('div', { class: 'cm-derby' },
+      side(c.name, c.team.logo, d.my, true), el('div', { class: 'cm-vs', text: 'VS' }), side(d.opponent.name, d.opponent.team.logo, d.their, false)),
+    el('p', { class: `small ${lead === 'win' ? 'gold' : 'muted'}`, style: 'margin:10px 0 0;text-align:center', text: `${t(`cm_derby_${lead}`)} · ${t('cm_derby_ends', { date: `${ddmm(d.end)} ${hhmm(d.end)}` })}` }));
+    return card;
+  }
+
   function cmBand(c, big) {
     const col = c.colors || {};
     return el('div', { class: `cm-band${big ? ' big' : ''}`, style: `background:${col.primary};color:${col.text};border-bottom:4px solid ${col.secondary}` },
       el('span', { class: 'cm-logo' }, c.team.logo ? el('img', { src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : '⚽'),
       el('span', { class: 'grow', style: 'min-width:0' },
-        el('b', { class: 'ellipsis', style: 'display:block', text: c.name }),
-        el('span', { class: 'small', style: 'opacity:.85', text: c.team.name })),
+        el('b', { class: 'ellipsis', style: 'display:block', text: `${c.crown ? '👑 ' : ''}${c.name}` }),
+        el('span', { class: 'small', style: 'opacity:.85', text: c.level ? `${c.team.name} · ${cmLevelLabel(c.level)}` : c.team.name })),
       c.champion ? el('span', { class: 'cm-champ', title: t('cm_champion'), text: '🏆' }) : null,
       c.wins ? el('span', { class: 'cm-wins', text: `🏆×${c.wins}` }) : null);
   }
@@ -777,8 +805,8 @@
     parts.push(d.standings.length ? el('div', { class: 'list' }, d.standings.map((c) => el('button', { class: `item cm-row${my && my.id === c.id ? ' on' : ''}`, type: 'button', onclick: () => open(c.id) },
       el('span', { class: 'cm-place', text: c.place <= 3 ? ['🥇', '🥈', '🥉'][c.place - 1] : String(c.place) }),
       el('span', { class: 'cm-logo sm' }, c.team.logo ? el('img', { src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : '⚽'),
-      el('span', { class: 'grow', style: 'min-width:0' }, el('b', { class: 'ellipsis', style: 'display:block', text: `${c.name}${c.champion ? ' 🏆' : ''}` }),
-        el('span', { class: 'small muted', text: `${c.team.name} · ${t('cm_members', { n: c.members })}` })),
+      el('span', { class: 'grow', style: 'min-width:0' }, el('b', { class: 'ellipsis', style: 'display:block', text: `${c.crown ? '👑 ' : ''}${c.name}${c.champion ? ' 🏆' : ''}` }),
+        el('span', { class: 'small muted', text: `${c.team.name} · Lv ${c.level.level} · ${t('cm_members', { n: c.members })}` })),
       el('b', { class: 'gold', text: c.points })))) : el('div', { class: 'card center muted', text: t('cm_ranking_empty') }));
     box.replaceChildren(...parts);
   }
@@ -822,6 +850,8 @@
         el('div', { class: 'stat' }, el('b', { text: c.place ? `${c.place}/${c.totalCommunities}` : '—' }), el('span', { text: t('cm_stat_place') })),
         el('div', { class: 'stat' }, el('b', { class: 'gold', text: c.points }), el('span', { text: t('cm_stat_points') })),
         el('div', { class: 'stat' }, el('b', { text: c.members }), el('span', { text: t('cm_stat_members') }))),
+      cmLevelCard(c.level),
+      cmDerbyCard(c),
       el('div', { class: 'card', style: 'margin-top:10px' }, el('h3', { style: 'margin-top:0', text: t('cm_stats_title') }),
         statLine(t('cm_avg_age'), st.avg_age ?? '—'),
         statLine(t('cm_gender'), `${t('fc_male')}: ${st.male} · ${t('fc_female')}: ${st.female}`),
