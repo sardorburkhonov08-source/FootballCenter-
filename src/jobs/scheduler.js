@@ -54,7 +54,9 @@ async function bonusReady() {
 
 async function quizTick() {
   const cur = await quiz.current();
-  if (cur && Date.now() - new Date(cur.published_at).getTime() < HOUR) return;
+  // Inglizcha tashqi API o'chiq bo'lsa, undan kelgan (faqat inglizcha) joriy savol soat kutmasdan almashtiriladi
+  const staleEnglish = cur && cur.source === 'api' && !(await settings.get('quiz_api_enabled'));
+  if (cur && !staleEnglish && Date.now() - new Date(cur.published_at).getTime() < HOUR) return;
   const q = await quiz.publishNext();
   if (!q) return;
   const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked');
