@@ -26,7 +26,8 @@ const PHOTO_MAX_BYTES = 1.5 * 1024 * 1024;
 const MIN_AGE = 5;
 const MAX_AGE = 100;
 const PHOTO_DIR = 'fancards';
-const DEFAULT_COLOR = '#1f8a4c'; // logotip rangi aniqlanmasa — FootballCenter yashili
+const DEFAULT_COLOR = '#1f8a4c';
+const DESIGN = 2; // karta dizayni o'zgarsa oshiriladi — eski rasmlar keshdan chiqadi // logotip rangi aniqlanmasa — FootballCenter yashili
 
 class CardError extends Error {}
 
@@ -98,10 +99,27 @@ async function teamColors(teamId, logoUrl) {
 }
 
 /** Kartadagi rang sxemasi: urg'u rangi och fonda o'qiladigan bo'lishi kerak */
-function palette(primary) {
+function contrast(a, b) { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); }
+
+/**
+ * Karta ranglari klub rangidan: sarlavha tasmasi — klubning asosiy rangi, fon — shu rangning och tusi,
+ * ingichka chiziq — ikkinchi rang. Raqamlar rangi fonda o'qiladigan bo'lguncha qoraytiriladi.
+ */
+function palette(primary, secondary) {
   const base = primary || DEFAULT_COLOR;
-  const accent = luminance(base) > 0.28 ? shade(base, -0.5) : base;
-  return { accent, bg: shade(base, 0.93), wave: base, dark: shade(base, -0.65) };
+  const bg = shade(base, 0.82);
+  let accent = base;
+  for (let k = 0.15; contrast(accent, bg) < 4.5 && k < 0.95; k += 0.1) accent = shade(base, -k);
+  // Tasmadagi matn: oq yaxshi o'qilsa — oq; bo'lmasa klubning ikkinchi rangi (masalan, havorangda to'q ko'k), u ham bo'lmasa — qora
+  const white = '#ffffff';
+  let bandText = '#0c1712';
+  if (contrast(white, base) >= 3.5) bandText = white;
+  else if (secondary && contrast(secondary, base) >= 4.5) bandText = secondary;
+  return {
+    band: base, bandText, bandMuted: bandText,
+    stripe: secondary && Math.abs(luminance(secondary) - luminance(base)) > 0.04 ? secondary : shade(base, -0.4),
+    accent, bg, wave: shade(base, -0.25), dark: shade(base, -0.65),
+  };
 }
 
 // ---------- Tekshiruvlar
@@ -198,7 +216,7 @@ async function getCard(user, lang = user.language || 'uz') {
   const rank = await clubRank(c);
   const points = (u.points_manager || 0) + (u.points_quiz || 0);
   const version = crypto.createHash('sha1')
-    .update([c.updated_at && new Date(c.updated_at).getTime(), points, rank.place, rank.total, lang, premium].join(':')).digest('hex').slice(0, 10);
+    .update([DESIGN, c.updated_at && new Date(c.updated_at).getTime(), points, rank.place, rank.total, lang, premium].join(':')).digest('hex').slice(0, 10);
   return {
     ...base,
     activated: true,
@@ -402,7 +420,7 @@ function waves(color) {
     }
     out += `<path d="${d}"/>`;
   }
-  return `<g fill="none" stroke="${color}" stroke-opacity="0.09" stroke-width="2">${out}</g>`;
+  return `<g fill="none" stroke="${color}" stroke-opacity="0.16" stroke-width="2">${out}</g>`;
 }
 
 /** Oltin to'p (Ballon d'Or uslubida, tagligi bilan) — Premium belgisi */
@@ -479,7 +497,7 @@ function field(x, y, label, value, { size = 40, color = INK, maxWidth = 380 } = 
 function shell(v, inner, idp) {
   return `<g><defs><clipPath id="${idp}c"><rect width="${W}" height="${H}" rx="40"/></clipPath></defs>
 <g clip-path="url(#${idp}c)"><rect width="${W}" height="${H}" fill="${v.pal.bg}"/>${waves(v.pal.wave)}
-${v.logoPng ? `<image href="data:image/png;base64,${v.logoPng}" x="760" y="300" width="420" height="420" opacity="0.07" preserveAspectRatio="xMidYMid meet"/>` : ''}
+${v.logoPng ? `<image href="data:image/png;base64,${v.logoPng}" x="760" y="300" width="420" height="420" opacity="0.1" preserveAspectRatio="xMidYMid meet"/>` : ''}
 ${inner}</g></g>`;
 }
 
@@ -491,12 +509,14 @@ function frontGroup(v, L, idp = 'f') {
 <text x="198" y="660" ${I} font-size="${fit(L('card_first', { n: v.firstLimit }), 17, 270, 0.62)}" letter-spacing="1.5" text-anchor="middle" fill="#fff">${esc(up(`★ ${L('card_first', { n: v.firstLimit })} ★`))}</text>`
     : '';
   return shell(v, `
-${logoBox(v, 48, 36, 124)}
-<text x="196" y="92" ${D} font-size="${fit(clubLine, 50, 760)}" fill="${v.pal.accent}">${esc(clubLine)}</text>
-<text x="196" y="138" ${D} font-size="34" fill="${INK}">${esc(up(L('card_header_title')))}</text>
-<text x="196" y="168" ${I} font-size="16" letter-spacing="3" fill="${MUTED}">FOOTBALLCENTER</text>
+<rect width="${W}" height="190" fill="${v.pal.band}"/><rect y="190" width="${W}" height="8" fill="${v.pal.stripe}"/>
+<circle cx="110" cy="98" r="72" fill="#ffffff"/>
+${logoBox(v, 50, 38, 120)}
+<text x="204" y="90" ${D} font-size="${fit(clubLine, 50, 740)}" fill="${v.pal.bandText}">${esc(clubLine)}</text>
+<text x="204" y="136" ${D} font-size="34" fill="${v.pal.bandText}">${esc(up(L('card_header_title')))}</text>
+<text x="204" y="166" ${I} font-size="16" letter-spacing="3" fill="${v.pal.bandMuted}" fill-opacity="0.75">FOOTBALLCENTER</text>
 ${trophy(1088, 30, `${idp}t`)}
-${photoBox(v, 48, 214, 300, 396, `${idp}p`)}
+${photoBox(v, 48, 222, 300, 390, `${idp}p`)}
 ${pill}
 ${field(392, 214, L('card_l_surname'), v.lastName, { maxWidth: 760 })}
 ${field(392, 300, L('card_l_name'), v.firstName, { maxWidth: 760 })}
@@ -518,6 +538,7 @@ ${v.rank.place <= 3 ? medal(522, 334, v.rank.place) : ''}
     : '';
   const link = v.botUsername ? `t.me/${v.botUsername}` : 'FootballCenter';
   return shell(v, `
+<rect width="${W}" height="22" fill="${v.pal.band}"/><rect y="22" width="${W}" height="6" fill="${v.pal.stripe}"/>
 ${field(48, 60, L('card_l_region'), v.region, { size: 44, maxWidth: 420 })}${field(500, 60, L('card_l_points'), num(v.points), { size: 44, color: v.pal.accent, maxWidth: 360 })}
 ${field(48, 170, L('card_l_fan_number'), String(v.fanNumber).padStart(6, '0'), { size: 44, color: v.pal.accent, maxWidth: 420 })}${field(500, 170, L('card_l_activated'), v.activated, { size: 44, maxWidth: 360 })}
 ${field(48, 280, L('card_l_issued'), 'FootballCenter', { size: 44, maxWidth: 420 })}
@@ -577,8 +598,8 @@ async function viewModel(u, lang) {
     teamColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'),
   ]);
   return {
-    key: [c.updated_at && new Date(c.updated_at).getTime(), c.team_id, (u.points_manager || 0) + (u.points_quiz || 0), rank.place, rank.total, lang, firstLimit].join(':'),
-    club: c.team_name, logoPng: colors ? colors.logo_png : null, pal: palette(colors && colors.primary_color),
+    key: [DESIGN, colors && colors.primary_color, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, (u.points_manager || 0) + (u.points_quiz || 0), rank.place, rank.total, lang, firstLimit].join(':'),
+    club: c.team_name, logoPng: colors ? colors.logo_png : null, pal: palette(colors && colors.primary_color, colors && colors.secondary_color),
     photo: readPhoto(c.photo_path),
     lastName: c.last_name, firstName: c.first_name, goat: c.goat, age: currentYear() - c.birth_year, gender: c.gender,
     player: c.fav_player, since: c.fan_since, fanNumber: c.fan_number, first: c.fan_number <= Number(firstLimit), firstLimit,

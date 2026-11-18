@@ -65,6 +65,13 @@ test('logotipdan klub ranglari; Code 128 shtrix-kodi', () => {
   assert.strictEqual(c.primary, '#c8102e');
   assert.strictEqual(c.secondary, '#1428a0');
   assert.strictEqual(fancard.palette('#ffe14d').accent !== '#ffe14d', true, "och rang matn uchun qoraytiriladi");
+  // Karta klub rangida: sarlavha tasmasi — asosiy rang, fon — uning sezilarli och tusi (deyarli oq emas)
+  const city = fancard.palette('#6cabdd', '#1c2c5b');
+  assert.strictEqual(city.band, '#6cabdd');
+  assert.strictEqual(city.bandText, '#1c2c5b', "havorangda oq o'qilmaydi — ikkinchi rang (to'q ko'k)");
+  assert.notStrictEqual(city.bg, '#ffffff');
+  assert.ok(parseInt(city.bg.slice(5, 7), 16) - parseInt(city.bg.slice(1, 3), 16) >= 15, 'fon havorang tusda');
+  assert.strictEqual(fancard.palette('#c8102e', '#f6eb61').bandText, '#ffffff');
   const m = barcode.modules('Ab');
   // Start B + 'A' + 'b' + nazorat belgisi (har biri 11 modul) + Stop (13 modul)
   assert.strictEqual(m.length, 11 * 4 + 13);
