@@ -71,6 +71,9 @@ async function find(query) {
   return db.one('SELECT * FROM users WHERE lower(username) = $1', [name]);
 }
 
+/** Umumiy points: Mini Manager + Quiz + Hisobni top */
+function totalPoints(u) { return (Number(u.points_manager) || 0) + (Number(u.points_quiz) || 0) + (Number(u.points_score) || 0); }
+
 function isPremium(user) {
   return !!(user && user.premium_expires_at && new Date(user.premium_expires_at) > new Date());
 }
@@ -121,6 +124,7 @@ async function activeReferralCount(userId) {
 }
 
 module.exports = {
+  totalPoints,
   welcomePremium, gotWelcomePremium,
   upsertFromTelegram, byTelegramId, byId, find, isPremium, isOwner, isAdmin, premiumDaysLeft, displayName,
   grantPremium, setLanguage, activeReferralCount,

@@ -9,6 +9,7 @@ const config = require('../config');
 const settings = require('../services/settings');
 const football = require('../services/football');
 const manager = require('../services/manager');
+const scorePredict = require('../services/scorePredict');
 const quiz = require('../services/quiz');
 const popularity = require('../services/popularity');
 const users = require('../services/users');
@@ -151,6 +152,37 @@ router.delete('/manager/games/:id', wrap(async (req, res) => {
   await db.query('DELETE FROM mini_manager_games WHERE id = $1', [g.id]);
   return res.json({ ok: true });
 }));
+
+// ---- 🎯 Hisobni top — o'yinlar (kelgusi o'yinlar qidiruvi /manager/matches bilan umumiy)
+function scoreAdminRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof scorePredict.ScoreError) return res.status(e.message === 'not_found' ? 404 : 400).json({ error: e.message });
+      if (e instanceof football.FootballUnavailable) return res.status(503).json({ error: 'football_unavailable', reason: e.reason });
+      throw e;
+    }
+  });
+}
+router.get('/score/games', scoreAdminRoute(async () => scorePredict.adminList()));
+router.post('/score/games', express.json(), scoreAdminRoute(async (req) => {
+  const id = Number(req.body && req.body.apiMatchId);
+  if (!id) throw new scorePredict.ScoreError('bad_match');
+  return scorePredict.assignGame(id);
+}));
+router.get('/score/settings', scoreAdminRoute(async () => scorePredict.rules()));
+router.put('/score/settings', express.json(), scoreAdminRoute(async (req) => {
+  const exact = Number(req.body && req.body.exact);
+  const outcome = Number(req.body && req.body.outcome);
+  if (!Number.isInteger(exact) || !Number.isInteger(outcome) || exact < 1 || outcome < 0 || outcome > exact || exact > 1000) {
+    throw new scorePredict.ScoreError('bad_points');
+  }
+  await settings.set('score_exact_points', exact);
+  await settings.set('score_outcome_points', outcome);
+  return scorePredict.rules();
+}));
+router.delete('/score/games/:id', scoreAdminRoute(async (req) => { await scorePredict.removeGame(req.params.id); return { ok: true }; }));
 
 // ---- ⭐ Asosiy ligalar (o'yinlar ro'yxatida eng tepada)
 const POPULAR_KEYS = ['popular_leagues_enabled', 'popular_leagues_days', 'popular_leagues_limit', 'popular_leagues_min_users'];
@@ -409,9 +441,9 @@ router.get('/stats', wrap(async (req, res) => {
     [today, ymd()],
   );
   const top = await db.many(
-    `SELECT id, telegram_id, first_name, last_name, username, coach_name, points_manager, points_quiz,
-            (points_manager + points_quiz) AS total
-     FROM users WHERE (points_manager + points_quiz) > 0 AND NOT is_blocked ORDER BY total DESC LIMIT 20`,
+    `SELECT id, telegram_id, first_name, last_name, username, coach_name, points_manager, points_quiz, points_score,
+            (points_manager + points_quiz + points_score) AS total
+     FROM users WHERE (points_manager + points_quiz + points_score) > 0 AND NOT is_blocked ORDER BY total DESC LIMIT 20`,
   );
   const winners = await db.many(
     `SELECT w.*, u.first_name, u.last_name, u.username, u.telegram_id FROM period_winners w LEFT JOIN users u ON u.id = w.user_id

@@ -193,11 +193,11 @@ function csvCell(v) {
 }
 
 async function exportUsers(ctx) {
-  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, points_manager, points_quiz,
+  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, points_manager, points_quiz, points_score,
       CASE WHEN premium_expires_at > now() THEN 'premium' ELSE 'free' END AS tariff, premium_expires_at, registered_at, is_blocked, is_admin,
       (SELECT count(*) FROM referrals r WHERE r.referrer_id = users.id AND r.is_active) AS active_referrals
     FROM users ORDER BY registered_at`);
-  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', 'points_manager', 'points_quiz', 'tariff',
+  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', 'points_manager', 'points_quiz', 'points_score', 'tariff',
     'premium_expires_at', 'registered_at', 'is_blocked', 'is_admin', 'active_referrals'];
   const csv = '﻿' + [cols.join(','), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(','))].join('\n');
   await ctx.replyWithDocument(new InputFile(Buffer.from(csv, 'utf8'), `users_${ymd()}.csv`), { caption: t(ctx.lang, 'a_export_caption', { count: rows.length }) });

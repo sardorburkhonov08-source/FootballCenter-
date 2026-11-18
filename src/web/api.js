@@ -4,6 +4,7 @@ const db = require('../db/pool');
 const settings = require('../services/settings');
 const users = require('../services/users');
 const football = require('../services/football');
+const scorePredict = require('../services/scorePredict');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -192,10 +193,24 @@ router.post('/manager/games/:id/prediction', requirePremium, express.json(), wra
   return undefined;
 }));
 
+// ---------- 🎯 Hisobni top (faqat Premium)
+function scoreRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof scorePredict.ScoreError) return res.status(e.message === 'not_found' ? 404 : e.message === 'locked' ? 409 : 400).json({ error: e.message });
+      throw e;
+    }
+  });
+}
+router.get('/score/games', requirePremium, scoreRoute((req) => scorePredict.listGames(req.user)));
+router.post('/score/games/:id', requirePremium, express.json(), scoreRoute((req) => scorePredict.savePrediction(req.user, req.params.id, req.body || {})));
+
 router.get('/leaderboard/:kind/:period', wrap(async (req, res) => {
   const { kind, period } = req.params;
-  if (!['manager', 'quiz'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
-  if (kind === 'quiz' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
+  if (!['manager', 'quiz', 'score'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
+  if (kind !== 'manager' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
   const top = Number(await settings.get('leaderboard_top')) || 30;
   return res.json(await leaderboard.board(kind, period, req.user.id, top));
 }));
@@ -300,7 +315,9 @@ router.get('/profile', wrap(async (req, res) => {
   const counts = await db.one(
     `SELECT (SELECT count(*)::int FROM mini_manager_predictions WHERE user_id = $1) AS predictions,
             (SELECT count(*)::int FROM quiz_answers WHERE user_id = $1 AND answered_at IS NOT NULL) AS answers,
-            (SELECT count(*)::int FROM quiz_answers WHERE user_id = $1 AND points_earned > 0) AS correct`,
+            (SELECT count(*)::int FROM quiz_answers WHERE user_id = $1 AND points_earned > 0) AS correct,
+            (SELECT count(*)::int FROM score_predictions WHERE user_id = $1) AS score_predictions,
+            (SELECT count(*)::int FROM score_predictions WHERE user_id = $1 AND points_earned > 0) AS score_hits`,
     [u.id],
   );
   res.json({
@@ -308,6 +325,7 @@ router.get('/profile', wrap(async (req, res) => {
     referrals: await users.activeReferralCount(u.id),
     manager: users.isPremium(u) ? { ...(await stat('manager')), predictions: counts.predictions } : null,
     quiz: users.isPremium(u) ? { ...(await stat('quiz')), answers: counts.answers, correct: counts.correct } : null,
+    score: users.isPremium(u) ? { ...(await stat('score')), predictions: counts.score_predictions, hits: counts.score_hits } : null,
   });
 }));
 

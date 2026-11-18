@@ -210,11 +210,11 @@ function readPhoto(rel) {
 // ---------- Ma'lumot
 async function cardRow(userId) { return db.one('SELECT * FROM fan_cards WHERE user_id = $1', [userId]); }
 
-/** Klub ichidagi o'rin: umumiy points (Mini Manager + Quiz) bo'yicha; teng bo'lsa — kim oldin muxlis bo'lgan */
+/** Klub ichidagi o'rin: umumiy points (Mini Manager + Quiz + Hisobni top) bo'yicha; teng bo'lsa — kim oldin muxlis bo'lgan */
 async function clubRank(card) {
   return db.one(
     `WITH f AS (
-       SELECT c.user_id, c.fan_number, (u.points_manager + u.points_quiz) AS pts
+       SELECT c.user_id, c.fan_number, (u.points_manager + u.points_quiz + u.points_score) AS pts
        FROM fan_cards c JOIN users u ON u.id = c.user_id WHERE c.team_id = $1 AND NOT u.is_blocked)
      SELECT (SELECT count(*)::int FROM f) AS total,
             (SELECT count(*)::int + 1 FROM f, f me WHERE me.user_id = $2
@@ -239,7 +239,7 @@ async function getCard(user, lang = user.language || 'uz') {
   const c = await cardRow(u.id);
   if (!c) return { ...base, activated: false, card: null, images: null };
   const rank = await clubRank(c);
-  const points = (u.points_manager || 0) + (u.points_quiz || 0);
+  const points = users.totalPoints(u);
   const version = crypto.createHash('sha1')
     .update([DESIGN, c.updated_at && new Date(c.updated_at).getTime(), points, rank.place, rank.total, lang, premium].join(':')).digest('hex').slice(0, 10);
   return {
@@ -627,12 +627,12 @@ async function viewModel(u, lang) {
     clubColors(c.team_id, c.team_logo), clubRank(c), settings.get('fan_card_first_fans'),
   ]);
   return {
-    key: [DESIGN, colors.primary, colors.secondary, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, (u.points_manager || 0) + (u.points_quiz || 0), rank.place, rank.total, lang, firstLimit].join(':'),
+    key: [DESIGN, colors.primary, colors.secondary, c.updated_at && new Date(c.updated_at).getTime(), c.team_id, users.totalPoints(u), rank.place, rank.total, lang, firstLimit].join(':'),
     club: c.team_name, logoPng: colors.logoPng, pal: palette(colors.primary, colors.secondary),
     photo: readPhoto(c.photo_path),
     lastName: c.last_name, firstName: c.first_name, goat: c.goat, age: currentYear() - c.birth_year, gender: c.gender,
     player: c.fav_player, since: c.fan_since, fanNumber: c.fan_number, first: c.fan_number <= Number(firstLimit), firstLimit,
-    region: regionName(lang, c.region), points: (u.points_manager || 0) + (u.points_quiz || 0),
+    region: regionName(lang, c.region), points: users.totalPoints(u),
     activated: formatDate(c.activated_at), rank, botUsername: config.botUsername || null,
   };
 }
