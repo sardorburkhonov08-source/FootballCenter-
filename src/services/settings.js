@@ -66,6 +66,26 @@ const DEFAULTS = {
   fan_card_club_change_price: 50000,   // klubni almashtirish narxi (balansdan yechiladi)
   fan_card_first_fans: 100,            // klubning birinchi N muxlisi kartasida maxsus belgi
   // GOAT tanlash uchun takliflar ro'yxati (foydalanuvchi qidirib tanlaydi)
+  // Klub ranglari (API-Football jamoa ID → { primary, secondary }). Bu ro'yxatdagi klublar uchun rang logotipdan
+  // aniqlanmaydi — rasmiy rang ishlatiladi. Web admin → "🪪 Muxlislik kartalari" → "Klub ranglari" orqali o'zgartiriladi.
+  fan_card_team_colors: {
+    50: { primary: '#6cabdd', secondary: '#1c2c5b' },   // Manchester City
+    33: { primary: '#da291c', secondary: '#fbe122' },   // Manchester United
+    40: { primary: '#c8102e', secondary: '#00b2a9' },   // Liverpool
+    42: { primary: '#ef0107', secondary: '#063672' },   // Arsenal
+    49: { primary: '#034694', secondary: '#dba111' },   // Chelsea
+    47: { primary: '#132257', secondary: '#ffffff' },   // Tottenham
+    541: { primary: '#00529f', secondary: '#febe10' },  // Real Madrid
+    529: { primary: '#a50044', secondary: '#004d98' },  // Barcelona
+    530: { primary: '#cb3524', secondary: '#272e61' },  // Atletico Madrid
+    157: { primary: '#dc052d', secondary: '#0066b2' },  // Bayern
+    165: { primary: '#fde100', secondary: '#000000' },  // Borussia Dortmund
+    496: { primary: '#000000', secondary: '#ffffff' },  // Juventus
+    505: { primary: '#010e80', secondary: '#000000' },  // Inter
+    489: { primary: '#fb090b', secondary: '#000000' },  // AC Milan
+    492: { primary: '#12a0d7', secondary: '#003c82' },  // Napoli
+    85: { primary: '#004170', secondary: '#da291c' },   // PSG
+  },
   fan_card_goats: ['Lionel Messi', 'Cristiano Ronaldo', 'Pelé', 'Diego Maradona', 'Johan Cruyff', 'Zinedine Zidane',
     'Ronaldo Nazário', 'Ronaldinho', 'Franz Beckenbauer', 'Alfredo Di Stéfano', 'Ferenc Puskás', 'George Best',
     'Michel Platini', 'Marco van Basten', 'Paolo Maldini', 'Thierry Henry', 'Kaká', 'Andrés Iniesta', 'Xavi',
