@@ -151,6 +151,12 @@ test('Mini Manager: murabbiy, taxmin, qulf, hisoblash, reyting', async () => {
   const manager = require('../src/services/manager');
   const g = await manager.assignGame(555);
   assert.strictEqual(g.home_team_name, 'Arsenal');
+  // Mini Manager — faqat Premium (egasi talabi)
+  for (const [path, method] of [['/api/manager/games', 'GET'], [`/api/manager/games/${g.id}`, 'GET'], ['/api/manager/coach', 'POST'], [`/api/manager/games/${g.id}/prediction`, 'POST']]) {
+    assert.strictEqual((await call(path, { id: FREE, method, body: method === 'POST' ? {} : undefined })).status, 402, path);
+  }
+  // Quyidagi oqim uchun FREE vaqtincha Premium (o'yin boshlangach qaytariladi — taxmin va ball saqlanadi)
+  await db.query("UPDATE users SET premium_expires_at = now() + interval '1 day' WHERE telegram_id = $1", [FREE]);
   assert.strictEqual((await call(`/api/manager/games/${g.id}/prediction`, { id: FREE, method: 'POST', body: {} })).body.error, 'coach_required');
   assert.strictEqual((await call('/api/manager/coach', { id: FREE, method: 'POST', body: { name: 'A' } })).status, 400);
   assert.strictEqual((await call('/api/manager/coach', { id: FREE, method: 'POST', body: { name: 'Coach Sardor' } })).body.coachName, 'Coach Sardor');
@@ -175,6 +181,7 @@ test('Mini Manager: murabbiy, taxmin, qulf, hisoblash, reyting', async () => {
   await db.query("UPDATE mini_manager_games SET kickoff_at = now() - interval '2 hours'");
   assert.strictEqual(await manager.lockStarted(), 1);
   assert.strictEqual((await call(`/api/manager/games/${g.id}/prediction`, { id: FREE, method: 'POST', body })).body.error, 'locked');
+  await db.query('UPDATE users SET premium_expires_at = NULL WHERE telegram_id = $1', [FREE]);
 
   // Tugadi -> hisoblash
   Object.assign(matchState, {
@@ -243,9 +250,14 @@ test('Football Quiz: faqat Premium, server vaqti bo\'yicha ball', async () => {
 
 test('profil API', async () => {
   const p = await call('/api/profile', { id: FREE });
-  assert.strictEqual(p.body.manager.total, 147);
-  assert.strictEqual(p.body.manager.overallPlace, 1);
+  assert.strictEqual(p.body.manager, null, 'Oddiy uchun Mini Manager statistikasi yo\'q');
   assert.strictEqual(p.body.quiz, null, 'Oddiy uchun quiz statistikasi yo\'q');
+  // Premium qaytsa — oldingi ballar saqlangan
+  await db.query("UPDATE users SET premium_expires_at = now() + interval '1 day' WHERE telegram_id = $1", [FREE]);
+  const back = await call('/api/profile', { id: FREE });
+  assert.strictEqual(back.body.manager.total, 147);
+  assert.strictEqual(back.body.manager.overallPlace, 1);
+  await db.query('UPDATE users SET premium_expires_at = NULL WHERE telegram_id = $1', [FREE]);
   const pp = await call('/api/profile', { id: PREM });
   assert.strictEqual(pp.body.quiz.total, 2);
 });
