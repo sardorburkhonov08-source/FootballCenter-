@@ -61,7 +61,7 @@ test/                   avtomatik testlar
 - **Faollashtirish**: ogohlantirish → savollar birma-bir (rasm, familiya, ism, tug'ilgan yil, jins, klub, shu klubdan sevimli futbolchi, GOAT, muxlislik yili, hudud) — hammasi majburiy. Rasm brauzerda 3:4, 600×800 JPEG qilib kichraytiriladi.
 - Keyin faqat **GOAT va sevimli futbolchi** o'zgaradi. **Klubni almashtirish pullik** (`fan_card_club_change_price`, balansdan yechiladi, `fan_card_club_changes` jurnali); yangi klubda raqam navbat oxiridan (`fan_team_counters`, raqam qayta berilmaydi).
 - **Admin** (bot: foydalanuvchi → 🪪; web: "🪪 Muxlislik kartalari"): nomaqbul rasmni o'chiradi (foydalanuvchiga xabar, u yangi rasm yuklaydi), xato ma'lumotni tuzatadi; narx, N va GOAT takliflari — sozlamalar.
-- Rasmlar serverda chiziladi (`@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`, `public/app/fonts/Oswald-Bold.ttf`): `/card/<tgId>-<imzo>-{front|back|story}.png`, xotira keshi bilan. Ma'lumot — `fan_cards` jadvali (005-migratsiya); 004 dagi `users.fav_*`/`fan_*` ustunlari endi ishlatilmaydi.
+- Rasmlar serverda chiziladi (`@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`, `public/app/fonts/Oswald-Bold.ttf`): `/card/<tgId>-<imzo>-{front|back|story}.png`, xotira keshi bilan. Ma'lumot — `fan_cards` jadvali (005-migratsiya); 004 dagi eski `users.fav_*`/`fan_*` ustunlari 006-migratsiyada o'chirilgan.
 
 ## Bosqichlar
 
