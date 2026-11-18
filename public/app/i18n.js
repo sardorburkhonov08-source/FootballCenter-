@@ -1,7 +1,8 @@
 /* Web App matnlari — 4 tilda. Kirill varianti o'zbek lotindan transliteratsiya qilinadi. */
 (function () {
   const uz = {
-    nav_home: 'Home', nav_games: 'Games', nav_profile: 'Profil',
+    nav_home: 'Home', nav_games: 'Games', nav_community: 'Community', nav_profile: 'Profil',
+    community_title: '👥 Community', community_soon_title: '🔜 Tez orada', community_soon_text: "Bu yerda FootballCenter muxlislari jamoasi bo'ladi. Yangiliklarni kuzatib boring!",
     games_quiz_desc: "Har soatda yangi savol: 15 soniyada to'g'ri javob bering, ball to'plang",
     games_title: '🎮 Games', games_mm_desc: "Haqiqiy o'yinlar uchun tarkib va natijani taxmin qiling, ball to'plang", games_soon: "🔜 Yangi o'yinlar tez orada qo'shiladi",
     open_in_telegram_title: '📱 Telegram orqali oching',
@@ -88,7 +89,8 @@
   };
 
   const ru = {
-    nav_home: 'Главная', nav_games: 'Games', nav_profile: 'Профиль',
+    nav_home: 'Главная', nav_games: 'Games', nav_community: 'Community', nav_profile: 'Профиль',
+    community_title: '👥 Community', community_soon_title: '🔜 Скоро', community_soon_text: 'Здесь появится сообщество болельщиков FootballCenter. Следите за новостями!',
     games_quiz_desc: 'Каждый час новый вопрос: ответьте правильно за 15 секунд и набирайте очки',
     games_title: '🎮 Games', games_mm_desc: 'Прогнозируйте составы и счёт реальных матчей, набирайте очки', games_soon: '🔜 Скоро появятся новые игры',
     open_in_telegram_title: '📱 Откройте через Telegram',
@@ -175,7 +177,8 @@
   };
 
   const en = {
-    nav_home: 'Home', nav_games: 'Games', nav_profile: 'Profile',
+    nav_home: 'Home', nav_games: 'Games', nav_community: 'Community', nav_profile: 'Profile',
+    community_title: '👥 Community', community_soon_title: '🔜 Coming soon', community_soon_text: 'The FootballCenter fan community is coming here. Stay tuned!',
     games_quiz_desc: 'A new question every hour: answer correctly within 15 seconds and earn points',
     games_title: '🎮 Games', games_mm_desc: 'Predict line-ups and scores of real matches and earn points', games_soon: '🔜 New games are coming soon',
     open_in_telegram_title: '📱 Open in Telegram',

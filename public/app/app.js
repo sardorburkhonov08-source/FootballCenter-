@@ -10,7 +10,7 @@
 
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
-    stacks: { home: [], games: [], profile: [] },
+    stacks: { home: [], games: [], community: [], profile: [] },
     lb: { manager: 'weekly', quiz: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
@@ -269,7 +269,7 @@
     updateBackButton();
     window.scrollTo(0, 0);
     if (page) return page.render(view);
-    return ({ home: renderHome, games: renderGames, profile: renderProfile })[S.tab](view);
+    return ({ home: renderHome, games: renderGames, community: renderCommunity, profile: renderProfile })[S.tab](view);
   }
 
   // ================= 🏠 HOME
@@ -706,6 +706,15 @@
     { key: 'quiz', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
   ];
+
+  // ================= 👥 COMMUNITY — mazmuni keyin belgilanadi (egasi bilan kelishilgan: hozircha «Tez orada»)
+  function renderCommunity(view) {
+    view.append(el('h2', { style: 'margin:4px 2px 12px', text: t('community_title') }),
+      el('div', { class: 'card', style: 'text-align:center;padding:36px 16px' },
+        el('div', { style: 'font-size:44px', text: '👥' }),
+        el('h3', { text: t('community_soon_title') }),
+        el('p', { class: 'muted', style: 'margin-bottom:0', text: t('community_soon_text') })));
+  }
 
   function renderGames(view) {
     view.append(el('h2', { style: 'margin:4px 2px 12px', text: t('games_title') }),
