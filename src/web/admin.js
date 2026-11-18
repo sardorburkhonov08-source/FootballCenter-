@@ -148,6 +148,28 @@ router.delete('/manager/games/:id', wrap(async (req, res) => {
   return res.json({ ok: true });
 }));
 
+// ---- ⭐ Asosiy ligalar (o'yinlar ro'yxatida eng tepada)
+router.get('/featured-leagues', wrap(async (req, res) => {
+  const ids = (await settings.get('featured_leagues')) || [];
+  try {
+    const data = await football.competitions();
+    const all = [...data.international.map((x) => ({ ...x, area: x.area || 'World' })),
+      ...data.countries.flatMap((c) => c.competitions.map((x) => ({ ...x, area: c.name })))];
+    res.json({ ids, leagues: all.map((x) => ({ id: x.id, name: x.name, area: x.area, emblem: x.emblem })) });
+  } catch (e) {
+    if (e instanceof football.FootballUnavailable) return res.json({ ids, leagues: [], error: 'football_unavailable' });
+    throw e;
+  }
+  return undefined;
+}));
+
+router.put('/featured-leagues', express.json(), wrap(async (req, res) => {
+  const ids = Array.isArray(req.body) ? [...new Set(req.body.map(Number).filter((n) => Number.isInteger(n) && n > 0))] : null;
+  if (!ids || ids.length > 50) return res.status(400).json({ error: 'bad_leagues' });
+  await settings.set('featured_leagues', ids);
+  return res.json(ids);
+}));
+
 router.get('/tactics', wrap(async (req, res) => res.json(await settings.get('tactics'))));
 router.put('/tactics', express.json(), wrap(async (req, res) => {
   const list = Array.isArray(req.body) ? req.body.map((s) => String(s).trim()).filter((s) => /^\d(-\d){2,4}$/.test(s)) : [];

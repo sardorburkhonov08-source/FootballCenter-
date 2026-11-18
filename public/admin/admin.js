@@ -28,7 +28,7 @@
     bad_media: '⚠️ Fayl turi qo\'llab-quvvatlanmaydi (JPG, PNG, WEBP, GIF, MP4, WEBM, Lottie JSON)',
     bad_link: '⚠️ Havola https:// bilan boshlanishi kerak', file_too_large: '⚠️ Fayl juda katta (maks. 50 MB)',
     football_unavailable: '⚠️ Football API mavjud emas (FOOTBALL_API_KEY ni tekshiring)', match_not_scheduled: '⚠️ Bu o\'yin allaqachon boshlangan',
-    bad_prize: '⚠️ Turi, davri va matnini to\'ldiring', bad_question: '⚠️ Barcha maydonlarni to\'ldiring', bad_tactics: '⚠️ Taktika formati: 4-4-2 (jami 10 ta futbolchi)',
+    bad_prize: '⚠️ Turi, davri va matnini to\'ldiring', bad_question: '⚠️ Barcha maydonlarni to\'ldiring', bad_tactics: '⚠️ Taktika formati: 4-4-2 (jami 10 ta futbolchi)', bad_leagues: '⚠️ Ro\'yxat noto\'g\'ri (ko\'pi bilan 50 ta liga)',
     already_finished: '⚠️ Tugagan o\'yinni o\'chirib bo\'lmaydi', quiz_api_unavailable: '⚠️ Quiz API mavjud emas', bad_credentials: '❌ Login yoki parol noto\'g\'ri',
     too_many_attempts: '⏳ Juda ko\'p urinish. 15 daqiqadan keyin qayta urinib ko\'ring',
   };
@@ -54,7 +54,7 @@
 
   // ---------- Bo'limlar
   const SECTIONS = [
-    ['banners', '🎬 Bannerlar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['prizes', '🏆 Sovrinlar'],
+    ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['prizes', '🏆 Sovrinlar'],
     ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['stats', '📊 Statistika'],
   ];
   let current = 'banners';
@@ -68,7 +68,7 @@
   async function show() {
     const v = $('view');
     v.replaceChildren(el('div', { class: 'skeleton' }));
-    try { await ({ banners, games, prizes, quiz, tactics, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+    try { await ({ banners, featured, games, prizes, quiz, tactics, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
   }
 
   // 🎬 Bannerlar
@@ -107,6 +107,49 @@
             el('button', { class: 'mini', text: b.is_active ? '⏸ O\'chirish' : '▶️ Yoqish', onclick: async () => { try { await api(`/banners/${b.id}`, { method: 'PATCH', body: { isActive: !b.is_active } }); show(); } catch (e) { fail(e); } } }),
             el('button', { class: 'mini danger', text: '🗑', onclick: async () => { if (!window.confirm('Banner o\'chirilsinmi?')) return; try { await api(`/banners/${b.id}`, { method: 'DELETE' }); show(); } catch (e) { fail(e); } } })));
       })) : el('div', { class: 'card center muted', text: '📭 Bannerlar yo\'q' }),
+    );
+  }
+
+  // ⭐ Asosiy ligalar — Mini App'dagi o'yinlar ro'yxatida eng tepada, shu tartibda chiqadi
+  async function featured(v) {
+    const d = await api('/featured-leagues');
+    let ids = d.ids.map(Number);
+    const byId = new Map(d.leagues.map((l) => [l.id, l]));
+    const label = (id) => { const l = byId.get(id); return l ? `${l.name} · ${l.area}` : `#${id}`; };
+    const listBox = el('div', { class: 'list' });
+    const results = el('div', { class: 'list', style: 'margin-top:8px' });
+    const search = el('input', { class: 'input', placeholder: 'Liga yoki davlat nomi (masalan: Uzbekistan, Premier)' });
+    const title = el('h2');
+    const draw = () => {
+      title.textContent = `Ro'yxat (${ids.length})`;
+      listBox.replaceChildren(...(ids.length ? ids.map((id, i) => el('div', { class: 'card row' },
+        el('b', { text: `${i + 1}.` }), byId.get(id) && byId.get(id).emblem ? el('img', { src: byId.get(id).emblem, style: 'width:22px;height:22px;object-fit:contain' }) : null,
+        el('span', { class: 'grow ellipsis', text: label(id) }),
+        el('button', { class: 'mini', text: '↑', disabled: i === 0, onclick: () => { [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; draw(); } }),
+        el('button', { class: 'mini', text: '↓', disabled: i === ids.length - 1, onclick: () => { [ids[i + 1], ids[i]] = [ids[i], ids[i + 1]]; draw(); } }),
+        el('button', { class: 'mini danger', text: '🗑', onclick: () => { ids = ids.filter((x) => x !== id); draw(); } }),
+      )) : [el('div', { class: 'card center muted', text: '📭 Ro\'yxat bo\'sh' })]));
+    };
+    const doSearch = () => {
+      const q = search.value.trim().toLowerCase();
+      if (q.length < 2) { results.replaceChildren(); return; }
+      const found = d.leagues.filter((l) => !ids.includes(l.id) && `${l.name} ${l.area}`.toLowerCase().includes(q)).slice(0, 30);
+      results.replaceChildren(...(found.length ? found.map((l) => el('div', { class: 'card row' },
+        l.emblem ? el('img', { src: l.emblem, style: 'width:22px;height:22px;object-fit:contain' }) : null,
+        el('span', { class: 'grow ellipsis', text: `${l.name} · ${l.area}` }),
+        el('button', { class: 'mini ok', text: '➕ Qo\'shish', onclick: () => { ids.push(l.id); draw(); doSearch(); } }),
+      )) : [el('div', { class: 'small muted', text: 'Topilmadi' })]));
+    };
+    search.addEventListener('input', doSearch);
+    const save = el('button', { class: 'btn', text: '💾 Saqlash', onclick: async () => { try { ids = (await api('/featured-leagues', { method: 'PUT', body: ids })).map(Number); draw(); toast('✅ Saqlandi'); } catch (e) { fail(e); } } });
+    draw();
+    v.replaceChildren(
+      el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⭐ Asosiy ligalar' }),
+        el('p', { class: 'small muted', text: 'Bu ligalarning o\'yinlari Mini App\'dagi o\'yinlar ro\'yxatida eng tepada, shu tartibda chiqadi. Qolgan ligalar pastda, yig\'ilgan holda ko\'rsatiladi.' }),
+        d.error ? el('p', { class: 'small', text: ERRORS.football_unavailable }) : null),
+      title, listBox,
+      el('div', { style: 'margin-top:10px' }, save),
+      el('h2', { text: '➕ Liga qo\'shish' }), search, results,
     );
   }
 

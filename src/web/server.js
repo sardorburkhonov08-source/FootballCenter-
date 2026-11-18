@@ -39,6 +39,7 @@ function createApp({ bot } = {}) {
   app.use((err, req, res, next) => {
     if (err && err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'file_too_large' });
     if (err && err.status === 404) return res.status(404).end();
+    if (err && (err.type === 'entity.parse.failed' || err.type === 'entity.too.large')) return res.status(err.status || 400).json({ error: 'bad_request' });
     console.error('[web]', err);
     return res.status(500).json({ error: 'server_error' });
   });
