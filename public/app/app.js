@@ -983,22 +983,52 @@
 
   // ================= 👤 PROFIL
   // ================= 🪪 MUXLISLIK KARTASI
+  // Rangni qoraytirish/oqartirish (k: -1..1) — tekis ranglar bilan "o'rilgan maysa" chiziqlari uchun
+  function shade(hexColor, k) {
+    const n = parseInt(hexColor.slice(1), 16);
+    const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k));
+    return `#${ch.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /** Futbol maydoni chiziqlari: o'rta chiziq, markaziy doira, jarima maydoni */
+  function pitchSvg(line) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 316 148');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('class', 'fc-pitch');
+    const add = (tag, attrs) => { const e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); svg.appendChild(e); };
+    const common = { fill: 'none', stroke: line, 'stroke-width': '1.4' };
+    add('line', { x1: 196, y1: 0, x2: 196, y2: 148, ...common });
+    add('circle', { cx: 196, cy: 80, r: 44, ...common });
+    add('circle', { cx: 196, cy: 80, r: 2.6, fill: line });
+    add('rect', { x: 272, y: 30, width: 60, height: 100, ...common });
+    add('path', { d: 'M272 56 A 26 26 0 0 0 272 104', ...common });
+    return svg;
+  }
+
   function fanCardView(c) {
     const st = c.style;
+    const bg = st.bg === '#16241d' ? '#12301f' : st.bg; // oddiy karta — maydon yashili
+    const dark = st.text !== '#0c1712';
+    const stripe = shade(bg, dark ? 0.05 : -0.05);
+    const line = dark ? 'rgba(255,255,255,.22)' : 'rgba(12,23,18,.22)';
     const field = (label, value) => el('div', { class: 'fc-field' }, el('span', { text: label }), el('b', { text: value || '—' }));
-    return el('div', { class: `fan-card${c.premium ? ' premium' : ''}`, style: `background:${st.bg};color:${st.text}` },
-      el('div', { class: 'fc-stripe', style: `background:${st.accent}` }),
-      el('div', { class: 'fc-top' },
-        el('span', { class: 'fc-brand', text: c.team ? c.team.name : 'FootballCenter' }),
-        el('span', { class: 'fc-no', text: `№ ${String(c.number).padStart(4, '0')}` })),
-      el('div', { class: 'fc-mid' },
+    const logo = c.premium && c.team && c.team.logo;
+    return el('div', { class: `fan-card${c.premium ? ' premium' : ''}`, style: `--fc-bg:${bg};--fc-stripe:${stripe};--fc-text:${st.text};--fc-accent:${st.accent}` },
+      pitchSvg(line),
+      logo ? el('img', { class: 'fc-watermark', src: logo, alt: '', referrerpolicy: 'no-referrer' }) : null,
+      el('div', { class: 'fc-main' },
+        el('div', { class: 'fc-top' },
+          el('span', { class: 'fc-brand', text: '⚽ FootballCenter' }),
+          el('span', { class: 'fc-pass' }, el('small', { text: 'FAN PASS' }), el('b', { text: `№ ${String(c.number).padStart(4, '0')}` }))),
         el('div', { class: 'fc-name', text: c.name }),
-        c.premium && c.team && c.team.logo ? el('img', { class: 'fc-logo', src: c.team.logo, alt: '', referrerpolicy: 'no-referrer' }) : null),
-      el('div', { class: 'fc-fields' },
+        c.team ? el('div', { class: 'fc-club' }, logo ? el('img', { src: logo, alt: '', referrerpolicy: 'no-referrer' }) : el('span', { text: '♥' }), el('span', { text: c.team.name })) : null),
+      el('div', { class: 'fc-stub' },
         field(t('fc_since'), c.since ? t('fc_since_value', { year: c.since }) : null),
         field(t('fc_player_short'), c.player),
-        el('div', { class: 'fc-wide' }, field(t('fc_region'), c.region && c.region.name))),
-      c.premium ? el('div', { class: 'fc-badge', text: '💎 PREMIUM' }) : null);
+        field(t('fc_region'), c.region && c.region.name)),
+      c.premium ? el('div', { class: 'fc-badge', text: 'PREMIUM' }) : null);
   }
 
   async function fanCardSection(container) {
@@ -1006,7 +1036,7 @@
     let d;
     try { d = await api('/fan-card'); } catch (err) { container.replaceChildren(errorBox(err)); return; }
     const c = d.card;
-    const stat = (value, label) => el('div', { class: 'stat' }, el('b', { text: value ?? '—' }), el('span', { text: label }));
+    const stat = (value, label) => el('div', { class: 'stat fc-stat' }, el('b', { text: value ?? '—' }), el('span', { text: label }));
     const editBox = el('div');
     const share = el('button', { class: 'btn ghost', text: t('fc_share'), onclick: () => {
       const text = t('fc_share_text');
@@ -1021,7 +1051,7 @@
       } catch (e) { toast(t('fc_story_unsupported')); }
     } });
     container.replaceChildren(...[
-      el('h2', { style: 'margin-top:4px', text: t('fc_title') }),
+      el('div', { class: 'fc-heading' }, el('span', { text: t('fc_kicker') }), el('b', { text: t('fc_headline') })),
       fanCardView(c),
       !c.premium && c.team ? el('button', { class: 'fc-hint', onclick: premiumModal, text: t('fc_premium_hint') }) : null,
       el('div', { class: 'stats3', style: 'margin-top:10px' },
@@ -1030,7 +1060,7 @@
         stat(c.stats.total, t('fc_stat_total'))),
       el('div', { class: 'card row between', style: 'margin-top:10px' },
         el('div', null, el('b', { text: t('fc_profile') }), el('div', { class: 'small muted', text: t('fc_profile_hint') })),
-        el('button', { class: 'btn ghost', style: 'height:36px', text: `${c.filled}/${c.fields} ✏️`, onclick: () => { haptic(); editBox.childElementCount ? editBox.replaceChildren() : editBox.replaceChildren(fanCardForm(c, () => fanCardSection(container))); } })),
+        el('button', { class: 'btn ghost fc-edit', text: `${c.filled}/${c.fields} ✏️`, onclick: () => { haptic(); editBox.childElementCount ? editBox.replaceChildren() : editBox.replaceChildren(fanCardForm(c, () => fanCardSection(container))); } })),
       editBox,
       el('div', { class: 'grid2', style: 'margin-top:10px' }, share, story),
     ].filter(Boolean));

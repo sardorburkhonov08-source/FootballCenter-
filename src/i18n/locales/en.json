@@ -328,5 +328,6 @@
   "card_stat_club": "{club} fans",
   "card_stat_region": "from this region",
   "card_stat_total": "members in total",
-  "card_join": "Join us"
+  "card_join": "Join us",
+  "card_headline": "My card"
 }

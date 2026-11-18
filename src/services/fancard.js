@@ -179,43 +179,82 @@ function verifyImagePath(file) {
 function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function clip(s, n) { const a = [...String(s || '')]; return a.length > n ? `${a.slice(0, n - 1).join('')}…` : a.join(''); }
 
+function shade(hexColor, k) {
+  const ch = rgb(hexColor).map((v) => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k));
+  return hex(...ch);
+}
+
+/**
+ * Stories rasmi (1080×1920): Mini App'dagi karta bilan bir xil dizayn —
+ * stadion chiptasi (yon kesiklar, perforatsiya), maydon chiziqlari, Oswald shrifti.
+ */
 function cardSvg(card, lang, { botUsername, logoPng } = {}) {
   const L = (k, p) => t(lang, k, p);
   const s = card.style;
-  const muted = s.text === '#0c1712' ? 'rgba(12,23,18,0.62)' : 'rgba(243,247,244,0.62)';
-  const field = (x, y, label, value, max) => `
-    <text x="${x}" y="${y}" font-size="26" font-weight="700" letter-spacing="2" fill="${muted}">${esc(L(label).toUpperCase())}</text>
-    <text x="${x}" y="${y + 50}" font-size="40" font-weight="700" fill="${s.text}">${esc(clip(value || '—', max))}</text>`;
+  const bg = s.bg === DEFAULT.primary ? '#12301f' : s.bg;
+  const dark = s.text !== '#0c1712';
+  const stripe = shade(bg, dark ? 0.05 : -0.05);
+  const muted = dark ? 'rgba(243,247,244,0.62)' : 'rgba(12,23,18,0.62)';
+  const lineOpacity = 0.22;
+  // Karta geometriyasi
+  const X = 60; const Y = 400; const W = 960; const H = 607; const MAIN = Math.round(H * 0.74);
+  const k = W / 316;                     // Mini App'dagi maydon chizmasi (316×148) masshtabi
+  const py = (v) => Y + (v / 148) * MAIN;
+  const stripes = Array.from({ length: 8 }, (_, i) => `<rect x="${X + (i * W) / 8}" y="${Y}" width="${W / 8 + 1}" height="${H}" fill="${i % 2 ? stripe : bg}"/>`).join('');
+  const D = 'font-family="Oswald, DejaVu Sans" font-weight="700"';
+  const field = (x, label, value, max) => `
+    <text x="${x}" y="${Y + MAIN + 62}" font-size="24" font-weight="800" letter-spacing="4" fill="${muted}">${esc(L(label).toUpperCase())}</text>
+    <text x="${x}" y="${Y + MAIN + 118}" ${D} font-size="44" fill="${s.text}">${esc(clip(value || '—', max))}</text>`;
   const stat = (x, value, label) => `
-    <rect x="${x}" y="1180" width="300" height="220" rx="32" fill="#16241d" stroke="#2a3f31" stroke-width="2"/>
-    <text x="${x + 36}" y="1290" font-size="84" font-weight="800" fill="#f2c94c">${esc(value ?? '—')}</text>
-    <text x="${x + 36}" y="1350" font-size="28" fill="#7d9284">${esc(clip(label, 18))}</text>`;
-  const logo = logoPng ? `<image href="data:image/png;base64,${logoPng}" x="760" y="520" width="140" height="140" preserveAspectRatio="xMidYMid meet"/>` : '';
-  const premiumMark = card.premium ? `<text x="920" y="1010" font-size="28" font-weight="800" letter-spacing="3" text-anchor="end" fill="${s.text}">PREMIUM</text>` : '';
+    <rect x="${x}" y="1110" width="300" height="240" rx="32" fill="#16241d" stroke="#2a3f31" stroke-width="2"/>
+    <text x="${x + 150}" y="1245" ${D} font-size="110" text-anchor="middle" fill="#f2c94c">${esc(value ?? '—')}</text>
+    <text x="${x + 150}" y="1305" font-size="28" text-anchor="middle" fill="#7d9284">${esc(clip(label, 17))}</text>`;
+  const name = clip(card.name, 16).toUpperCase();
+  const nameSize = [...name].length > 10 ? 120 : 150;
+  const watermark = logoPng ? `<image href="data:image/png;base64,${logoPng}" x="${X + W * 0.56}" y="${Y + 40}" width="440" height="440" opacity="0.14" preserveAspectRatio="xMidYMid meet"/>` : '';
+  const clubIcon = logoPng ? `<image href="data:image/png;base64,${logoPng}" x="${X + 54}" y="${Y + MAIN - 92}" width="52" height="52" preserveAspectRatio="xMidYMid meet"/>` : `<text x="${X + 54}" y="${Y + MAIN - 52}" font-size="40" fill="${s.text}">♥</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, DejaVu Sans, sans-serif">
   <rect width="1080" height="1920" fill="#0c1712"/>
-  <text x="80" y="200" font-size="40" font-weight="800" letter-spacing="6" fill="#2ecc71">FOOTBALLCENTER</text>
-  <text x="80" y="290" font-size="64" font-weight="800" fill="#f3f7f4">${esc(L('card_title').toUpperCase())}</text>
-  <defs><clipPath id="card"><rect x="80" y="420" width="920" height="640" rx="48"/></clipPath></defs>
-  <g clip-path="url(#card)">
-    <rect x="80" y="420" width="920" height="640" fill="${s.bg}"/>
-    <rect x="80" y="420" width="920" height="16" fill="${s.accent}"/>
+  <text x="60" y="190" font-size="30" font-weight="800" letter-spacing="7" fill="#2ecc71">${esc(`FOOTBALLCENTER · ${L('card_title')}`.toUpperCase())}</text>
+  <text x="60" y="320" ${D} font-size="118" fill="#f3f7f4">${esc(L('card_headline').toUpperCase())}</text>
+  <defs>
+    <mask id="ticket">
+      <rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="56" fill="#fff"/>
+      <circle cx="${X}" cy="${Y + MAIN}" r="34" fill="#000"/>
+      <circle cx="${X + W}" cy="${Y + MAIN}" r="34" fill="#000"/>
+    </mask>
+    <clipPath id="field"><rect x="${X}" y="${Y}" width="${W}" height="${MAIN}"/></clipPath>
+  </defs>
+  <g mask="url(#ticket)">
+    ${stripes}
+    <g clip-path="url(#field)" fill="none" stroke="${s.text}" stroke-opacity="${lineOpacity}" stroke-width="4">
+      <line x1="${X + 196 * k}" y1="${Y}" x2="${X + 196 * k}" y2="${Y + MAIN}"/>
+      <circle cx="${X + 196 * k}" cy="${py(80)}" r="${44 * k}"/>
+      <rect x="${X + 272 * k}" y="${py(30)}" width="${60 * k}" height="${py(130) - py(30)}"/>
+      <path d="M${X + 272 * k} ${py(56)} A ${26 * k} ${26 * k} 0 0 0 ${X + 272 * k} ${py(104)}"/>
+    </g>
+    <circle cx="${X + 196 * k}" cy="${py(80)}" r="8" fill="${s.text}" fill-opacity="${lineOpacity}"/>
+    ${watermark}
+    <line x1="${X + 50}" y1="${Y + MAIN}" x2="${X + W - 50}" y2="${Y + MAIN}" stroke="${s.text}" stroke-opacity="0.35" stroke-width="5" stroke-dasharray="18 14"/>
   </g>
-  <text x="160" y="560" font-size="34" font-weight="800" letter-spacing="4" fill="${s.text}">${esc(card.team ? clip(card.team.name, 22).toUpperCase() : 'FOOTBALLCENTER')}</text>
-  <text x="${logo ? 720 : 920}" y="560" font-size="40" font-weight="800" text-anchor="end" fill="${s.text}">№ ${String(card.number).padStart(4, '0')}</text>
-  ${logo}
-  <text x="160" y="740" font-size="104" font-weight="800" fill="${s.text}">${esc(clip(card.name, 14).toUpperCase())}</text>
-  ${field(160, 820, 'card_since', card.since ? L('card_since_value', { year: card.since }) : null, 14)}
-  ${field(560, 820, 'card_player', card.player, 16)}
-  ${field(160, 930, 'card_region', card.region ? card.region.name : null, 28)}
-  ${premiumMark}
-  ${stat(80, card.stats.sameTeam, card.team ? L('card_stat_club', { club: clip(card.team.name, 10) }) : L('card_club'))}
+  <text x="${X + 54}" y="${Y + 82}" font-size="30" font-weight="800" letter-spacing="6" fill="${s.text}">FOOTBALLCENTER</text>
+  <text x="${X + W - 54}" y="${Y + 76}" font-size="24" font-weight="800" letter-spacing="6" text-anchor="end" fill="${muted}">FAN PASS</text>
+  <text x="${X + W - 54}" y="${Y + 150}" ${D} font-size="68" letter-spacing="2" text-anchor="end" fill="${s.text}">№ ${String(card.number).padStart(4, '0')}</text>
+  ${card.premium ? `<rect x="${X + W - 254}" y="${Y + 172}" width="200" height="50" rx="12" fill="${s.accent}"/><text x="${X + W - 154}" y="${Y + 206}" font-size="24" font-weight="900" letter-spacing="6" text-anchor="middle" fill="${bg}">PREMIUM</text>` : ''}
+  <text x="${X + 54}" y="${Y + MAIN - 118}" ${D} font-size="${nameSize}" fill="${s.text}">${esc(name)}</text>
+  ${card.team ? `${clubIcon}<text x="${X + 124}" y="${Y + MAIN - 52}" font-size="34" font-weight="800" letter-spacing="4" fill="${s.text}">${esc(clip(card.team.name, 26).toUpperCase())}</text>` : ''}
+  ${field(X + 54, 'card_since', card.since ? L('card_since_value', { year: card.since }) : null, 12)}
+  ${field(X + 330, 'card_player', card.player, 12)}
+  ${field(X + 590, 'card_region', card.region ? card.region.name : null, 16)}
+  ${stat(60, card.stats.sameTeam, card.team ? L('card_stat_club', { club: clip(card.team.name, 9) }) : L('card_club'))}
   ${stat(390, card.stats.sameRegion, L('card_stat_region'))}
-  ${stat(700, card.stats.total, L('card_stat_total'))}
-  <text x="80" y="1640" font-size="40" font-weight="700" fill="#f3f7f4">${esc(L('card_join'))}:</text>
-  <text x="80" y="1710" font-size="48" font-weight="800" fill="#2ecc71">${esc(botUsername ? `@${botUsername}` : 'FootballCenter')}</text>
+  ${stat(720, card.stats.total, L('card_stat_total'))}
+  <text x="60" y="1530" font-size="40" font-weight="700" fill="#f3f7f4">${esc(L('card_join'))}</text>
+  <text x="60" y="1630" ${D} font-size="84" fill="#2ecc71">${esc(botUsername ? `@${botUsername}` : 'FootballCenter')}</text>
 </svg>`;
 }
+
+const FONT_FILES = [require('path').join(__dirname, '..', '..', 'public', 'app', 'fonts', 'Oswald-Bold.ttf')];
 
 async function renderPng(telegramId) {
   const user = await users.byTelegramId(telegramId);
@@ -229,10 +268,10 @@ async function renderPng(telegramId) {
   }
   const { Resvg } = require('@resvg/resvg-js');
   const svg = cardSvg(card, LOCALES[lang] ? lang : 'uz', { botUsername: config.botUsername, logoPng });
-  return new Resvg(svg, { font: { loadSystemFonts: true, defaultFontFamily: 'DejaVu Sans' } }).render().asPng();
+  return new Resvg(svg, { font: { fontFiles: FONT_FILES, loadSystemFonts: true, defaultFontFamily: 'DejaVu Sans' } }).render().asPng();
 }
 
 module.exports = {
   REGIONS, CardError, setFetch, dominantColors, textOn, teamColors, getCard, update, regionsList,
-  imagePath, verifyImagePath, cardSvg, renderPng,
+  imagePath, verifyImagePath, cardSvg, renderPng, FONT_FILES,
 };

@@ -328,5 +328,6 @@
   "card_stat_club": "болельщиков {club}",
   "card_stat_region": "из этого региона",
   "card_stat_total": "всего участников",
-  "card_join": "Присоединяйтесь"
+  "card_join": "Присоединяйтесь",
+  "card_headline": "Моя карта"
 }
