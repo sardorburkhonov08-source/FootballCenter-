@@ -63,6 +63,13 @@ test/                   avtomatik testlar
 - **Admin** (bot: foydalanuvchi → 🪪; web: "🪪 Muxlislik kartalari"): nomaqbul rasmni o'chiradi (foydalanuvchiga xabar, u yangi rasm yuklaydi), xato ma'lumotni tuzatadi; narx, N va GOAT takliflari — sozlamalar.
 - Rasmlar serverda chiziladi (`@resvg/resvg-js`, Dockerfile'da `font-inter`/`font-dejavu`, `public/app/fonts/Oswald-Bold.ttf`): `/card/<tgId>-<imzo>-{front|back|story}.png`, xotira keshi bilan. Ma'lumot — `fan_cards` jadvali (005-migratsiya); 004 dagi eski `users.fav_*`/`fan_*` ustunlari 006-migratsiyada o'chirilgan.
 
+## 🧠 Quiz savollari
+
+- **4 tilli savollar banki**: `src/data/quiz-bank/qNN.json` (1000+ savol) + `dict.json` (davlat nomlari 3 tilda). Format va qoidalar — `src/services/quizBank.js`. Kirill matni o'zbek lotindan transliteratsiya qilinadi, umumiy nomlar (futbolchi, klub) lotinda qoladi. Server ishga tushganda (`migrate`) bazaga bir marta qo'shiladi (`source = 'bank'`, `quiz_questions.i18n`).
+- Savol foydalanuvchi tilida ko'rsatiladi (`quiz.publicQuestion`). Navbat: admin qo'shgani → bank (tasodifiy) → bank tugasa eng eskisi nusxa bo'lib qayta chiqadi (`bank_repeat`).
+- Inglizcha Open Trivia DB avtomatik ishlatilmaydi (`settings.quiz_api_enabled = false`).
+- Yangi savol qo'shilganda: faktlar aniq, 4 variant har xil, to'g'ri javob — birinchi; `test/quizbank.test.js` tekshiradi.
+
 ## Egasi talabi bilan SPEC'dan farqlar
 
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
@@ -90,5 +97,5 @@ Holat: ✅ — tugagan va tekshirilgan; 🧪 — kod yozilgan va avtomatik testl
 ### Ma'lum cheklovlar (keyingi ishlar)
 
 - API-Football bepul tarifi: kuniga 100 so'rov va joriy mavsum bo'lmasligi mumkin (mustaqil manbalarga ko'ra) — real ishlash uchun pullik tarif kerak bo'lishi mumkin. API javob formatlari soxta ma'lumot bilan sinalgan, haqiqiy API bilan tekshirilishi kerak.
-- Quiz savollari standart manbasi (Open Trivia DB) ingliz tilida.
+- Quiz: 1000+ savollik 4 tilli bank oxirigacha ishlatilgach, savollar takrorlanadi (eng eskisidan, 30 kundan keyin). Yangi savollarni AI (`ANTHROPIC_API_KEY`) orqali tarjima qilish — keyingi ish. Admin qo'lda qo'shgan savol hozircha bitta tilda.
 - Web admin paneli faqat o'zbek (lotin) tilida.

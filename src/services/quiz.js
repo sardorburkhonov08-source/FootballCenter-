@@ -2,6 +2,9 @@
 const crypto = require('crypto');
 const db = require('../db/pool');
 const config = require('../config');
+const settings = require('./settings');
+
+const LANGS = ['uz', 'uz_cyrl', 'ru', 'en'];
 
 const ANSWER_SECONDS = 15;
 const FAST_SECONDS = 5;
@@ -59,20 +62,38 @@ async function current() {
   return db.one('SELECT * FROM quiz_questions WHERE published_at IS NOT NULL AND published_at <= now() ORDER BY published_at DESC LIMIT 1');
 }
 
-/** Yangi savolni e'lon qilish (har soatda ishga tushadi) */
+/**
+ * Yangi savolni e'lon qilish (har soatda ishga tushadi).
+ * Navbat: admin qo'shganlari → 4 tilli savollar bazasi (tasodifiy). Hammasi chiqib bo'lsa — eng uzoq vaqt oldin
+ * chiqqan baza savoli nusxa sifatida qayta e'lon qilinadi (javoblar har nusxaga alohida yoziladi).
+ * Inglizcha tashqi API (Open Trivia DB) faqat quiz_api_enabled yoqilgan bo'lsa ishlatiladi.
+ */
 async function publishNext() {
   let q = await db.one('SELECT id FROM quiz_questions WHERE published_at IS NULL ORDER BY source = \'manual\' DESC, random() LIMIT 1');
-  if (!q) {
+  if (!q && await settings.get('quiz_api_enabled')) {
     try { await fetchFromApi(); } catch (e) { console.warn('[quiz] API:', e.message); }
     q = await db.one('SELECT id FROM quiz_questions WHERE published_at IS NULL ORDER BY random() LIMIT 1');
+  }
+  if (!q) {
+    q = await db.one(
+      `INSERT INTO quiz_questions (question, option_a, option_b, option_c, option_d, correct_option, source, i18n)
+       SELECT question, option_a, option_b, option_c, option_d, correct_option, 'bank_repeat', i18n FROM quiz_questions
+       WHERE source IN ('bank', 'bank_repeat') AND published_at IS NOT NULL
+         AND question NOT IN (SELECT question FROM quiz_questions WHERE published_at > now() - interval '30 days')
+       ORDER BY published_at ASC LIMIT 1 RETURNING id`,
+    );
   }
   if (!q) return null;
   return db.one('UPDATE quiz_questions SET published_at = now() WHERE id = $1 RETURNING *', [q.id]);
 }
 
-function publicQuestion(q) {
-  return { id: q.id, question: q.question, options: { A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d } };
+/** Savol foydalanuvchi tilida (tarjimasi bo'lmasa — asosiy matn) */
+function publicQuestion(q, lang) {
+  const tr = lang && lang !== 'uz' && q.i18n && q.i18n[lang];
+  const x = tr || { q: q.question, a: q.option_a, b: q.option_b, c: q.option_c, d: q.option_d };
+  return { id: q.id, question: x.q, options: { A: x.a, B: x.b, C: x.c, D: x.d } };
 }
+function langOf(user) { return LANGS.includes(user && user.language) ? user.language : 'uz'; }
 
 function elapsedSeconds(startedAt) {
   return (Date.now() - new Date(startedAt).getTime()) / 1000;
@@ -86,13 +107,13 @@ async function state(user) {
   const nextAt = new Date(new Date(q.published_at).getTime() + 3600 * 1000);
   const base = { questionId: q.id, publishedAt: q.published_at, nextAt };
   if (!a) return { ...base, status: 'new' };
-  if (a.answered_at) return { ...base, status: 'answered', result: resultOf(q, a), question: publicQuestion(q) };
+  if (a.answered_at) return { ...base, status: 'answered', result: resultOf(q, a), question: publicQuestion(q, langOf(user)) };
   const left = ANSWER_SECONDS - elapsedSeconds(a.started_at);
   if (left + NETWORK_GRACE <= 0) {
     const done = await finalize(user, q, a, null);
-    return { ...base, status: 'answered', result: resultOf(q, done), question: publicQuestion(q) };
+    return { ...base, status: 'answered', result: resultOf(q, done), question: publicQuestion(q, langOf(user)) };
   }
-  return { ...base, status: 'in_progress', question: publicQuestion(q), secondsLeft: Math.max(0, left) };
+  return { ...base, status: 'in_progress', question: publicQuestion(q, langOf(user)), secondsLeft: Math.max(0, left) };
 }
 
 function resultOf(q, a) {
@@ -131,7 +152,7 @@ async function answer(user, questionId, option) {
   if (!a) return { error: 'not_started' };
   if (a.answered_at) return { status: 'answered', result: resultOf(q, a) };
   const done = await finalize(user, q, a, option);
-  return { status: 'answered', result: resultOf(q, done), question: publicQuestion(q) };
+  return { status: 'answered', result: resultOf(q, done), question: publicQuestion(q, langOf(user)) };
 }
 
-module.exports = { ANSWER_SECONDS, FAST_SECONDS, setFetch, fetchFromApi, current, publishNext, state, start, answer, decodeEntities };
+module.exports = { ANSWER_SECONDS, FAST_SECONDS, setFetch, fetchFromApi, current, publishNext, publicQuestion, state, start, answer, decodeEntities };

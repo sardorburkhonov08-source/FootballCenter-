@@ -215,9 +215,10 @@ test('Football Quiz: faqat Premium, server vaqti bo\'yicha ball', async () => {
   assert.strictEqual((await call('/api/quiz', { id: FREE })).status, 402);
   assert.strictEqual((await call('/api/quiz', { id: PREM })).body.question, null);
   const q = await quiz.publishNext();
-  assert.ok(q, 'API\'dan savol olindi');
-  assert.match(q.question, /World Cup/, 'faqat futbolga oid savollar');
-  assert.strictEqual((await db.one('SELECT count(*)::int AS c FROM quiz_questions')).c, 1);
+  assert.ok(q, '4 tilli savollar bazasidan savol olindi');
+  assert.strictEqual(q.source, 'bank');
+  assert.ok(q.i18n && q.i18n.ru && q.i18n.en && q.i18n.uz_cyrl, '4 tilda');
+  assert.ok((await db.one("SELECT count(*)::int AS c FROM quiz_questions WHERE source = 'bank'")).c >= 1000, '1000+ savol');
   let st = await call('/api/quiz', { id: PREM });
   assert.strictEqual(st.body.status, 'new');
   assert.strictEqual(st.body.question, undefined, 'boshlanmaguncha savol ko\'rsatilmaydi');
@@ -225,6 +226,13 @@ test('Football Quiz: faqat Premium, server vaqti bo\'yicha ball', async () => {
   assert.strictEqual(st.body.status, 'in_progress');
   assert.ok(st.body.secondsLeft > 14);
   assert.strictEqual(st.body.question.options.A !== undefined, true);
+  // Savol foydalanuvchi tilida
+  const prevLang = (await db.one('SELECT language FROM users WHERE telegram_id = $1', [PREM])).language;
+  await db.query("UPDATE users SET language = 'ru' WHERE telegram_id = $1", [PREM]);
+  const ru = await call('/api/quiz', { id: PREM });
+  assert.strictEqual(ru.body.question.question, q.i18n.ru.q);
+  assert.strictEqual(ru.body.question.options.A, q.i18n.ru.a);
+  await db.query('UPDATE users SET language = $2 WHERE telegram_id = $1', [PREM, prevLang]);
   assert.strictEqual(JSON.stringify(st.body).includes('correct'), false, "to'g'ri javob oshkor qilinmaydi");
   const a = await call('/api/quiz/answer', { id: PREM, method: 'POST', body: { questionId: q.id, option: q.correct_option } });
   assert.strictEqual(a.body.result.points, 2);

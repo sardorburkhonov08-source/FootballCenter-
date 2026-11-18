@@ -1,0 +1,597 @@
+{
+  "BRA": [
+    "Braziliya",
+    "Бразилия",
+    "Brazil"
+  ],
+  "ARG": [
+    "Argentina",
+    "Аргентина",
+    "Argentina"
+  ],
+  "GER": [
+    "Germaniya",
+    "Германия",
+    "Germany"
+  ],
+  "FRG": [
+    "GFR (G'arbiy Germaniya)",
+    "ФРГ",
+    "West Germany"
+  ],
+  "ITA": [
+    "Italiya",
+    "Италия",
+    "Italy"
+  ],
+  "FRA": [
+    "Fransiya",
+    "Франция",
+    "France"
+  ],
+  "ESP": [
+    "Ispaniya",
+    "Испания",
+    "Spain"
+  ],
+  "ENG": [
+    "Angliya",
+    "Англия",
+    "England"
+  ],
+  "URU": [
+    "Urugvay",
+    "Уругвай",
+    "Uruguay"
+  ],
+  "NED": [
+    "Niderlandiya",
+    "Нидерланды",
+    "Netherlands"
+  ],
+  "POR": [
+    "Portugaliya",
+    "Португалия",
+    "Portugal"
+  ],
+  "BEL": [
+    "Belgiya",
+    "Бельгия",
+    "Belgium"
+  ],
+  "CRO": [
+    "Xorvatiya",
+    "Хорватия",
+    "Croatia"
+  ],
+  "SWE": [
+    "Shvetsiya",
+    "Швеция",
+    "Sweden"
+  ],
+  "MEX": [
+    "Meksika",
+    "Мексика",
+    "Mexico"
+  ],
+  "USA": [
+    "AQSH",
+    "США",
+    "USA"
+  ],
+  "CAN": [
+    "Kanada",
+    "Канада",
+    "Canada"
+  ],
+  "JPN": [
+    "Yaponiya",
+    "Япония",
+    "Japan"
+  ],
+  "KOR": [
+    "Janubiy Koreya",
+    "Южная Корея",
+    "South Korea"
+  ],
+  "QAT": [
+    "Qatar",
+    "Катар",
+    "Qatar"
+  ],
+  "RUS": [
+    "Rossiya",
+    "Россия",
+    "Russia"
+  ],
+  "URS": [
+    "SSSR",
+    "СССР",
+    "Soviet Union"
+  ],
+  "KSA": [
+    "Saudiya Arabistoni",
+    "Саудовская Аравия",
+    "Saudi Arabia"
+  ],
+  "CHI": [
+    "Chili",
+    "Чили",
+    "Chile"
+  ],
+  "COL": [
+    "Kolumbiya",
+    "Колумбия",
+    "Colombia"
+  ],
+  "PAR": [
+    "Paragvay",
+    "Парагвай",
+    "Paraguay"
+  ],
+  "PER": [
+    "Peru",
+    "Перу",
+    "Peru"
+  ],
+  "ECU": [
+    "Ekvador",
+    "Эквадор",
+    "Ecuador"
+  ],
+  "BOL": [
+    "Boliviya",
+    "Боливия",
+    "Bolivia"
+  ],
+  "VEN": [
+    "Venesuela",
+    "Венесуэла",
+    "Venezuela"
+  ],
+  "CRC": [
+    "Kosta-Rika",
+    "Коста-Рика",
+    "Costa Rica"
+  ],
+  "CMR": [
+    "Kamerun",
+    "Камерун",
+    "Cameroon"
+  ],
+  "NGA": [
+    "Nigeriya",
+    "Нигерия",
+    "Nigeria"
+  ],
+  "EGY": [
+    "Misr",
+    "Египет",
+    "Egypt"
+  ],
+  "SEN": [
+    "Senegal",
+    "Сенегал",
+    "Senegal"
+  ],
+  "MAR": [
+    "Marokash",
+    "Марокко",
+    "Morocco"
+  ],
+  "GHA": [
+    "Gana",
+    "Гана",
+    "Ghana"
+  ],
+  "CIV": [
+    "Kot-d'Ivuar",
+    "Кот-д'Ивуар",
+    "Ivory Coast"
+  ],
+  "ALG": [
+    "Jazoir",
+    "Алжир",
+    "Algeria"
+  ],
+  "TUN": [
+    "Tunis",
+    "Тунис",
+    "Tunisia"
+  ],
+  "RSA": [
+    "Janubiy Afrika",
+    "ЮАР",
+    "South Africa"
+  ],
+  "ZAM": [
+    "Zambiya",
+    "Замбия",
+    "Zambia"
+  ],
+  "GRE": [
+    "Gretsiya",
+    "Греция",
+    "Greece"
+  ],
+  "DEN": [
+    "Daniya",
+    "Дания",
+    "Denmark"
+  ],
+  "CZE": [
+    "Chexiya",
+    "Чехия",
+    "Czech Republic"
+  ],
+  "TCH": [
+    "Chexoslovakiya",
+    "Чехословакия",
+    "Czechoslovakia"
+  ],
+  "HUN": [
+    "Vengriya",
+    "Венгрия",
+    "Hungary"
+  ],
+  "POL": [
+    "Polsha",
+    "Польша",
+    "Poland"
+  ],
+  "SUI": [
+    "Shveytsariya",
+    "Швейцария",
+    "Switzerland"
+  ],
+  "AUT": [
+    "Avstriya",
+    "Австрия",
+    "Austria"
+  ],
+  "TUR": [
+    "Turkiya",
+    "Турция",
+    "Turkey"
+  ],
+  "SCO": [
+    "Shotlandiya",
+    "Шотландия",
+    "Scotland"
+  ],
+  "WAL": [
+    "Uels",
+    "Уэльс",
+    "Wales"
+  ],
+  "IRL": [
+    "Irlandiya",
+    "Ирландия",
+    "Republic of Ireland"
+  ],
+  "NIR": [
+    "Shimoliy Irlandiya",
+    "Северная Ирландия",
+    "Northern Ireland"
+  ],
+  "NOR": [
+    "Norvegiya",
+    "Норвегия",
+    "Norway"
+  ],
+  "FIN": [
+    "Finlyandiya",
+    "Финляндия",
+    "Finland"
+  ],
+  "ISL": [
+    "Islandiya",
+    "Исландия",
+    "Iceland"
+  ],
+  "UKR": [
+    "Ukraina",
+    "Украина",
+    "Ukraine"
+  ],
+  "SRB": [
+    "Serbiya",
+    "Сербия",
+    "Serbia"
+  ],
+  "YUG": [
+    "Yugoslaviya",
+    "Югославия",
+    "Yugoslavia"
+  ],
+  "ROU": [
+    "Ruminiya",
+    "Румыния",
+    "Romania"
+  ],
+  "BUL": [
+    "Bolgariya",
+    "Болгария",
+    "Bulgaria"
+  ],
+  "SVK": [
+    "Slovakiya",
+    "Словакия",
+    "Slovakia"
+  ],
+  "SVN": [
+    "Sloveniya",
+    "Словения",
+    "Slovenia"
+  ],
+  "GEO": [
+    "Gruziya",
+    "Грузия",
+    "Georgia"
+  ],
+  "UZB": [
+    "O'zbekiston",
+    "Узбекистан",
+    "Uzbekistan"
+  ],
+  "KAZ": [
+    "Qozog'iston",
+    "Казахстан",
+    "Kazakhstan"
+  ],
+  "TJK": [
+    "Tojikiston",
+    "Таджикистан",
+    "Tajikistan"
+  ],
+  "KGZ": [
+    "Qirg'iziston",
+    "Киргизия",
+    "Kyrgyzstan"
+  ],
+  "TKM": [
+    "Turkmaniston",
+    "Туркмения",
+    "Turkmenistan"
+  ],
+  "IRN": [
+    "Eron",
+    "Иран",
+    "Iran"
+  ],
+  "IRQ": [
+    "Iroq",
+    "Ирак",
+    "Iraq"
+  ],
+  "JOR": [
+    "Iordaniya",
+    "Иордания",
+    "Jordan"
+  ],
+  "UAE": [
+    "BAA",
+    "ОАЭ",
+    "UAE"
+  ],
+  "KUW": [
+    "Quvayt",
+    "Кувейт",
+    "Kuwait"
+  ],
+  "AUS": [
+    "Avstraliya",
+    "Австралия",
+    "Australia"
+  ],
+  "CHN": [
+    "Xitoy",
+    "Китай",
+    "China"
+  ],
+  "THA": [
+    "Tailand",
+    "Таиланд",
+    "Thailand"
+  ],
+  "VIE": [
+    "Vyetnam",
+    "Вьетнам",
+    "Vietnam"
+  ],
+  "IND": [
+    "Hindiston",
+    "Индия",
+    "India"
+  ],
+  "PRK": [
+    "KXDR",
+    "КНДР",
+    "North Korea"
+  ],
+  "NZL": [
+    "Yangi Zelandiya",
+    "Новая Зеландия",
+    "New Zealand"
+  ],
+  "SLV": [
+    "Salvador",
+    "Сальвадор",
+    "El Salvador"
+  ],
+  "HON": [
+    "Gonduras",
+    "Гондурас",
+    "Honduras"
+  ],
+  "JAM": [
+    "Yamayka",
+    "Ямайка",
+    "Jamaica"
+  ],
+  "YES": [
+    "Ha",
+    "Да",
+    "Yes"
+  ],
+  "NO": [
+    "Yo'q",
+    "Нет",
+    "No"
+  ],
+  "GK": [
+    "Darvozabon",
+    "Вратарь",
+    "Goalkeeper"
+  ],
+  "DEF": [
+    "Himoyachi",
+    "Защитник",
+    "Defender"
+  ],
+  "MID": [
+    "Yarim himoyachi",
+    "Полузащитник",
+    "Midfielder"
+  ],
+  "FWD": [
+    "Hujumchi",
+    "Нападающий",
+    "Forward"
+  ],
+  "ALB": [
+    "Albaniya",
+    "Албания",
+    "Albania"
+  ],
+  "BIH": [
+    "Bosniya va Gertsegovina",
+    "Босния и Герцеговина",
+    "Bosnia and Herzegovina"
+  ],
+  "MNE": [
+    "Chernogoriya",
+    "Черногория",
+    "Montenegro"
+  ],
+  "ISR": [
+    "Isroil",
+    "Израиль",
+    "Israel"
+  ],
+  "LBN": [
+    "Livan",
+    "Ливан",
+    "Lebanon"
+  ],
+  "SYR": [
+    "Suriya",
+    "Сирия",
+    "Syria"
+  ],
+  "OMA": [
+    "Ummon",
+    "Оман",
+    "Oman"
+  ],
+  "BHR": [
+    "Bahrayn",
+    "Бахрейн",
+    "Bahrain"
+  ],
+  "IDN": [
+    "Indoneziya",
+    "Индонезия",
+    "Indonesia"
+  ],
+  "MAS": [
+    "Malayziya",
+    "Малайзия",
+    "Malaysia"
+  ],
+  "PAN": [
+    "Panama",
+    "Панама",
+    "Panama"
+  ],
+  "HAI": [
+    "Gaiti",
+    "Гаити",
+    "Haiti"
+  ],
+  "MLI": [
+    "Mali",
+    "Мали",
+    "Mali"
+  ],
+  "BFA": [
+    "Burkina-Faso",
+    "Буркина-Фасо",
+    "Burkina Faso"
+  ],
+  "COD": [
+    "KDR",
+    "ДР Конго",
+    "DR Congo"
+  ],
+  "CPV": [
+    "Kabo-Verde",
+    "Кабо-Верде",
+    "Cape Verde"
+  ],
+  "CUW": [
+    "Kyurasao",
+    "Кюрасао",
+    "Curaçao"
+  ],
+  "KOS": [
+    "Kosovo",
+    "Косово",
+    "Kosovo"
+  ],
+  "ARM": [
+    "Armaniston",
+    "Армения",
+    "Armenia"
+  ],
+  "AZE": [
+    "Ozarbayjon",
+    "Азербайджан",
+    "Azerbaijan"
+  ],
+  "BLR": [
+    "Belarus",
+    "Беларусь",
+    "Belarus"
+  ],
+  "LVA": [
+    "Latviya",
+    "Латвия",
+    "Latvia"
+  ],
+  "EST": [
+    "Estoniya",
+    "Эстония",
+    "Estonia"
+  ],
+  "LTU": [
+    "Litva",
+    "Литва",
+    "Lithuania"
+  ],
+  "GAB": [
+    "Gabon",
+    "Габон",
+    "Gabon"
+  ],
+  "LUX": [
+    "Lyuksemburg",
+    "Люксембург",
+    "Luxembourg"
+  ],
+  "CYP": [
+    "Kipr",
+    "Кипр",
+    "Cyprus"
+  ]
+}

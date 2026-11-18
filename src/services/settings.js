@@ -49,6 +49,8 @@ const DEFAULTS = {
   tactics: ['4-4-2', '4-3-3', '4-2-3-1', '4-1-4-1', '4-5-1', '4-3-2-1', '4-1-2-1-2', '4-4-1-1', '4-2-2-2',
     '3-5-2', '3-4-3', '3-4-2-1', '3-4-1-2', '3-1-4-2', '3-5-1-1', '5-3-2', '5-4-1', '5-2-3', '5-2-1-2'],
   prize_rotate_seconds: 15,
+  // 🧠 Quiz: inglizcha tashqi API (Open Trivia DB) — o'chiq; savollar 4 tilli bazadan (src/data/quiz-bank)
+  quiz_api_enabled: false,
   // Asosiy ligalar (API-Football league ID, tartibi bilan): o'yinlar ro'yxatida eng tepada chiqadi.
   // Web admin paneli → "⭐ Asosiy ligalar" orqali o'zgartiriladi.
   // 2 — UEFA Chempionlar Ligasi, 3 — Yevropa Ligasi, 848 — Konferensiya Ligasi, 1 — Jahon chempionati,
