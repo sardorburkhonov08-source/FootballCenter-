@@ -11,7 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
-    lb: { manager: 'weekly', quiz: 'weekly' },
+    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
   };
@@ -705,6 +705,8 @@
       open: () => push({ render: (v) => { v.append(backBar('🎮 Mini Manager')); return renderManager(v); } }) },
     { key: 'quiz', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
+    { key: 'score', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
   ];
 
   // ================= 👥 COMMUNITY — klub fan community'lari va haftalik fan reytingi
@@ -936,6 +938,62 @@
           el('div', { class: 'side' }, el('span', { class: 'time', text: `${ddmm(g.kickoffAt)} ${hhmm(g.kickoffAt)}` }), status)));
       }
     } catch (err) { list.replaceChildren(errorBox(err, () => render())); }
+  }
+
+  // ================= 🎯 HISOBNI TOP — admin belgilagan o'yinlarning aniq hisobini taxmin qilish (faqat Premium)
+  async function renderScorePredict(view) {
+    if (!S.me.premium) { lockedSection(view, '🎯'); return; }
+    const list = el('div', null, skeleton(3));
+    view.append(list, leaderboardBlock('score'));
+    let d;
+    try { d = await api('/score/games'); } catch (err) {
+      if (err.status === 402) { S.me.premium = false; list.replaceChildren(); premiumModal(); return; }
+      list.replaceChildren(errorBox(err, () => render())); return;
+    }
+    list.replaceChildren(el('div', { class: 'card small muted', text: t('sp_rules', { exact: d.rules.exact, outcome: d.rules.outcome }) }));
+    if (!d.games.length) { list.append(el('div', { class: 'card center muted', text: t('sp_no_games') })); return; }
+    for (const g of d.games) list.append(scoreCard(g));
+  }
+
+  function scoreCard(g) {
+    const card = el('div', { class: 'card sp-card' });
+    const val = { home: g.prediction ? g.prediction.home : 0, away: g.prediction ? g.prediction.away : 0 };
+    const draw = () => {
+      const p = g.prediction;
+      const dirty = !p || p.home !== val.home || p.away !== val.away;
+      const stepper = (side) => {
+        if (g.locked) return el('b', { class: 'sp-num', text: p ? String(p[side]) : '–' });
+        const change = (k) => { val[side] = Math.max(0, Math.min(20, val[side] + k)); haptic(); draw(); };
+        return el('div', { class: 'sp-step' }, el('button', { class: 'mini', type: 'button', text: '−', onclick: () => change(-1) }),
+          el('b', { class: 'sp-num', text: String(val[side]) }), el('button', { class: 'mini', type: 'button', text: '+', onclick: () => change(1) }));
+      };
+      const line = (side) => el('div', { class: 'team-line sp-line' }, crest(g[side].crest), el('span', { class: 'name grow ellipsis', text: g[side].name }),
+        g.result ? el('span', { class: 'sc', text: g.result[side] }) : null, g.result ? null : stepper(side));
+      let status;
+      if (p && p.points !== null && p.points !== undefined) status = el('span', { class: `badge${p.points > 0 ? ' gold' : ''}`, text: t('mm_points', { points: p.points }) });
+      else if (g.locked) status = el('span', { class: 'badge', text: p ? t('mm_locked') : t('sp_missed') });
+      else if (p) status = el('span', { class: 'badge live', text: t('mm_predicted') });
+      else status = el('span', { class: 'badge gold', text: t('mm_not_predicted') });
+      const save = el('button', { class: 'btn block', style: 'margin-top:8px', disabled: !dirty, text: dirty ? t('sp_save') : t('sp_saved') });
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        try {
+          Object.assign(g, await api(`/score/games/${g.id}`, { method: 'POST', body: val }));
+          haptic('success'); toast(t('sp_saved_toast')); draw();
+        } catch (err) {
+          haptic('error');
+          if (err.body && err.body.error === 'locked') { g.locked = true; toast(t('sp_err_locked')); draw(); return; }
+          toast(t('error_generic')); save.disabled = false;
+        }
+      });
+      put(card,
+        el('div', { class: 'row between small muted', style: 'margin-bottom:6px;gap:8px' }, el('span', { class: 'ellipsis', text: `${g.competition || ''} · ${ddmm(g.kickoffAt)} ${hhmm(g.kickoffAt)}` }), status),
+        line('home'), line('away'),
+        g.result && p ? el('div', { class: 'small muted', style: 'margin-top:6px', text: t('sp_your', { home: p.home, away: p.away }) }) : null,
+        g.locked ? null : save);
+    };
+    draw();
+    return card;
   }
 
   /** "4-2-3-1" -> qatorlar (hujumdan darvozabongacha) */
@@ -1516,6 +1574,9 @@
       d.quiz
         ? statBlock('🧠 Football Quiz', d.quiz, [el('div', { class: 'kv' }, el('span', { text: t('prof_answers') }), el('b', { text: d.quiz.answers })), el('div', { class: 'kv' }, el('span', { text: t('prof_correct') }), el('b', { text: d.quiz.correct }))])
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: '🧠 Football Quiz' }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
+      d.score
+        ? statBlock(`🎯 ${t('sp_title')}`, d.score, [el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.score.predictions })), el('div', { class: 'kv' }, el('span', { text: t('sp_hits') }), el('b', { text: d.score.hits }))])
+        : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: `🎯 ${t('sp_title')}` }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
       ...(u.isAdmin ? [el('button', { class: 'btn ghost block', style: 'margin-top:10px', text: t('admin_panel'), onclick: () => { window.location.href = '/admin/'; } })] : []),
     );
   }

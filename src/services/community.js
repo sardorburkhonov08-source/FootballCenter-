@@ -3,7 +3,7 @@
 //   Klubning birinchi community'si bepul, keyingilari pullik (settings.community_extra_price) — pul tasdiqlanganda yechiladi.
 // - A'zolar — muxlislik kartasi shu klubniki bo'lganlar; har kim bir vaqtda bitta community'da.
 // - Egasi: e'lon yozadi, a'zoni chiqaradi, nom/tavsifni tahrirlaydi. Admin community'ni yopadi.
-// - Haftalik fan reytingi: a'zolarning hafta davomida to'plagan points yig'indisi (Mini Manager + Quiz).
+// - Haftalik fan reytingi: a'zolarning hafta davomida to'plagan points yig'indisi (Mini Manager + Quiz + Hisobni top).
 //   Hafta tugagach g'olib yoziladi (wins + 1) va hamma foydalanuvchiga xabar ketadi.
 const db = require('../db/pool');
 const settings = require('./settings');
@@ -60,12 +60,12 @@ async function requirePremiumCard(user) {
 }
 
 // ---------- Haftalik points
-/** userId → hafta davomidagi points (Mini Manager + Quiz). fresh — keshsiz (g'olibni aniqlash uchun) */
+/** userId → hafta davomidagi points (Mini Manager + Quiz + Hisobni top). fresh — keshsiz (g'olibni aniqlash uchun) */
 async function weekPoints(range, fresh = false) {
   const get = fresh ? leaderboard.computeRanking : leaderboard.ranking;
-  const [mm, qz] = await Promise.all([get('manager', range), get('quiz', range)]);
+  const [mm, qz, sc] = await Promise.all([get('manager', range), get('quiz', range), get('score', range)]);
   const pts = new Map();
-  for (const r of [...mm, ...qz]) pts.set(r.id, (pts.get(r.id) || 0) + Number(r.points));
+  for (const r of [...mm, ...qz, ...sc]) pts.set(r.id, (pts.get(r.id) || 0) + Number(r.points));
   return pts;
 }
 

@@ -258,3 +258,8 @@ input[type=search].input { margin-bottom: 4px; }
 .cm-reacts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .cm-react { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; }
 .cm-react.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 700; }
+.sp-line { height: auto; min-height: 36px; }
+.sp-step { display: flex; align-items: center; gap: 6px; flex: none; }
+.sp-step button { width: 32px; height: 32px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 18px; font-weight: 700; line-height: 1; }
+.sp-step button:active { transform: scale(.94); }
+.sp-num { min-width: 22px; text-align: center; font-size: 17px; font-variant-numeric: tabular-nums; }

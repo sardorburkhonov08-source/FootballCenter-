@@ -5,6 +5,7 @@ const settings = require('../services/settings');
 const users = require('../services/users');
 const notify = require('../services/notify');
 const manager = require('../services/manager');
+const scorePredict = require('../services/scorePredict');
 const quiz = require('../services/quiz');
 const community = require('../services/community');
 const donations = require('../services/donations');
@@ -119,11 +120,12 @@ async function finalizePeriods(now = new Date()) {
 }
 
 const JOBS = [
-  { name: 'lock_games', every: 60, fn: () => manager.lockStarted() },
+  { name: 'lock_games', every: 60, fn: () => Promise.all([manager.lockStarted(), scorePredict.lockStarted()]) },
   { name: 'match_reminders', every: 60, fn: matchStartReminders },
   { name: 'donation_announce', every: 60, fn: () => donations.processExpired(notify.getApi()) },
   { name: 'quiz', every: 60, fn: quizTick },
   { name: 'score_games', every: 300, fn: () => manager.scoreFinished() },
+  { name: 'score_predict', every: 300, fn: () => scorePredict.scoreFinished() },
   { name: 'premium_expiry', every: 300, fn: premiumExpiry },
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },

@@ -71,7 +71,7 @@
 
   // ---------- Bo'limlar
   const SECTIONS = [
-    ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['prizes', '🏆 Sovrinlar'],
+    ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['score', '🎯 Hisobni top'], ['prizes', '🏆 Sovrinlar'],
     ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['communities', '👥 Fan community'], ['stats', '📊 Statistika'],
   ];
   let current = 'banners';
@@ -85,7 +85,7 @@
   async function show() {
     const v = $('view');
     v.replaceChildren(el('div', { class: 'skeleton' }));
-    try { await ({ banners, featured, games, prizes, quiz, tactics, fancards, communities, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+    try { await ({ banners, featured, games, score, prizes, quiz, tactics, fancards, communities, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
   }
 
   // 👥 Fan community'lar — so'rovlar (tasdiqlash: pul shu paytda egasining balansidan yechiladi), faollarini yopish, narx
@@ -336,8 +336,33 @@
   }
 
   // 🎮 Mini Manager — o'yin belgilash
-  async function games(v) {
-    const assigned = await api('/manager/games');
+  function games(v) {
+    return gamesAdmin(v, {
+      base: '/manager', hint: 'API\'dagi kelgusi o\'yinlardan birini Mini Manager uchun faol o\'yin qiling. Hafta: seshanba 12:00 — keyingi seshanba 11:59 (Toshkent).',
+    });
+  }
+
+  // 🎯 Hisobni top — bir nechta o'yin belgilanadi (kuniga 5—10 tasi qulay: natijalar kun bo'yicha bitta API so'rovida olinadi)
+  async function score(v) {
+    const rules = await api('/score/settings');
+    const exact = el('input', { class: 'input', type: 'number', min: '1', value: rules.exact });
+    const outcome = el('input', { class: 'input', type: 'number', min: '0', value: rules.outcome });
+    const saveRules = el('button', { class: 'btn', text: '💾 Saqlash' });
+    saveRules.addEventListener('click', async () => {
+      try { await api('/score/settings', { method: 'PUT', body: { exact: Number(exact.value), outcome: Number(outcome.value) } }); toast('✅ Saqlandi'); } catch (e) { fail(e); }
+    });
+    const settingsCard = el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⭐ Ballar' }),
+      el('p', { class: 'small muted', text: 'Yangi qiymat keyin hisoblanadigan o\'yinlarga qo\'llanadi. Ballar umumiy points\'ga qo\'shiladi.' }),
+      el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Aniq hisob' }), exact),
+        el('div', null, el('label', { class: 'field-label', text: 'Faqat natija (g\'alaba/durang)' }), outcome), saveRules));
+    return gamesAdmin(v, {
+      base: '/score', multiHint: true, before: settingsCard,
+      hint: 'Foydalanuvchilar (faqat Premium) aniq hisobni taxmin qiladi. Bir nechta o\'yin belgilang — kuniga 5—10 tasi qulay.',
+    });
+  }
+
+  async function gamesAdmin(v, cfg) {
+    const assigned = await api(`${cfg.base}/games`);
     const from = el('input', { class: 'input', type: 'date', value: ymd() });
     const to = el('input', { class: 'input', type: 'date', value: ymd(new Date(Date.now() + 7 * 86400000)) });
     const results = el('div', { class: 'list', style: 'margin-top:10px' });
@@ -353,21 +378,31 @@
           el('div', { class: 'grow', style: 'min-width:200px' }, el('b', { text: `${m.home.fullName} — ${m.away.fullName}` }),
             el('div', { class: 'small muted', text: `${m.competition ? m.competition.name : ''} · ${fmt(m.utcDate)}` })),
           assignedIds.has(m.id) ? el('span', { class: 'badge live', text: '✅ Belgilangan' })
-            : el('button', { class: 'mini ok', text: '➕ Belgilash', onclick: async (e) => { e.target.disabled = true; try { await api('/manager/games', { method: 'POST', body: { apiMatchId: m.id } }); toast('✅ O\'yin belgilandi'); show(); } catch (err) { fail(err); e.target.disabled = false; } } })))
+            : el('button', { class: 'mini ok', text: '➕ Belgilash', onclick: async (e) => {
+              e.target.disabled = true;
+              try {
+                await api(`${cfg.base}/games`, { method: 'POST', body: { apiMatchId: m.id } });
+                toast('✅ O\'yin belgilandi');
+                if (!cfg.multiHint) { show(); return; }
+                assignedIds.add(m.id);
+                e.target.replaceWith(el('span', { class: 'badge live', text: '✅ Belgilangan' }));
+              } catch (err) { fail(err); e.target.disabled = false; }
+            } })))
           : [el('div', { class: 'card center muted', text: '📭 Bu oraliqda o\'yinlar topilmadi' })]));
       } catch (e) { results.replaceChildren(); fail(e); }
     });
     const st = { upcoming: '⏳ kutilmoqda', locked: '🔒 boshlangan', finished: '✅ hisoblangan' };
     v.replaceChildren(
+      ...(cfg.before ? [cfg.before] : []),
       el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '➕ O\'yin belgilash' }),
-        el('p', { class: 'small muted', text: 'API\'dagi kelgusi o\'yinlardan birini Mini Manager uchun faol o\'yin qiling. Hafta: seshanba 12:00 — keyingi seshanba 11:59 (Toshkent).' }),
+        el('p', { class: 'small muted', text: cfg.hint }),
         el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Dan' }), from), el('div', null, el('label', { class: 'field-label', text: 'Gacha' }), to), search),
         results),
       el('h2', { text: `Belgilangan o'yinlar (${assigned.length})` }),
       assigned.length ? el('div', { class: 'list' }, assigned.map((g) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
         el('div', { class: 'grow', style: 'min-width:200px' }, el('b', { text: `${g.home_team_name} — ${g.away_team_name}` }),
           el('div', { class: 'small muted', text: `${g.competition || ''} · ${fmt(g.kickoff_at)} · ${st[g.status]} · 👥 ${g.participants}${g.result ? ` · ${g.result.home}:${g.result.away}` : ''}` })),
-        g.status !== 'finished' ? el('button', { class: 'mini danger', text: '🗑', onclick: async () => { if (!window.confirm('O\'yin va unga berilgan taxminlar o\'chirilsinmi?')) return; try { await api(`/manager/games/${g.id}`, { method: 'DELETE' }); show(); } catch (e) { fail(e); } } }) : null)))
+        g.status !== 'finished' ? el('button', { class: 'mini danger', text: '🗑', onclick: async () => { if (!window.confirm('O\'yin va unga berilgan taxminlar o\'chirilsinmi?')) return; try { await api(`${cfg.base}/games/${g.id}`, { method: 'DELETE' }); show(); } catch (e) { fail(e); } } }) : null)))
         : el('div', { class: 'card center muted', text: '📭 Hali o\'yin belgilanmagan' }),
     );
   }
@@ -469,7 +504,7 @@
       el('h2', { text: '🏅 TOP faol foydalanuvchilar' }),
       el('div', { class: 'card' }, s.top.length ? s.top.map((u, i) => el('div', { class: 'lb-row' }, el('span', { class: 'pl', text: i + 1 }),
         el('span', { class: 'grow ellipsis' }, el('b', { text: u.name }), u.coach_name ? el('span', { class: 'small muted', text: ` · 👔 ${u.coach_name}` }) : null),
-        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz}` }), el('span', { class: 'pts', text: u.total })))
+        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz} · 🎯 ${u.points_score}` }), el('span', { class: 'pts', text: u.total })))
         : el('div', { class: 'muted center', text: '📭 Hali yo\'q' })),
       el('h2', { text: '🏆 Davr g\'oliblari (sovrin topshirish uchun)' }),
       el('div', { class: 'card' }, s.winners.length ? s.winners.map((w) => el('div', { class: 'kv' },

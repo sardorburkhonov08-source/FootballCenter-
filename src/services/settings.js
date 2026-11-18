@@ -18,6 +18,9 @@ const DEFAULTS = {
   premium_days: 30,
   premium_week_price: 10000,
   premium_week_days: 7,
+  // 🎯 Hisobni top
+  score_exact_points: 5,
+  score_outcome_points: 2,
   // 🎁 Botga yangi kirgan foydalanuvchiga necha kunlik bepul Premium (0 — o'chiq)
   welcome_premium_days: 3,
 
