@@ -120,7 +120,7 @@
   "btn_activate": "✅ Faollashtirish",
   "premium_activated": "✅ Premium faollashtirildi! Balansdan {price} so'm yechildi. Amal qilish muddati: {date}gacha",
   "premium_no_money": "😔 Kechirasiz, balansingizda mablag' yetarli emas. Hisobingizni to'ldiring.",
-  "premium_description_default": "✨ Premium imkoniyatlari:\n🤖 AI Yordamchi — kuniga ko'proq so'rov\n🎁 Bonus — kuniga 2 marta\n🧠 Football Quiz — to'liq ochiq\n⚽ O'yinlar — batafsil statistika, tarkib, eventlar\n🏆 Musobaqalar — natijalar, taqvim, top o'yinchilar\n🔔 Barcha bildirishnomalar\n➕ Va yana juda ko'plab imkoniyatlar!",
+  "premium_description_default": "✨ Premium imkoniyatlari:\n🤖 AI Yordamchi — kuniga ko'proq so'rov\n🎁 Bonus — kuniga 2 marta\n🧠 Football Quiz — to'liq ochiq\n🎮 Mini Manager — taxminlar, reyting va sovrinlar\n⚽ O'yinlar — batafsil statistika, tarkib, eventlar\n🏆 Musobaqalar — natijalar, taqvim, top o'yinchilar\n🔔 Barcha bildirishnomalar\n➕ Va yana juda ko'plab imkoniyatlar!",
   "premium_expiry_reminder": "⏰ Premium obunangiz tugashiga 3 kun qoldi ({date} gacha). Uzaytirish uchun 💎 Tarif bo'limiga kiring.",
   "settings_title": "⚙️ Sozlamalar",
   "btn_change_lang": "🌐 Tilni o'zgartirish",

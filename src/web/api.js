@@ -162,25 +162,25 @@ router.get('/competitions/:id/:tab', (req, res, next) => {
   return { players: tab === 'scorers' ? s.scorers : s.assists };
 }));
 
-// ---------- 🎮 Mini Manager
-router.post('/manager/coach', express.json(), wrap(async (req, res) => {
+// ---------- 🎮 Mini Manager (egasi talabi bilan — faqat Premium)
+router.post('/manager/coach', requirePremium, express.json(), wrap(async (req, res) => {
   const name = String((req.body && req.body.name) || '').trim().replace(/\s+/g, ' ');
   if (name.length < 2 || name.length > 32) return res.status(400).json({ error: 'bad_coach_name' });
   const u = await db.one('UPDATE users SET coach_name = $2 WHERE id = $1 RETURNING *', [req.user.id, name]);
   return res.json({ coachName: u.coach_name });
 }));
 
-router.get('/manager/games', wrap(async (req, res) => {
+router.get('/manager/games', requirePremium, wrap(async (req, res) => {
   res.json({ coachName: req.user.coach_name, games: await manager.listGames(req.user) });
 }));
 
-router.get('/manager/games/:id', wrap(async (req, res) => {
+router.get('/manager/games/:id', requirePremium, wrap(async (req, res) => {
   const g = await manager.getGame(req.user, Number(req.params.id));
   if (!g) return res.status(404).json({ error: 'not_found' });
   return res.json(g);
 }));
 
-router.post('/manager/games/:id/prediction', express.json(), wrap(async (req, res) => {
+router.post('/manager/games/:id/prediction', requirePremium, express.json(), wrap(async (req, res) => {
   try {
     res.json({ prediction: await manager.savePrediction(req.user, Number(req.params.id), req.body || {}) });
   } catch (e) {
@@ -272,7 +272,7 @@ router.get('/profile', wrap(async (req, res) => {
   res.json({
     user: publicUser(u), telegramId: u.telegram_id, balance: u.balance, registeredAt: u.registered_at,
     referrals: await users.activeReferralCount(u.id),
-    manager: { ...(await stat('manager')), predictions: counts.predictions },
+    manager: users.isPremium(u) ? { ...(await stat('manager')), predictions: counts.predictions } : null,
     quiz: users.isPremium(u) ? { ...(await stat('quiz')), answers: counts.answers, correct: counts.correct } : null,
   });
 }));

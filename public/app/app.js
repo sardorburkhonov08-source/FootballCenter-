@@ -690,7 +690,17 @@
     return el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: t('coach_prompt_title') }), el('p', { class: 'muted small', text: t('coach_prompt_text') }), input, btn);
   }
 
+  /** Premium bo'lmaganlar uchun yopiq bo'lim (Mini Manager, Quiz) */
+  function lockedSection(view, icon) {
+    view.append(el('div', { class: 'card center' },
+      el('div', { style: 'font-size:44px', text: `${icon}🔒` }),
+      el('h3', { text: t('premium_only_title') }),
+      el('p', { class: 'muted', text: t('premium_only_text') }),
+      el('button', { class: 'btn', text: t('buy_premium_btn'), onclick: () => openBot('premium') })));
+  }
+
   async function renderManager(view) {
+    if (!S.me.premium) { lockedSection(view, '🎮'); return; }
     if (!S.me.coachName) { view.append(coachPrompt(() => render())); return; }
     view.append(el('div', { class: 'card row between' },
       el('span', null, el('span', { class: 'muted', text: `${t('coach_label')}: ` }), el('b', { text: S.me.coachName })),
@@ -730,7 +740,10 @@
     const box = el('div', null, skeleton(4));
     view.append(box);
     let g;
-    try { g = await api(`/manager/games/${id}`); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
+    try { g = await api(`/manager/games/${id}`); } catch (err) {
+      if (err.status === 402) { S.me.premium = false; box.replaceChildren(); premiumModal(); return; }
+      box.replaceChildren(errorBox(err, () => render())); return;
+    }
     const p = g.prediction || {};
     const locked = g.locked;
     const form = {
@@ -867,11 +880,7 @@
   // ================= 🧠 FOOTBALL QUIZ (faqat Premium)
   async function renderQuiz(view) {
     if (!S.me.premium) {
-      view.append(el('div', { class: 'card center' },
-        el('div', { style: 'font-size:44px', text: '🧠🔒' }),
-        el('h3', { text: t('premium_only_title') }),
-        el('p', { class: 'muted', text: t('premium_only_text') }),
-        el('button', { class: 'btn', text: t('buy_premium_btn'), onclick: openBot })));
+      lockedSection(view, '🧠');
       view.append(el('div', { class: 'locked', style: 'margin-top:10px;pointer-events:none' },
         el('div', { class: 'card' }, el('div', { class: 'q-text', text: '??? ??? ???' }), ['A', 'B', 'C', 'D'].map((l) => el('div', { class: 'opt' }, el('span', { class: 'l', text: l }), el('span', { text: '— — —' }))))));
       return;
@@ -1291,7 +1300,9 @@
         el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_registered') }), el('b', { text: ddmmyyyy(d.registeredAt) })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_refs') }), el('b', { text: d.referrals }))),
-      statBlock('🎮 Mini Manager', d.manager, el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.manager.predictions }))),
+      d.manager
+        ? statBlock('🎮 Mini Manager', d.manager, el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.manager.predictions })))
+        : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: '🎮 Mini Manager' }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
       d.quiz
         ? statBlock('🧠 Football Quiz', d.quiz, [el('div', { class: 'kv' }, el('span', { text: t('prof_answers') }), el('b', { text: d.quiz.answers })), el('div', { class: 'kv' }, el('span', { text: t('prof_correct') }), el('b', { text: d.quiz.correct }))])
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: '🧠 Football Quiz' }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),

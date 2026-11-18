@@ -34,6 +34,7 @@ async function migrate() {
       }
     }
     await seedSettings(client);
+    await require('../services/quizBank').seed(client); // 🧠 4 tilli Quiz savollari (bir marta qo'shiladi)
   } finally {
     await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]).catch(() => {});
     client.release();
