@@ -96,6 +96,14 @@ router.get('/matches', footballRoute(async (req) => {
   return { date, matches: list.map((m) => ({ ...m, subscribed: subSet.has(m.id) })) };
 }));
 
+// 🔍 Jamoa qidirish (ligalar va kunlik o'yinlar Mini App ichida, so'rovsiz qidiriladi)
+router.get('/search/teams', footballRoute(async (req) => ({ teams: await football.searchTeams(req.query.q) })));
+
+router.get('/teams/:id/matches', footballRoute(async (req) => {
+  if (!/^\d+$/.test(req.params.id)) return { next: [], last: [] };
+  return football.teamMatches(req.params.id);
+}));
+
 // Mini App'da liga guruhi ochilganda (qiziqish statistikasi uchun)
 router.post('/stats/league/:id', wrap(async (req, res) => {
   track(req, req.params.id);

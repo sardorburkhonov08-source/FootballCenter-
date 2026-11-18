@@ -79,6 +79,7 @@
   const CLIENT_CACHE = [
     [/^\/matches\?/, 60000], [/^\/competitions/, 300000], [/^\/leaderboard\//, 15000],
     [/^\/(banners|prizes)/, 300000], [/^\/manager\/games$/, 15000],
+    [/^\/search\/teams/, 600000], [/^\/teams\/\d+\/matches/, 120000],
   ];
   const clientCache = new Map();
 
@@ -278,11 +279,95 @@
     view.append(el('div', { class: 'seg' }, subs.map(([k, label]) => el('button', {
       class: S.homeSub === k ? 'on' : '', text: t(label), onclick: () => { S.homeSub = k; haptic(); render(); },
     }))));
+    view.append(el('button', { class: 'search-bar', type: 'button', onclick: () => push({ render: renderSearch }) },
+      el('span', { text: '🔍' }), el('span', { class: 'muted', text: t('search_placeholder') })));
     const body = el('div');
     view.append(body);
     if (S.homeSub === 'competitions') return renderCompetitions(body);
     if (S.homeSub === 'news') { body.append(el('div', { class: 'card center muted', style: 'margin-top:12px', text: t('news_soon') })); return undefined; }
     return renderMatches(body);
+  }
+
+  // ================= 🔍 QIDIRUV
+  function norm(v) { return String(v || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, ''); }
+
+  function leagueItem(c) {
+    return el('button', { class: 'item', onclick: () => push({ render: (v) => renderCompetition(v, c.id, c.name) }) },
+      c.emblem ? crest(c.emblem) : el('span', { class: 'crest-ph' }),
+      el('span', { class: 'grow ellipsis' }, c.name, c.area ? el('span', { class: 'muted small', text: ` · ${c.area}` }) : null),
+      el('span', { class: 'chev', text: '›' }));
+  }
+
+  function renderSearch(view) {
+    const input = el('input', { class: 'input', type: 'search', placeholder: t('search_placeholder'), value: S.searchQ || '', autocomplete: 'off' });
+    const out = el('div');
+    view.append(backBar(), input, out);
+    let localTimer = null;
+    let remoteTimer = null;
+    let seq = 0;
+
+    const section = (title, nodes) => (nodes.length ? [el('h2', { text: title }), el('div', null, nodes)] : []);
+
+    async function run() {
+      const q = input.value.trim();
+      S.searchQ = q;
+      const my = ++seq;
+      if (norm(q).length < 2) { out.replaceChildren(el('div', { class: 'card center muted', style: 'margin-top:12px', text: t('search_hint') })); return; }
+      const nq = norm(q);
+      const blocks = [];
+      // 1) Ligalar — keshdagi ro'yxatdan (API so'rovisiz)
+      try {
+        const c = await api('/competitions');
+        const all = [...c.international.map((x) => ({ ...x, area: x.area || 'World' })), ...c.countries.flatMap((k) => k.competitions.map((x) => ({ ...x, area: k.name })))];
+        const found = all.filter((x) => norm(`${x.name} ${x.area}`).includes(nq)).slice(0, 15);
+        blocks.push(...section(t('search_leagues'), found.map(leagueItem)));
+      } catch (e) { /* futbol API mavjud bo'lmasa — o'tkazib yuboramiz */ }
+      // 2) Tanlangan kundagi o'yinlar — jamoa yoki liga nomi bo'yicha
+      try {
+        const date = S.date || tashkentYmd();
+        const d = await api(`/matches?date=${date}`);
+        const found = d.matches.filter((m) => norm(`${m.home && m.home.name} ${m.away && m.away.name} ${m.competition && m.competition.name}`).includes(nq)).slice(0, 20);
+        blocks.push(...section(t('search_matches_day', { date: fmtShortDate(date) }), found.map((m) => matchCard(m, { bell: true }))));
+      } catch (e) { /* */ }
+      if (my !== seq) return;
+      const teamsBox = el('div');
+      out.replaceChildren(...blocks, teamsBox);
+      // 3) Jamoalar — server orqali (keshlanadi), kamida 3 harf, yozib bo'lgach
+      if (nq.length < 3) { if (!blocks.length) out.replaceChildren(el('div', { class: 'card center muted', style: 'margin-top:12px', text: t('search_none') })); return; }
+      teamsBox.replaceChildren(el('h2', { text: t('search_teams') }), skeleton(2));
+      clearTimeout(remoteTimer);
+      remoteTimer = setTimeout(async () => {
+        try {
+          const r = await api(`/search/teams?q=${encodeURIComponent(q)}`);
+          if (my !== seq) return;
+          teamsBox.replaceChildren(...section(t('search_teams'), r.teams.map((tm) => el('button', { class: 'item', onclick: () => push({ render: (v) => renderTeam(v, tm) }) },
+            tm.logo ? crest(tm.logo) : el('span', { class: 'crest-ph' }),
+            el('span', { class: 'grow ellipsis' }, tm.name, tm.country ? el('span', { class: 'muted small', text: ` · ${tm.country}` }) : null),
+            el('span', { class: 'chev', text: '›' })))));
+          if (!r.teams.length && !blocks.length) out.replaceChildren(el('div', { class: 'card center muted', style: 'margin-top:12px', text: t('search_none') }));
+        } catch (err) {
+          if (my === seq) teamsBox.replaceChildren(el('h2', { text: t('search_teams') }), errorBox(err));
+        }
+      }, 700);
+    }
+
+    input.addEventListener('input', () => { clearTimeout(localTimer); localTimer = setTimeout(run, 250); });
+    cleanups.push(() => { clearTimeout(localTimer); clearTimeout(remoteTimer); seq += 1; });
+    run();
+    setTimeout(() => input.focus(), 50);
+  }
+
+  async function renderTeam(view, tm) {
+    view.append(backBar(tm.name));
+    const box = el('div', null, skeleton(3));
+    view.append(box);
+    try {
+      const d = await api(`/teams/${tm.id}/matches`);
+      const block = (title, list) => [el('h2', { text: title }), list.length ? el('div', null, list.map((m) => matchCard(m, { bell: true, showDate: true }))) : el('div', { class: 'card center muted', text: t('no_data') })];
+      box.replaceChildren(...block(t('team_next'), d.next), ...block(t('team_last'), d.last));
+    } catch (err) {
+      box.replaceChildren(errorBox(err, () => render()));
+    }
   }
 
   function statusBadge(m) {
@@ -292,7 +377,7 @@
     return el('span', { class: 'badge', text: `⏳ ${t('status_scheduled')}` });
   }
 
-  function matchCard(m, { bell } = {}) {
+  function matchCard(m, { bell, showDate } = {}) {
     const premium = S.me.premium;
     const started = m.state === 'live' || m.state === 'finished';
     const teamLine = (team, sc) => el('div', { class: 'team-line' }, crest(team && team.crest), el('span', { class: 'name', text: team ? team.name : '—' }),
@@ -317,7 +402,8 @@
     const card = el('div', { class: 'match', role: 'button' },
       el('div', { class: 'teams' }, teamLine(m.home, m.score.home), teamLine(m.away, m.score.away)),
       el('div', { class: 'side' },
-        m.state === 'scheduled' ? el('span', { class: 'time', text: hhmm(m.utcDate) }) : statusBadge(m),
+        m.state === 'scheduled' ? el('span', { class: 'time', text: showDate ? `${ddmm(m.utcDate)} ${hhmm(m.utcDate)}` : hhmm(m.utcDate) }) : statusBadge(m),
+        showDate && m.state !== 'scheduled' ? el('span', { class: 'small muted', text: ddmm(m.utcDate) }) : null,
         m.state === 'scheduled' ? statusBadge(m) : null,
         premium ? null : el('span', { class: 'lock-badge', text: '🔒' }),
         bellBtn));
