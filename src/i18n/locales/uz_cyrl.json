@@ -423,5 +423,16 @@
   "share_place": "{place}-ўрин",
   "share_achievements": "Ютуқлар",
   "share_score": "Ҳисобни топ",
-  "share_join": "Менга қўшилинг — FootballCenter'да ўйнанг!"
+  "share_join": "Менга қўшилинг — FootballCenter'да ўйнанг!",
+  "duel_kind_quiz": "Quiz дуэл",
+  "duel_kind_player": "Футболчини топ",
+  "duel_result_win": "⚔️ {kind}: сиз <b>{name}</b> ни {my}:{their} ҳисобида ютдингиз! 🏆 +{points} points",
+  "duel_result_draw": "⚔️ {kind}: <b>{name}</b> билан дуранг — {my}:{their}. +{points} points",
+  "duel_result_loss": "⚔️ {kind}: <b>{name}</b> {their}:{my} ҳисобида ютди. Кейинги сафар омад! 💪",
+  "duel_invite_msg": "⚔️ <b>{name}</b> сизни «{kind}» дуэлига чақирди! 5 та раунд — ким кўпроқ топса, ўша ғолиб. Қабул қилиш учун тугмани босинг 👇",
+  "btn_duel_open": "⚔️ Дуэлни очиш",
+  "a_btn_games_settings": "🎮 Ўйинлар созламалари",
+  "a_set_duel_win_points": "Дуэл ғалабаси (points)",
+  "a_set_duel_draw_points": "Дуэл дуранги (points)",
+  "a_set_duel_daily_limit": "Кунига points берадиган дуэллар сони"
 }

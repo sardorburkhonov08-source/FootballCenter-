@@ -11,7 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
-    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly' },
+    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
   };
@@ -705,6 +705,8 @@
       open: () => push({ render: (v) => { v.append(backBar('🎮 Mini Manager')); return renderManager(v); } }) },
     { key: 'quiz', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
+    { key: 'duel', icon: '⚔️', title: () => t('du_title'), desc: () => t('games_du_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar(`⚔️ ${t('du_title')}`)); return renderDuels(v); } }) },
     { key: 'score', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
   ];
@@ -968,6 +970,206 @@
           el('div', { class: 'side' }, el('span', { class: 'time', text: `${ddmm(g.kickoffAt)} ${hhmm(g.kickoffAt)}` }), status)));
       }
     } catch (err) { list.replaceChildren(errorBox(err, () => render())); }
+  }
+
+
+  // ================= ⚔️ DUEL — Quiz duel va Futbolchini top 1v1 (navbatma-navbat, faqat Premium)
+  const DUEL_KINDS = [['quiz', '🧠'], ['player', '🕵️']];
+  const duelKindName = (k) => t(`du_kind_${k}`);
+
+  function duelError(err) {
+    const code = err && err.body && err.body.error;
+    haptic('error');
+    if (err && err.status === 402) { premiumModal(); return; }
+    toast(I.DICTS.uz[`du_err_${code}`] ? t(`du_err_${code}`) : t('error_generic'));
+  }
+
+  function duelStateBadge(d) {
+    if (d.state === 'finished' && d.result) {
+      const cls = d.result.result === 'win' ? 'badge gold' : d.result.result === 'draw' ? 'badge' : 'badge';
+      return el('span', { class: cls, text: `${t(`du_res_${d.result.result}`)} ${d.result.my}:${d.result.their}` });
+    }
+    return el('span', { class: d.state === 'your_turn' ? 'badge live' : 'badge', text: t(`du_st_${d.state}`) });
+  }
+
+  async function renderDuels(view) {
+    if (!S.me.premium) { lockedSection(view, '⚔️'); return; }
+    const box = el('div', null, skeleton(3));
+    view.append(box, leaderboardBlock('duel'));
+    let d;
+    try { d = await api('/duels', { fresh: true }); } catch (err) {
+      if (err.status === 402) { S.me.premium = false; box.replaceChildren(); premiumModal(); return; }
+      box.replaceChildren(errorBox(err, () => render())); return;
+    }
+    const start = async (kind, mode, btn) => {
+      btn.disabled = true;
+      try {
+        const r = await api('/duels', { method: 'POST', body: { kind, mode } });
+        haptic('success');
+        push({ render: (v) => renderDuel(v, r.id, r.link) });
+      } catch (err) { duelError(err); btn.disabled = false; }
+    };
+    const kinds = DUEL_KINDS.map(([k, icon]) => {
+      const rnd = el('button', { class: 'btn', text: t('du_random') });
+      const inv = el('button', { class: 'btn ghost', text: t('du_invite') });
+      rnd.addEventListener('click', () => start(k, 'random', rnd));
+      inv.addEventListener('click', () => start(k, 'invite', inv));
+      return el('div', { class: 'card' },
+        el('h3', { style: 'margin:0 0 4px', text: `${icon} ${duelKindName(k)}` }),
+        el('p', { class: 'small muted', style: 'margin:0 0 10px', text: t(`du_desc_${k}`, { n: d.rules.rounds, s: d.rules.seconds[k] }) }),
+        el('div', { class: 'grid2' }, rnd, inv));
+    });
+    const st = d.stats;
+    box.replaceChildren(
+      el('div', { class: 'stats3' },
+        el('div', { class: 'stat' }, el('b', { class: 'gold', text: st.wins }), el('span', { text: t('du_wins') })),
+        el('div', { class: 'stat' }, el('b', { text: st.draws }), el('span', { text: t('du_draws') })),
+        el('div', { class: 'stat' }, el('b', { text: st.losses }), el('span', { text: t('du_losses') }))),
+      el('p', { class: 'small muted', style: 'margin:8px 2px 10px', text: t('du_rules', { win: d.rules.win, draw: d.rules.draw, limit: d.rules.limit, today: Math.min(st.today, d.rules.limit) }) }),
+      ...kinds,
+      el('h3', { style: 'margin:16px 2px 8px', text: t('du_my') }),
+      d.duels.length ? el('div', { class: 'list' }, d.duels.map((x) => el('button', { class: 'item', type: 'button', onclick: () => push({ render: (v) => renderDuel(v, x.id) }) },
+        el('span', { style: 'font-size:22px', text: x.kind === 'quiz' ? '🧠' : '🕵️' }),
+        el('span', { class: 'grow', style: 'min-width:0' }, el('b', { class: 'ellipsis', style: 'display:block', text: x.opponent ? x.opponent.name : t(x.mode === 'invite' ? 'du_no_friend' : 'du_searching') }),
+          el('span', { class: 'small muted', text: `${duelKindName(x.kind)} · ${ddmm(x.createdAt)} ${hhmm(x.createdAt)}` })),
+        duelStateBadge(x))))
+        : el('div', { class: 'card center muted', text: t('du_none') }));
+  }
+
+  function shareDuelLink(link, kind) {
+    const text = t('du_share_text', { kind: duelKindName(kind) });
+    const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+    try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(url); return; } } catch (e) { /* */ }
+    window.open(url, '_blank');
+  }
+
+  async function renderDuel(view, id, link) {
+    view.append(backBar(t('du_title')));
+    const box = el('div', null, skeleton(3));
+    view.append(box);
+    let d;
+    try { d = await api(`/duels/${id}`, { fresh: true }); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
+    const inviteLink = link || d.link;
+    const head = el('div', { class: 'card' },
+      el('div', { class: 'small muted', text: `${d.kind === 'quiz' ? '🧠' : '🕵️'} ${duelKindName(d.kind)}` }),
+      el('div', { class: 'du-vs' }, el('b', { class: 'ellipsis', text: t('du_you') }), el('span', { class: 'muted', text: 'VS' }),
+        el('b', { class: 'ellipsis', text: d.opponent ? d.opponent.name : '?' })),
+      el('div', { class: 'du-vs small muted' }, el('span', { text: `${d.me.answered}/${d.rounds}` }), el('span'), el('span', { text: d.opponent ? `${d.opponent.answered}/${d.rounds}` : '—' })));
+    const parts = [head];
+    if (d.state === 'finished' && d.result) {
+      const r = d.result;
+      parts.push(el('div', { class: `card center du-final ${r.result}` },
+        el('div', { style: 'font-size:46px', text: r.result === 'win' ? '🏆' : r.result === 'draw' ? '🤝' : '💪' }),
+        el('h2', { style: 'margin:6px 0', text: `${t(`du_res_${r.result}`)} ${r.my}:${r.their}` }),
+        el('div', { class: r.points ? 'gold' : 'muted', text: r.points ? `+${r.points} points` : t(r.result === 'loss' ? 'du_next_time' : 'du_no_points') })));
+    } else if (d.state === 'expired') {
+      parts.push(el('div', { class: 'card center muted', text: t('du_expired') }));
+    } else if (d.state === 'your_turn') {
+      const play = el('button', { class: 'btn block', text: d.me.answered ? t('du_continue', { n: d.me.answered + 1, total: d.rounds }) : t('du_start') });
+      const playBox = el('div');
+      play.addEventListener('click', () => { play.remove(); duelRound(playBox, d); });
+      parts.push(el('div', { class: 'card' }, el('p', { class: 'small muted', style: 'margin-top:0', text: t(`du_desc_${d.kind}`, { n: d.rounds, s: d.seconds }) }), play), playBox);
+    } else {
+      parts.push(el('div', { class: 'card center' },
+        el('div', { style: 'font-size:36px', text: '⏳' }),
+        el('p', { style: 'margin:6px 0 0', text: t(d.state === 'waiting_opponent' ? (d.mode === 'invite' ? 'du_wait_friend' : 'du_wait_random') : 'du_wait_turn', { score: d.me.score, n: d.rounds }) }),
+        el('p', { class: 'small muted', text: t('du_until', { date: `${ddmm(d.expiresAt)} ${hhmm(d.expiresAt)}` }) })));
+    }
+    if (inviteLink && !d.opponent) {
+      parts.push(el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: t('du_invite_title') }), el('p', { class: 'small muted', text: t('du_invite_hint') }),
+        el('div', { class: 'du-link', text: inviteLink }),
+        el('button', { class: 'btn block', style: 'margin-top:10px', text: t('du_send_link'), onclick: () => shareDuelLink(inviteLink, d.kind) })));
+    }
+    box.replaceChildren(...parts);
+  }
+
+  /** Bitta raund: taymer, savol yoki futbolchi ma'lumoti, 4 variant */
+  async function duelRound(box, d) {
+    let r;
+    try { r = await api(`/duels/${d.id}/next`, { method: 'POST' }); } catch (err) { duelError(err); return; }
+    if (r.done) { render(); return; }
+    const card = el('div', { class: 'card' });
+    const timerBar = el('div', { class: 'timer' }, el('div', { style: 'width:100%' }));
+    const timeText = el('div', { class: 'small muted', style: 'margin-top:6px;text-align:right' });
+    const title = el('div', { class: 'small muted', text: t('du_round', { n: r.round + 1, total: r.total }) });
+    let body;
+    if (r.clues) {
+      const c = r.clues;
+      body = el('div', { class: 'du-clues' },
+        el('div', { class: 'kv' }, el('span', { text: t('du_c_country') }), el('b', { text: c.country })),
+        el('div', { class: 'kv' }, el('span', { text: t('du_c_position') }), el('b', { text: c.position })),
+        el('div', { class: 'kv' }, el('span', { text: t('du_c_born') }), el('b', { text: c.born })),
+        el('div', { class: 'kv' }, el('span', { text: t('du_c_clubs') }), el('b', { style: 'text-align:right', text: c.clubs.join(' → ') })));
+    } else body = el('div', { class: 'q-text', text: r.question });
+    const letters = ['A', 'B', 'C', 'D'];
+    const options = r.options.map((o, i) => el('button', { class: 'opt', 'data-k': o.key }, el('span', { class: 'l', text: letters[i] }), el('span', { text: o.text })));
+    const resultLine = el('div', { style: 'margin-top:12px;font-weight:700;text-align:center' });
+    const nextBtn = el('button', { class: 'btn block', style: 'margin-top:12px', hidden: true, text: r.round + 1 >= r.total ? t('du_finish') : t('du_next') });
+    card.append(title, timerBar, timeText, body, el('div', { style: 'margin-top:12px' }, options), resultLine, nextBtn);
+    box.replaceChildren(card);
+    const deadline = Date.now() + r.secondsLeft * 1000;
+    let done = false;
+    const finish = (res) => {
+      done = true;
+      timerBar.remove(); timeText.remove();
+      options.forEach((o) => {
+        o.disabled = true;
+        if (res && o.dataset.k === res.correctKey) o.classList.add('correct');
+      });
+      nextBtn.hidden = false;
+    };
+    nextBtn.addEventListener('click', () => { if (r.round + 1 >= r.total) render(); else duelRound(box, d); });
+    const raf = () => {
+      if (done) return;
+      const left = Math.max(0, (deadline - Date.now()) / 1000);
+      timerBar.firstChild.style.width = `${(left / r.seconds) * 100}%`;
+      timeText.textContent = `${left.toFixed(1)} s`;
+      if (left <= 0) { finish(null); resultLine.textContent = t('quiz_timeout'); haptic('error'); return; }
+      requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+    cleanups.push(() => { done = true; });
+    options.forEach((o) => o.addEventListener('click', async () => {
+      if (done) return;
+      done = true;
+      options.forEach((x) => { x.disabled = true; });
+      try {
+        const res = await api(`/duels/${d.id}/answer`, { method: 'POST', body: { round: r.round, key: o.dataset.k } });
+        if (!res.correct) o.classList.add('wrong');
+        haptic(res.correct ? 'success' : 'error');
+        resultLine.textContent = res.correct ? t('du_correct', { s: (res.timeMs / 1000).toFixed(1) }) : t('du_wrong');
+        if (res.correct) resultLine.className = 'gold';
+        resultLine.style.cssText = 'margin-top:12px;font-weight:800;text-align:center';
+        finish(res);
+      } catch (err) { duelError(err); finish(null); }
+    }));
+  }
+
+  /** Do'st havolasi orqali kelgan duel taklifi */
+  async function renderDuelInvite(view, code) {
+    view.append(backBar(t('du_title')));
+    const box = el('div', null, skeleton(2));
+    view.append(box);
+    let p;
+    try { p = await api(`/duels/invite/${encodeURIComponent(code)}`); } catch (err) { box.replaceChildren(el('div', { class: 'card center muted', text: t('du_err_not_found') })); return; }
+    if (p.mine) { currentStack().pop(); push({ render: (v) => renderDuel(v, p.id) }); return; }
+    if (!p.available) { box.replaceChildren(el('div', { class: 'card center muted', text: t('du_err_not_available') })); return; }
+    const accept = el('button', { class: 'btn block', text: t('du_accept') });
+    accept.addEventListener('click', async () => {
+      if (!S.me.premium) { premiumModal(); return; }
+      accept.disabled = true;
+      try {
+        const d = await api(`/duels/invite/${encodeURIComponent(code)}/join`, { method: 'POST' });
+        haptic('success');
+        currentStack().pop();
+        push({ render: (v) => renderDuel(v, d.id) });
+      } catch (err) { duelError(err); accept.disabled = false; }
+    });
+    box.replaceChildren(el('div', { class: 'card center' },
+      el('div', { style: 'font-size:46px', text: '⚔️' }),
+      el('h3', { text: t('du_invited', { name: p.from, kind: duelKindName(p.kind) }) }),
+      el('p', { class: 'small muted', text: t(`du_desc_${p.kind}`, { n: 5, s: p.kind === 'quiz' ? 15 : 20 }) }),
+      accept));
   }
 
   // ================= 🎯 HISOBNI TOP — admin belgilagan o'yinlarning aniq hisobini taxmin qilish (faqat Premium)
@@ -1636,6 +1838,9 @@
       d.quiz
         ? statBlock('🧠 Football Quiz', d.quiz, [el('div', { class: 'kv' }, el('span', { text: t('prof_answers') }), el('b', { text: d.quiz.answers })), el('div', { class: 'kv' }, el('span', { text: t('prof_correct') }), el('b', { text: d.quiz.correct }))])
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: '🧠 Football Quiz' }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
+      d.duel
+        ? statBlock(`⚔️ ${t('du_title')}`, d.duel, el('div', { class: 'kv' }, el('span', { text: t('du_wdl') }), el('b', { text: `${d.duel.wins} / ${d.duel.draws} / ${d.duel.losses}` })))
+        : null,
       d.score
         ? statBlock(`🎯 ${t('sp_title')}`, d.score, [el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.score.predictions })), el('div', { class: 'kv' }, el('span', { text: t('sp_hits') }), el('b', { text: d.score.hits }))])
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: `🎯 ${t('sp_title')}` }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
@@ -1693,6 +1898,10 @@
       render();
     }));
     initBanner();
+    // ⚔️ Do'stning duel taklifi: /app/?duel=<kod> (bot tugmasi) yoki startapp=duel_<kod>
+    const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || '';
+    const duelCode = new URLSearchParams(window.location.search).get('duel') || (startParam.startsWith('duel_') ? startParam.slice(5) : '');
+    if (duelCode) { S.tab = 'games'; S.stacks.games = [{ render: (v) => renderDuelInvite(v, duelCode) }]; }
     render();
     return undefined;
   }

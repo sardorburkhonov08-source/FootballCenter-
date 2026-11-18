@@ -421,5 +421,16 @@
   "share_place": "#{place}",
   "share_achievements": "Achievements",
   "share_score": "Guess the score",
-  "share_join": "Join me — play on FootballCenter!"
+  "share_join": "Join me — play on FootballCenter!",
+  "duel_kind_quiz": "Quiz duel",
+  "duel_kind_player": "Guess the player",
+  "duel_result_win": "⚔️ {kind}: you beat <b>{name}</b> {my}:{their}! 🏆 +{points} points",
+  "duel_result_draw": "⚔️ {kind}: draw with <b>{name}</b> — {my}:{their}. +{points} points",
+  "duel_result_loss": "⚔️ {kind}: <b>{name}</b> won {their}:{my}. Better luck next time! 💪",
+  "duel_invite_msg": "⚔️ <b>{name}</b> challenges you to a «{kind}» duel! 5 rounds — whoever gets more right wins. Tap the button to accept 👇",
+  "btn_duel_open": "⚔️ Open duel",
+  "a_btn_games_settings": "🎮 Game settings",
+  "a_set_duel_win_points": "Duel win (points)",
+  "a_set_duel_draw_points": "Duel draw (points)",
+  "a_set_duel_daily_limit": "Duels with points per day"
 }

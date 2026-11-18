@@ -423,5 +423,16 @@
   "share_place": "{place}-o'rin",
   "share_achievements": "Yutuqlar",
   "share_score": "Hisobni top",
-  "share_join": "Menga qo'shiling — FootballCenter'da o'ynang!"
+  "share_join": "Menga qo'shiling — FootballCenter'da o'ynang!",
+  "duel_kind_quiz": "Quiz duel",
+  "duel_kind_player": "Futbolchini top",
+  "duel_result_win": "⚔️ {kind}: siz <b>{name}</b> ni {my}:{their} hisobida yutdingiz! 🏆 +{points} points",
+  "duel_result_draw": "⚔️ {kind}: <b>{name}</b> bilan durang — {my}:{their}. +{points} points",
+  "duel_result_loss": "⚔️ {kind}: <b>{name}</b> {their}:{my} hisobida yutdi. Keyingi safar omad! 💪",
+  "duel_invite_msg": "⚔️ <b>{name}</b> sizni «{kind}» dueliga chaqirdi! 5 ta raund — kim ko'proq topsa, o'sha g'olib. Qabul qilish uchun tugmani bosing 👇",
+  "btn_duel_open": "⚔️ Duelni ochish",
+  "a_btn_games_settings": "🎮 O'yinlar sozlamalari",
+  "a_set_duel_win_points": "Duel g'alabasi (points)",
+  "a_set_duel_draw_points": "Duel durangi (points)",
+  "a_set_duel_daily_limit": "Kuniga points beradigan duellar soni"
 }

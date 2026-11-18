@@ -6,6 +6,7 @@ const users = require('../services/users');
 const football = require('../services/football');
 const scorePredict = require('../services/scorePredict');
 const achievements = require('../services/achievements');
+const duels = require('../services/duels');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -208,9 +209,42 @@ function scoreRoute(fn) {
 router.get('/score/games', requirePremium, scoreRoute((req) => scorePredict.listGames(req.user)));
 router.post('/score/games/:id', requirePremium, express.json(), scoreRoute((req) => scorePredict.savePrediction(req.user, req.params.id, req.body || {})));
 
+// ---------- ⚔️ Duel (faqat Premium)
+function duelRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof duels.DuelError) return res.status(e.message === 'not_found' ? 404 : 409).json({ error: e.message });
+      throw e;
+    }
+  });
+}
+const duelLink = (d) => (config.botUsername ? `https://t.me/${config.botUsername}?start=duel_${d.code}` : null);
+router.get('/duels', requirePremium, duelRoute((req) => duels.list(req.user)));
+router.post('/duels', requirePremium, express.json(), duelRoute(async (req) => {
+  const d = await duels.create(req.user, req.body && req.body.kind, req.body && req.body.mode);
+  return { ...(await duels.detail(req.user, d.id)), link: d.mode === 'invite' ? duelLink(d) : null };
+}));
+router.get('/duels/invite/:code', duelRoute((req) => duels.invitePreview(req.user, req.params.code)));
+router.post('/duels/invite/:code/join', requirePremium, duelRoute(async (req) => {
+  const d = await duels.join(req.user, req.params.code);
+  return duels.detail(req.user, d.id);
+}));
+router.get('/duels/:id', requirePremium, duelRoute(async (req) => {
+  const s = await duels.detail(req.user, req.params.id);
+  const d = await db.one('SELECT * FROM duels WHERE id = $1', [s.id]);
+  return { ...s, link: d.mode === 'invite' && d.status === 'waiting' ? duelLink(d) : null };
+}));
+router.post('/duels/:id/next', requirePremium, duelRoute((req) => duels.next(req.user, req.params.id)));
+router.post('/duels/:id/answer', requirePremium, express.json(), duelRoute(async (req) => {
+  const r = await duels.answer(req.user, req.params.id, req.body && req.body.round, req.body && req.body.key);
+  return { ...r, duel: r.last ? await duels.detail(req.user, req.params.id) : null };
+}));
+
 router.get('/leaderboard/:kind/:period', wrap(async (req, res) => {
   const { kind, period } = req.params;
-  if (!['manager', 'quiz', 'score'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
+  if (!['manager', 'quiz', 'score', 'duel'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
   if (kind !== 'manager' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
   const top = Number(await settings.get('leaderboard_top')) || 30;
   return res.json(await leaderboard.board(kind, period, req.user.id, top));
@@ -332,6 +366,9 @@ router.get('/profile', wrap(async (req, res) => {
     manager: users.isPremium(u) ? { ...(await stat('manager')), predictions: counts.predictions } : null,
     quiz: users.isPremium(u) ? { ...(await stat('quiz')), answers: counts.answers, correct: counts.correct } : null,
     score: users.isPremium(u) ? { ...(await stat('score')), predictions: counts.score_predictions, hits: counts.score_hits } : null,
+    duel: users.isPremium(u) ? { ...(await stat('duel')), ...(await db.one(
+      `SELECT count(*) FILTER (WHERE result = 'win')::int AS wins, count(*) FILTER (WHERE result = 'draw')::int AS draws,
+              count(*) FILTER (WHERE result = 'loss')::int AS losses FROM duel_results WHERE user_id = $1`, [u.id])) } : null,
     achievements: await achievements.forUser(u.id, u.language || 'uz'),
   });
 }));
