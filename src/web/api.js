@@ -7,6 +7,7 @@ const football = require('../services/football');
 const scorePredict = require('../services/scorePredict');
 const achievements = require('../services/achievements');
 const duels = require('../services/duels');
+const penalty = require('../services/penalty');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -242,9 +243,24 @@ router.post('/duels/:id/answer', requirePremium, express.json(), duelRoute(async
   return { ...r, duel: r.last ? await duels.detail(req.user, req.params.id) : null };
 }));
 
+// ---------- 🥅 Penalty (sinov, faqat Premium)
+function penaltyRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof penalty.PenaltyError) return res.status(e.message === 'bad_dir' ? 400 : 409).json({ error: e.message });
+      throw e;
+    }
+  });
+}
+router.get('/penalty', requirePremium, penaltyRoute((req) => penalty.state(req.user)));
+router.post('/penalty/start', requirePremium, penaltyRoute((req) => penalty.start(req.user)));
+router.post('/penalty/kick', requirePremium, express.json(), penaltyRoute((req) => penalty.kick(req.user, req.body && req.body.dir)));
+
 router.get('/leaderboard/:kind/:period', wrap(async (req, res) => {
   const { kind, period } = req.params;
-  if (!['manager', 'quiz', 'score', 'duel'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
+  if (!['manager', 'quiz', 'score', 'duel', 'penalty'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
   if (kind !== 'manager' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
   const top = Number(await settings.get('leaderboard_top')) || 30;
   return res.json(await leaderboard.board(kind, period, req.user.id, top));

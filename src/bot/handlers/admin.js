@@ -33,7 +33,7 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit'] },
+  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -194,11 +194,11 @@ function csvCell(v) {
 }
 
 async function exportUsers(ctx) {
-  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, points_manager, points_quiz, points_score, points_duel,
+  const rows = await db.many(`SELECT telegram_id, username, first_name, last_name, language, balance, ${users.POINT_COLUMNS.join(', ')},
       CASE WHEN premium_expires_at > now() THEN 'premium' ELSE 'free' END AS tariff, premium_expires_at, registered_at, is_blocked, is_admin,
       (SELECT count(*) FROM referrals r WHERE r.referrer_id = users.id AND r.is_active) AS active_referrals
     FROM users ORDER BY registered_at`);
-  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', 'points_manager', 'points_quiz', 'points_score', 'points_duel', 'tariff',
+  const cols = ['telegram_id', 'username', 'first_name', 'last_name', 'language', 'balance', ...users.POINT_COLUMNS, 'tariff',
     'premium_expires_at', 'registered_at', 'is_blocked', 'is_admin', 'active_referrals'];
   const csv = '﻿' + [cols.join(','), ...rows.map((r) => cols.map((c) => csvCell(r[c])).join(','))].join('\n');
   await ctx.replyWithDocument(new InputFile(Buffer.from(csv, 'utf8'), `users_${ymd()}.csv`), { caption: t(ctx.lang, 'a_export_caption', { count: rows.length }) });

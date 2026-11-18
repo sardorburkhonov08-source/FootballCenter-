@@ -38,6 +38,17 @@ async function computeRanking(kind, r) {
       [r.start, r.end],
     );
   }
+  if (kind === 'penalty') {
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(g.points)::int AS points, max(g.finished_at) AS last_at
+       FROM penalty_games g JOIN users u ON u.id = g.user_id
+       WHERE g.status = 'finished' AND g.finished_at >= $1 AND g.finished_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id HAVING sum(g.points) > 0
+       ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end],
+    );
+  }
   if (kind === 'duel') {
     return db.many(
       `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
@@ -93,7 +104,7 @@ async function board(kind, period, userId, top = 30) {
 
 /** Umumiy (barcha vaqt) o'rin */
 async function overallPlace(kind, userId) {
-  const col = { manager: 'points_manager', quiz: 'points_quiz', score: 'points_score', duel: 'points_duel' }[kind];
+  const col = { manager: 'points_manager', quiz: 'points_quiz', score: 'points_score', duel: 'points_duel', penalty: 'points_penalty' }[kind];
   const r = await db.one(
     `SELECT u.${col} AS points,
             (SELECT count(*)::int + 1 FROM users x WHERE x.${col} > u.${col} AND NOT x.is_blocked) AS place

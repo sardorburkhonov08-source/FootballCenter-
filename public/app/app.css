@@ -285,3 +285,26 @@ input[type=search].input { margin-bottom: 4px; }
 .du-link { font-size: 13px; word-break: break-all; padding: 10px 12px; border-radius: 10px; background: var(--surface2); border: 1px dashed var(--border); }
 .du-clues { margin-top: 10px; }
 .du-clues .kv b { max-width: 65%; }
+.pk-score { display: grid; gap: 6px; }
+.pk-row { display: grid; grid-template-columns: 54px 1fr 28px; align-items: center; gap: 8px; font-size: 14px; }
+.pk-n { text-align: right; font-size: 18px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.pk-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.pk-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); }
+.pk-dot.goal { background: var(--accent); border-color: var(--accent); }
+.pk-dot.miss { background: var(--danger); border-color: var(--danger); }
+.pk-prompt { margin: 12px 0 8px; font-weight: 700; text-align: center; }
+.pk-pitch { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; user-select: none;
+  background: repeating-linear-gradient(180deg, #1f7a3e 0 34px, #23863f 34px 68px); }
+.pk-goal { position: absolute; left: 8%; right: 8%; top: 10%; height: 50%; border: 6px solid #f4f7f5; border-bottom: none; border-radius: 4px 4px 0 0;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 2px, transparent 2px 12px), repeating-linear-gradient(-45deg, rgba(255,255,255,.18) 0 2px, transparent 2px 12px), rgba(0,0,0,.18); }
+.pk-zone { background: transparent; border: none; border-right: 1px dashed rgba(255,255,255,.25); cursor: pointer; }
+.pk-zone:last-child { border-right: none; }
+.pk-zone:active, .pk-zone:hover { background: rgba(242, 201, 76, .22); }
+.pk-pitch.keeping .pk-zone:active, .pk-pitch.keeping .pk-zone:hover { background: rgba(46, 204, 113, .25); }
+.pk-keeper { position: absolute; top: 36%; left: 50%; transform: translateX(-50%); font-size: 40px; transition: left .35s ease-out; pointer-events: none; }
+.pk-ball { position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); font-size: 30px; transition: left .4s ease-out, bottom .4s ease-out, transform .4s ease-out; pointer-events: none; }
+.pk-flash { position: absolute; left: 0; right: 0; bottom: 22%; text-align: center; font-size: 30px; font-weight: 900; letter-spacing: 2px; opacity: 0; transform: scale(.7); transition: opacity .2s, transform .2s; pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.pk-flash.on { opacity: 1; transform: scale(1); }
+.pk-flash.good { color: var(--gold); }
+.pk-flash.bad { color: #fff; }

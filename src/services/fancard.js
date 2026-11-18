@@ -214,7 +214,7 @@ async function cardRow(userId) { return db.one('SELECT * FROM fan_cards WHERE us
 async function clubRank(card) {
   return db.one(
     `WITH f AS (
-       SELECT c.user_id, c.fan_number, (u.points_manager + u.points_quiz + u.points_score + u.points_duel) AS pts
+       SELECT c.user_id, c.fan_number, ${users.totalPointsSql('u.')} AS pts
        FROM fan_cards c JOIN users u ON u.id = c.user_id WHERE c.team_id = $1 AND NOT u.is_blocked)
      SELECT (SELECT count(*)::int FROM f) AS total,
             (SELECT count(*)::int + 1 FROM f, f me WHERE me.user_id = $2

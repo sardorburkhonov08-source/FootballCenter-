@@ -432,5 +432,8 @@
   "a_btn_games_settings": "🎮 Game settings",
   "a_set_duel_win_points": "Duel win (points)",
   "a_set_duel_draw_points": "Duel draw (points)",
-  "a_set_duel_daily_limit": "Duels with points per day"
+  "a_set_duel_daily_limit": "Duels with points per day",
+  "a_set_penalty_win_points": "Penalty win (points)",
+  "a_set_penalty_draw_points": "Penalty draw (points)",
+  "a_set_penalty_daily_games": "Penalty games per day"
 }

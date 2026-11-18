@@ -71,8 +71,11 @@ async function find(query) {
   return db.one('SELECT * FROM users WHERE lower(username) = $1', [name]);
 }
 
-/** Umumiy points: Mini Manager + Quiz + Hisobni top + Duel */
-function totalPoints(u) { return ['points_manager', 'points_quiz', 'points_score', 'points_duel'].reduce((sum, k) => sum + (Number(u[k]) || 0), 0); }
+/** Umumiy points: Mini Manager + Quiz + Hisobni top + Duel + Penalty. Yangi o'yin ustuni shu ro'yxatga qo'shiladi. */
+const POINT_COLUMNS = ['points_manager', 'points_quiz', 'points_score', 'points_duel', 'points_penalty'];
+function totalPoints(u) { return POINT_COLUMNS.reduce((sum, k) => sum + (Number(u[k]) || 0), 0); }
+/** SQL ifoda: (u.points_manager + ...); prefix — jadval taxallusi */
+function totalPointsSql(prefix = '') { return `(${POINT_COLUMNS.map((c) => `${prefix}${c}`).join(' + ')})`; }
 
 function isPremium(user) {
   return !!(user && user.premium_expires_at && new Date(user.premium_expires_at) > new Date());
@@ -124,7 +127,7 @@ async function activeReferralCount(userId) {
 }
 
 module.exports = {
-  totalPoints,
+  totalPoints, totalPointsSql, POINT_COLUMNS,
   welcomePremium, gotWelcomePremium,
   upsertFromTelegram, byTelegramId, byId, find, isPremium, isOwner, isAdmin, premiumDaysLeft, displayName,
   grantPremium, setLanguage, activeReferralCount,
