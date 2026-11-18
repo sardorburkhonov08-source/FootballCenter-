@@ -72,6 +72,11 @@ test('logotipdan klub ranglari; Code 128 shtrix-kodi', () => {
   assert.strictEqual(m.slice(-13), '1100011101011', 'Stop');
 });
 
+test("eski (004) karta ustunlari users jadvalidan olib tashlangan", async () => {
+  const cols = await db.many("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND (column_name LIKE 'fav_%' OR column_name LIKE 'fan_%')");
+  assert.deepStrictEqual(cols, []);
+});
+
 test("Premium yo'q: qulflangan namuna, faollashtirib bo'lmaydi", async () => {
   await call('/api/me', 9001);
   const r = await call('/api/fan-card', 9001);
