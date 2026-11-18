@@ -10,7 +10,7 @@
 
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
-    stacks: { home: [], games: [], quiz: [], profile: [] },
+    stacks: { home: [], games: [], profile: [] },
     lb: { manager: 'weekly', quiz: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
@@ -269,7 +269,7 @@
     updateBackButton();
     window.scrollTo(0, 0);
     if (page) return page.render(view);
-    return ({ home: renderHome, games: renderGames, quiz: renderQuiz, profile: renderProfile })[S.tab](view);
+    return ({ home: renderHome, games: renderGames, profile: renderProfile })[S.tab](view);
   }
 
   // ================= 🏠 HOME
@@ -699,10 +699,12 @@
       el('button', { class: 'btn', text: t('buy_premium_btn'), onclick: () => openBot('premium') })));
   }
 
-  // ================= 🎮 GAMES — o'yinlar ro'yxati (Mini Manager — ulardan biri; keyin yangi o'yinlar qo'shiladi)
+  // ================= 🎮 GAMES — o'yinlar ro'yxati (Mini Manager, Football Quiz; keyin yangi o'yinlar qo'shiladi)
   const GAMES = [
     { key: 'manager', icon: '🎮', title: () => 'Mini Manager', desc: () => t('games_mm_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🎮 Mini Manager')); return renderManager(v); } }) },
+    { key: 'quiz', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
   ];
 
   function renderGames(view) {
