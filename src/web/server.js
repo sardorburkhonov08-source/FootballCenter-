@@ -73,6 +73,7 @@ function createApp({ bot } = {}) {
     if (err && err.status === 404) return res.status(404).end();
     if (err && (err.type === 'entity.parse.failed' || err.type === 'entity.too.large')) return res.status(err.status || 400).json({ error: 'bad_request' });
     console.error('[web]', err);
+    require('../services/alerts').reportLater('web', `${req.method} ${req.path}: ${require('../services/alerts').errText(err)}`);
     return res.status(500).json({ error: 'server_error' });
   });
 

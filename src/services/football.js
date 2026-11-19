@@ -119,7 +119,10 @@ async function fetchFromApi(key, ttl, { background }) {
   if (header(res, 'x-ratelimit-remaining') === '0') blockedUntil = Date.now() + 60000;
 
   if (res.status === 429) { blockedUntil = Date.now() + 60000; throw new FootballUnavailable('Football API limiti', 'busy'); }
-  if (res.status === 401 || res.status === 403) throw new FootballUnavailable('Football API kaliti noto\'g\'ri', 'token');
+  if (res.status === 401 || res.status === 403) {
+    require('./alerts').reportLater('football_token', `API-Football: HTTP ${res.status} (kalit yoki tarif)`);
+    throw new FootballUnavailable('Football API kaliti noto\'g\'ri', 'token');
+  }
   if (!res.ok) throw new FootballUnavailable(`Football API ${res.status}`);
   const body = await res.json();
 
@@ -128,6 +131,7 @@ async function fetchFromApi(key, ttl, { background }) {
     if (errors.requests) {
       daily = { remaining: 0, day: utcDay() };
       blockedUntil = nextUtcMidnight();
+      require('./alerts').reportLater('football_limit', 'API-Football: kunlik so\'rovlar limiti tugadi');
       throw new FootballUnavailable('Kunlik limit tugadi', 'limit');
     }
     if (errors.rateLimit) { blockedUntil = Date.now() + 60000; throw new FootballUnavailable('Daqiqalik limit', 'busy'); }

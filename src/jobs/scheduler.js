@@ -182,6 +182,7 @@ const JOBS = [
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
   { name: 'api_cache_cleanup', every: 6 * 3600, fn: () => require('../services/football').cleanupCache() },
+  { name: 'db_health', every: 300, fn: () => require('../services/alerts').checkDb() },
   { name: 'popularity_cleanup', every: 24 * 3600, fn: () => require('../services/popularity').cleanup() },
 ];
 
@@ -192,7 +193,10 @@ function start() {
     const run = async () => {
       if (running) return;
       running = true;
-      try { await job.fn(); } catch (e) { console.error(`[job:${job.name}]`, e.message || e); } finally { running = false; }
+      try { await job.fn(); } catch (e) {
+        console.error(`[job:${job.name}]`, e.message || e);
+        require('../services/alerts').reportLater(`job:${job.name}`, e);
+      } finally { running = false; }
     };
     timers.push(setTimeout(run, 5000));
     timers.push(setInterval(run, job.every * 1000));

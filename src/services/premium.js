@@ -64,4 +64,53 @@ async function gift(fromUser, toUserId, plan = 'month') {
   return result;
 }
 
-module.exports = { PLANS, plans, planInfo, buy, gift };
+// ---- ⭐ Telegram Stars orqali to'lov (egasi talabi; narxni admin belgilaydi, 0 — o'chiq).
+// Telegram Stars to'lovni o'zi tasdiqlaydi, shuning uchun Premium successful_payment kelganda darhol beriladi (SPEC 20.4 dan farq).
+const STAR_KEYS = { week: 'premium_week_stars', month: 'premium_month_stars' };
+
+/** { week: { plan, stars, days }, ... } — faqat narxi > 0 bo'lganlari */
+async function starPlans() {
+  const p = await plans();
+  const s = await settings.getMany(Object.values(STAR_KEYS));
+  const out = {};
+  for (const [plan, key] of Object.entries(STAR_KEYS)) {
+    const stars = Math.floor(Number(s[key]) || 0);
+    if (stars > 0) out[plan] = { plan, stars, days: p[plan].days };
+  }
+  return out;
+}
+
+function starPayload(plan, userId, stars) { return `prem:${plan}:${userId}:${stars}`; }
+
+/** pre_checkout_query tekshiruvi: to'lov joriy narx va to'g'ri foydalanuvchiga mosmi */
+async function checkStarPayload(payload, user, { currency, total }) {
+  const m = /^prem:(week|month):(\d+):(\d+)$/.exec(payload || '');
+  if (!m || currency !== 'XTR' || !user || Number(m[2]) !== Number(user.id)) return null;
+  const plan = (await starPlans())[m[1]];
+  if (!plan || plan.stars !== Number(m[3]) || plan.stars !== Number(total)) return null;
+  return plan;
+}
+
+/**
+ * successful_payment: Premium berish (bir to'lov — bir marta, charge_id bo'yicha).
+ * → { ok, days, user } | { ok:false, reason:'duplicate'|'bad' }
+ */
+async function grantStars(user, payment) {
+  const m = /^prem:(week|month):(\d+):(\d+)$/.exec(payment.invoice_payload || '');
+  if (!m || payment.currency !== 'XTR' || Number(m[2]) !== Number(user.id)) return { ok: false, reason: 'bad' };
+  const { days } = await planInfo(m[1]);
+  const result = await db.tx(async (c) => {
+    const ins = await c.query(
+      `INSERT INTO star_payments (user_id, plan, stars, days, charge_id) VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (charge_id) DO NOTHING RETURNING id`,
+      [user.id, m[1], Number(payment.total_amount), days, payment.telegram_payment_charge_id],
+    );
+    if (!ins.rows.length) return { ok: false, reason: 'duplicate' };
+    const updated = await users.grantPremium(c, user.id, days, 'stars', 0);
+    return { ok: true, days, stars: Number(payment.total_amount), user: updated };
+  });
+  if (result.ok) await referral.activate(user.id, 'premium').catch((e) => console.error(e));
+  return result;
+}
+
+module.exports = { PLANS, plans, planInfo, buy, gift, STAR_KEYS, starPlans, starPayload, checkStarPayload, grantStars };

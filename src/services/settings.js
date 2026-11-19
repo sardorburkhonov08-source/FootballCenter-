@@ -18,6 +18,13 @@ const DEFAULTS = {
   premium_days: 30,
   premium_week_price: 10000,
   premium_week_days: 7,
+  // ⭐ Telegram Stars orqali Premium narxi (yulduzlarda; 0 — Stars bilan sotilmaydi). Muddat — premium_week_days / premium_days
+  premium_week_stars: 0,
+  premium_month_stars: 0,
+  // 🚨 Adminlarga xato xabarlari: server xatolari, API limiti, sekin baza (bir xil xato — alerts_repeat_minutes da bir marta)
+  alerts_enabled: true,
+  alerts_repeat_minutes: 30,
+  alerts_db_slow_ms: 2000,
   // ⚔️ Duel: g'alaba / durang uchun points, kuniga nechta duel points beradi
   duel_win_points: 10,
   duel_draw_points: 3,

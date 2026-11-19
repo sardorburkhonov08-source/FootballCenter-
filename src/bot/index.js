@@ -24,6 +24,21 @@ function createBot(token = config.botToken, botConfig = {}) {
   // Telegram "juda tez" (429) desa — kutib, qayta yuboradi; xabarlar yo'qolmaydi
   bot.api.config.use(autoRetry({ maxRetryAttempts: 3, maxDelaySeconds: 60 }));
 
+  // Xatolar: foydalanuvchiga "xatolik" javobi + adminga 🚨 xabar. bot.catch faqat polling'da ishlaydi,
+  // webhook rejimida (Railway) ham xuddi shunday bo'lishi uchun — eng birinchi middleware'da ushlanadi.
+  async function onError(err) {
+    console.error('[bot]', err.error || err);
+    require('../services/alerts').reportLater('bot', err);
+    const ctx = err.ctx;
+    try {
+      if (ctx.callbackQuery) await ctx.answerCallbackQuery({ text: t(ctx.lang || 'uz', 'error'), show_alert: true });
+      else if (ctx.chat) await ctx.reply(t(ctx.lang || 'uz', 'error'));
+    } catch (e) { /* e'tiborsiz */ }
+  }
+  bot.use(async (ctx, next) => {
+    try { await next(); } catch (error) { await onError({ error, ctx }); }
+  });
+
   // Faqat shaxsiy chatlar (kanal/guruh yangilanishlari e'tiborsiz)
   bot.use(async (ctx, next) => {
     if (!ctx.from || (ctx.chat && ctx.chat.type !== 'private')) return undefined;
@@ -36,6 +51,9 @@ function createBot(token = config.botToken, botConfig = {}) {
     ctx.user = user;
     ctx.userCreated = created;
     ctx.lang = user.language || 'uz';
+    if (ctx.preCheckoutQuery && (user.is_blocked || (!users.isAdmin(user) && (await settings.get('maintenance_mode'))))) {
+      return ctx.answerPreCheckoutQuery(false, { error_message: t(ctx.lang, user.is_blocked ? 'blocked' : 'maintenance') });
+    }
     if (user.is_blocked) {
       if (ctx.callbackQuery) await ctx.answerCallbackQuery({ text: t(ctx.lang, 'blocked'), show_alert: true }).catch(() => {});
       else await ctx.reply(t(ctx.lang, 'blocked'));
@@ -46,6 +64,7 @@ function createBot(token = config.botToken, botConfig = {}) {
       else await ctx.reply(t(ctx.lang, 'maintenance'));
       return undefined;
     }
+    require('../services/activity').touch(user.id);
     return next();
   });
 
@@ -84,14 +103,7 @@ function createBot(token = config.botToken, botConfig = {}) {
   // Eskirgan/noma'lum tugmalar
   bot.on('callback_query:data', (ctx) => ctx.answerCallbackQuery());
 
-  bot.catch(async (err) => {
-    console.error('[bot]', err.error || err);
-    const ctx = err.ctx;
-    try {
-      if (ctx.callbackQuery) await ctx.answerCallbackQuery({ text: t(ctx.lang || 'uz', 'error'), show_alert: true });
-      else await ctx.reply(t(ctx.lang || 'uz', 'error'));
-    } catch (e) { /* e'tiborsiz */ }
-  });
+  bot.catch(onError);
 
   return bot;
 }
