@@ -66,7 +66,7 @@ async function requirePremiumCard(user) {
 /** userId → hafta davomidagi points (Mini Manager + Quiz + Hisobni top + Duel). fresh — keshsiz (g'olibni aniqlash uchun) */
 async function weekPoints(range, fresh = false) {
   const get = fresh ? leaderboard.computeRanking : leaderboard.ranking;
-  const lists = await Promise.all(['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy'].map((k) => get(k, range)));
+  const lists = await Promise.all(['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest'].map((k) => get(k, range)));
   const pts = new Map();
   for (const r of lists.flat()) pts.set(r.id, (pts.get(r.id) || 0) + Number(r.points));
   return pts;

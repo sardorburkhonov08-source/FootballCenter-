@@ -61,21 +61,56 @@ async function quizTick() {
   if (cur && !staleEnglish && Date.now() - new Date(cur.published_at).getTime() < HOUR) return;
   const q = await quiz.publishNext();
   if (!q) return;
-  await quizDailyNotify();
+  await dailyDigest();
 }
 
-/** 🧠 Yangi savol haqida xabar — kuniga 1 marta (egasi talabi): settings.quiz_notify_hour dan keyingi birinchi savolda */
-async function quizDailyNotify(now = new Date()) {
-  const hour = Number(await settings.get('quiz_notify_hour'));
+/**
+ * ☀️ Kunlik dayjest — kuniga 1 marta bitta xabar (egasi talabi; "yangi Quiz savoli" xabari har soatda yuborilmaydi):
+ * settings.digest_hour (Toshkent) dan keyingi birinchi Quiz savolida. Bugungi vazifalar, navbati kelgan duellar va bellashuvlar,
+ * taxmin kutayotgan "Hisobni top" o'yinlari, tayyor bonus. Faqat Premium (bildirishnoma turi — quiz_new).
+ */
+async function dailyDigest(now = new Date()) {
+  const hour = Number(await settings.get('digest_hour'));
   if (parts(now).hour < hour) return false;
-  const mark = await db.one("INSERT INTO daily_notify_log (kind, day) VALUES ('quiz_new', $1) ON CONFLICT DO NOTHING RETURNING *", [ymd(now)]);
+  const mark = await db.one("INSERT INTO daily_notify_log (kind, day) VALUES ('digest', $1) ON CONFLICT DO NOTHING RETURNING *", [ymd(now)]);
   if (!mark) return false;
-  const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked');
+  const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked AND language IS NOT NULL');
+  const webApp = require('../config').webAppUrl;
   for (const u of rows) {
-    await notify.toUser(u, 'quiz_new_notify', {}, { kind: 'quiz_new' });
+    if (!notify.isEnabled(u, 'quiz_new')) continue;
+    try {
+      const text = await digestText(u, now);
+      const lang = u.language || 'uz';
+      await notify.sendRaw(u.telegram_id, text, webApp ? { reply_markup: { inline_keyboard: [[{ text: t(lang, 'btn_digest_play'), web_app: { url: `${webApp}/` } }]] } } : {});
+    } catch (e) { console.error('[digest]', e.message); }
     await new Promise((r) => setTimeout(r, 40));
   }
   return true;
+}
+
+async function digestText(u, now = new Date()) {
+  const lang = u.language || 'uz';
+  const L = (k, p) => t(lang, k, p);
+  const lines = [L('digest_title', { name: u.first_name || '' }), ''];
+  const q = await require('../services/quests').today(u, now);
+  if (q.total) lines.push(q.claimed ? L('digest_quests_done', { reward: q.reward }) : L('digest_quests', { done: q.done, total: q.total, reward: q.reward }));
+  if (q.streak > 0) lines.push(L('digest_streak', { n: q.streak }));
+  const c = await db.one(
+    `SELECT
+       (SELECT count(*)::int FROM duels d WHERE d.status IN ('waiting', 'active') AND (d.creator_id = $1 OR d.opponent_id = $1)
+          AND (SELECT count(*) FROM duel_answers a WHERE a.duel_id = d.id AND a.user_id = $1 AND a.answered_at IS NOT NULL) < 5) AS duels,
+       (SELECT count(*)::int FROM arcade_matches m WHERE m.status IN ('waiting', 'active') AND (m.creator_id = $1 OR m.opponent_id = $1)
+          AND NOT EXISTS (SELECT 1 FROM arcade_games g WHERE g.match_id = m.id AND g.user_id = $1 AND g.status = 'finished')) AS matches,
+       (SELECT count(*)::int FROM score_games s WHERE s.status = 'upcoming' AND s.kickoff_at > now()
+          AND NOT EXISTS (SELECT 1 FROM score_predictions p WHERE p.game_id = s.id AND p.user_id = $1)) AS score`,
+    [u.id],
+  );
+  if (c.duels + c.matches > 0) lines.push(L('digest_duels', { n: c.duels + c.matches }));
+  if (c.score > 0) lines.push(L('digest_score', { n: c.score }));
+  lines.push(L('digest_quiz'));
+  if ((await require('../services/bonus').waitMs(u)) === 0) lines.push(L('digest_bonus'));
+  lines.push('', L('digest_footer'));
+  return lines.join('\n');
 }
 
 /** Davr (hafta/oy) yakunlanganda g'olibni yozish va xabar berish */
@@ -164,4 +199,4 @@ function start() {
   return () => timers.forEach((x) => clearInterval(x));
 }
 
-module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, quizDailyNotify, finalizePeriods };
+module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, dailyDigest, digestText, finalizePeriods };

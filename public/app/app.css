@@ -1,4 +1,5 @@
-/* FootballCenter dizayn tizimi (texnik topshiriq 19-bo'lim): qora-yashil, gradientsiz, ko'k rangsiz */
+/* FootballCenter dizayn tizimi. Egasi talabi bilan (SPEC 19 dan farq): gradientlar va Telegram yorug' mavzusiga moslashish.
+   Ko'k rang ishlatilmaydi. Qorong'i mavzu — asosiy (SPEC ranglari), yorug' — [data-theme="light"]. */
 :root {
   --bg: #0c1712;
   --card: #16241d;
@@ -12,7 +13,28 @@
   --danger: #e5534b;
   --radius: 16px;
   --nav-h: 64px;
+  --grad: linear-gradient(135deg, #2ecc71 0%, #27ae60 55%, #1e8f4e 100%);
+  --grad-gold: linear-gradient(135deg, #f7d774 0%, #f2c94c 50%, #d9a520 100%);
+  --grad-card: linear-gradient(160deg, #1b2d23 0%, #16241d 60%, #132019 100%);
+  --shadow: 0 6px 20px rgba(0, 0, 0, .28);
   color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f2f6f3;
+  --card: #ffffff;
+  --surface2: #eaf1ec;
+  --border: #d6e2da;
+  --accent: #1fa85a;
+  --accent-ink: #ffffff;
+  --gold: #c08a0c;
+  --text: #102018;
+  --muted: #66786c;
+  --danger: #d43f37;
+  --grad: linear-gradient(135deg, #34d47c 0%, #22b05f 55%, #189150 100%);
+  --grad-gold: linear-gradient(135deg, #f7d774 0%, #ecbd3a 50%, #d29b15 100%);
+  --grad-card: linear-gradient(160deg, #ffffff 0%, #f8fbf9 100%);
+  --shadow: 0 6px 18px rgba(16, 32, 24, .08);
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -58,17 +80,20 @@ h3 { font-size: 15px; font-weight: 700; margin: 14px 0 8px; }
   padding-bottom: env(safe-area-inset-bottom); background: var(--card); border-top: 1px solid var(--border);
 }
 .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--muted); font-size: 11px; font-weight: 600; }
-.nav-ico { font-size: 20px; filter: grayscale(1) opacity(.65); transition: filter .2s; }
+.nav-ico { width: 24px; height: 24px; display: inline-flex; transition: transform .2s; }
+.nav-ico svg { width: 24px; height: 24px; }
+.nav-btn.active .nav-ico { transform: translateY(-2px) scale(1.08); }
 .nav-btn.active { color: var(--accent); }
-.nav-btn.active .nav-ico { filter: none; }
 
 /* ---------- Kartalar va boshqaruv elementlari */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.card { background: var(--grad-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.view > * { animation: rise .28s ease-out both; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .card + .card, .stack > * + * { margin-top: 10px; }
 .list > * + * { margin-top: 8px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 700; background: var(--grad); color: var(--accent-ink); box-shadow: 0 4px 14px rgba(46, 204, 113, .25); transition: transform .12s, box-shadow .12s; }
 .btn.block { width: 100%; }
-.btn.ghost { background: var(--surface2); color: var(--text); }
+.btn.ghost { background: var(--surface2); color: var(--text); box-shadow: none; }
 .btn:disabled { opacity: .5; }
 .btn:active { transform: scale(.98); }
 .input, select.input { width: 100%; height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); outline: none; }
@@ -230,7 +255,7 @@ input[type=search].input { margin-bottom: 4px; }
 .idc-locked img, .idc-preview img { width: 100%; height: 100%; display: block; }
 .idc-locked img { filter: blur(5px) saturate(.6); opacity: .55; transform: scale(1.04); }
 .idc-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 44px; }
-.gold-btn { background: var(--gold); color: #0c1712; }
+.gold-btn { background: var(--grad-gold); color: #1a1405; }
 .idc-progress { height: 4px; border-radius: 4px; background: var(--surface, #1e3226); overflow: hidden; margin-top: 4px; }
 .idc-progress i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
 .idc-photo { width: 150px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; display: inline-block; }
@@ -239,7 +264,9 @@ input[type=search].input { margin-bottom: 4px; }
 .item.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 /* 🎮 Games — o'yinlar ro'yxati */
 .game-item { padding: 14px; }
-.game-ico { font-size: 30px; width: 44px; text-align: center; flex: none; }
+.game-ico { font-size: 26px; width: 50px; height: 50px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: var(--g, var(--grad)); box-shadow: 0 4px 12px rgba(0,0,0,.22); }
+.game-item { transition: transform .15s; }
+.game-item:active { transform: scale(.98); }
 /* 👥 Fan community */
 .cm-card { display: block; width: 100%; padding: 0; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
 .cm-card + .cm-card { margin-top: 8px; }
@@ -328,3 +355,25 @@ input[type=search].input { margin-bottom: 4px; }
 @keyframes ku-kick { 0% { opacity: 1; transform: translateX(-50%) translateY(0) rotate(-20deg); } 100% { opacity: 0; transform: translateX(-50%) translateY(-18px) rotate(10deg); } }
 .ku-field::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 15%; background: linear-gradient(180deg, transparent, rgba(242, 201, 76, .12)); pointer-events: none; }
 .ku-hint { position: absolute; left: 16px; right: 16px; top: 40%; text-align: center; font-weight: 800; font-size: 18px; color: #fff; pointer-events: none; }
+
+/* ✅ Bugun: salom, daraja va kunlik vazifalar */
+.today { position: relative; overflow: hidden; background: var(--grad); color: #fff; border: none; }
+.today::after { content: '⚽'; position: absolute; right: -14px; top: -16px; font-size: 96px; opacity: .12; transform: rotate(-18deg); pointer-events: none; }
+.today .hello { font-size: 18px; font-weight: 800; }
+.today .sub { font-size: 13px; opacity: .9; }
+.lv-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.2); font-weight: 800; font-size: 12px; }
+.lv-bar { height: 8px; border-radius: 4px; background: rgba(0,0,0,.22); overflow: hidden; margin: 8px 0 4px; }
+.lv-bar span { display: block; height: 100%; background: var(--grad-gold); border-radius: 4px; transition: width .8s ease-out; }
+.quests { margin-top: 10px; }
+.quest { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); }
+.quest:first-of-type { border-top: none; }
+.quest .qi { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface2); font-size: 18px; flex: none; }
+.quest.done .qi { background: var(--grad); }
+.quest .qp { font-size: 12px; color: var(--muted); }
+.quest.done .qn { text-decoration: line-through; opacity: .7; }
+.quest .qc { font-size: 18px; }
+.streak { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: var(--gold); }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 80; }
+.q-mini { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px; padding: 9px 12px; border-radius: 12px; background: rgba(0,0,0,.2); color: #fff; font-weight: 700; font-size: 13px; text-align: left; }
+.q-mini > span:first-child { flex: 1; }
+.today .streak { color: #ffe08a; }

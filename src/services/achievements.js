@@ -48,6 +48,7 @@ async function grant(userId, ids) {
   if (fresh.length) {
     const u = await db.one('SELECT * FROM users WHERE id = $1', [userId]);
     const lang = (u && u.language) || 'uz';
+    await notify.celebrate(u, '🎉');   // bir marta — nechta yutuq bo'lsa ham
     for (const id of fresh) {
       const a = localized(BY_ID[id], lang);
       await notify.toUser(u, 'ach_unlocked', { icon: a.icon, name: a.name, desc: a.desc });
@@ -58,6 +59,7 @@ async function grant(userId, ids) {
 
 /** Foydalanuvchi yutuqlarini tekshirish (bitta so'rov). Xatolar asosiy amalni to'xtatmasin — chaqiruvchi .catch qiladi */
 async function check(userId) {
+  await require('./levels').check(userId).catch((e) => console.error('[levels]', e.message));
   const firstFans = Number(await settings.get('fan_card_first_fans'));
   const row = await db.one(CHECK_SQL, [userId, firstFans]);
   if (!row) return [];

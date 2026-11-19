@@ -104,7 +104,7 @@ async function kick(user, dir, { random = rand } = {}) {
       [g.id, JSON.stringify(kicks), after.ug, after.bg, after.over ? 'finished' : 'active', result, points],
     )).rows[0];
     return { kick: k, game: publicGame(row) };
-  });
+  }).then((r) => { if (r.game.status === 'finished') require('./achievements').checkLater(user.id); return r; });
 }
 
 module.exports = { PenaltyError, DIRS, REGULAR, evaluate, rules, state, start, kick };

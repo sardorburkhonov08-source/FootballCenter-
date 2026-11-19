@@ -38,6 +38,17 @@ async function computeRanking(kind, r) {
       [r.start, r.end],
     );
   }
+  if (kind === 'quest') {
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(q.reward)::int AS points, max(q.claimed_at) AS last_at
+       FROM user_quest_days q JOIN users u ON u.id = q.user_id
+       WHERE q.claimed_at >= $1 AND q.claimed_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id HAVING sum(q.reward) > 0
+       ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end],
+    );
+  }
   if (kind === 'crossbar' || kind === 'keepy') {
     return db.many(
       `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,

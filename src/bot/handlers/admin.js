@@ -20,21 +20,21 @@ const { RULE_KEYS, tariffLabel } = require('./sections');
 // ---------- Sozlamalar muharriri (umumiy)
 const BOOL_KEYS = ['force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
 const TEXT_KEYS = ['donation_channel_id'];
-const MIN1_KEYS = ['premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
+const MIN1_KEYS = ['bonus_goal_multiplier', 'premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'fan_card_club_change_price', 'fan_card_first_fans'];
-const MAX_VALUES = { quiz_notify_hour: 23 };
+const MAX_VALUES = { digest_hour: 23 };
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
 const SECTIONS = {
   referral: { title: 'a_btn_referral', keys: ['referral_enabled', 'referral_bonus_free', 'referral_bonus_premium', 'referral_fake_protection', 'referral_league_premium_days'] },
-  bonus: { title: 'a_btn_bonus', keys: ['bonus_free_min', 'bonus_free_max', 'bonus_free_per_day', 'bonus_premium_min', 'bonus_premium_max', 'bonus_premium_per_day'] },
+  bonus: { title: 'a_btn_bonus', keys: ['bonus_goal_multiplier', 'bonus_free_min', 'bonus_free_max', 'bonus_free_per_day', 'bonus_premium_min', 'bonus_premium_max', 'bonus_premium_per_day'] },
   donation: { title: 'a_btn_donation', keys: ['donation_channel_id', 'donation_big_threshold', 'donation_announce_timeout_minutes'] },
   tariff: { title: 'a_btn_tariff', keys: ['premium_week_price', 'premium_week_days', 'premium_price', 'premium_days', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['quiz_notify_hour', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
+  games: { title: 'a_btn_games_settings', keys: ['digest_hour', 'quest_reward_points', 'quest_streak_bonus', 'quest_streak_max', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
 };
 
 function fmtValue(lang, key, v) {

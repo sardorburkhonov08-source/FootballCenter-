@@ -38,8 +38,11 @@ test("ma'lumotdan aniqlanadi, bir marta beriladi va botda xabar keladi", async (
   await db.query('UPDATE users SET points_manager = 995, points_score = 5, points_quiz = 2 WHERE id = $1', [uid]);
   h.clear();
   assert.deepStrictEqual((await achievements.check(uid)).sort(), ['points_1000', 'quiz_1', 'score_exact_1']);
-  const texts = h.texts(U);
+  const texts = h.texts(U).filter((x) => x.startsWith('🏅'));
   assert.strictEqual(texts.length, 3);
+  // 🎉 — bitta yutuqlar uchun (nechta bo'lsa ham) va bitta yangi daraja uchun
+  assert.strictEqual(h.texts(U).filter((x) => x === '🎉').length, 2);
+  assert.ok(h.texts(U).some((x) => /^🎉 Tabriklaymiz! Siz <b>8-darajaga<\/b> chiqdingiz — «Kapitan»!/.test(x)), h.texts(U).join('\n'));
   assert.ok(texts.some((x) => /^🏅 Yangi yutuq: 🎯 <b>Snayper<\/b>\n«Hisobni top»da birinchi aniq hisob/.test(x)), texts.join('\n'));
   h.clear();
   assert.deepStrictEqual(await achievements.check(uid), [], 'qayta berilmaydi');

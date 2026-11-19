@@ -18,18 +18,32 @@ const HTML = { parse_mode: 'HTML', link_preview_options: { is_disabled: true } }
 /**
  * Ekranni ko'rsatish: callback bo'lsa — mavjud xabarni tahrirlash, aks holda yangi xabar.
  */
+// 🧹 Chat toza tursin: har bir chatdagi oxirgi "ekran" (menyu) xabari. Yangi ekran yuborilganda eskisi o'chiriladi.
+const lastScreen = new Map();   // chatId -> message_id
+const SCREEN_MAP_MAX = 20000;
+
 async function show(ctx, text, markup) {
   const extra = { ...HTML, reply_markup: markup };
   const msg = ctx.callbackQuery && ctx.callbackQuery.message;
   if (msg && msg.text !== undefined) {
     try {
       await ctx.editMessageText(text, extra);
+      if (ctx.chat) lastScreen.set(ctx.chat.id, msg.message_id);
       return;
     } catch (e) {
       if (String(e.description || e.message).includes('message is not modified')) return;
     }
   }
-  await ctx.reply(text, extra);
+  const chatId = ctx.chat && ctx.chat.id;
+  const prev = chatId ? lastScreen.get(chatId) : null;
+  const sent = await ctx.reply(text, extra);
+  if (!chatId) return;
+  if (prev && (!sent || prev !== sent.message_id)) ctx.api.deleteMessage(chatId, prev).catch(() => {});
+  if (sent && sent.message_id) {
+    lastScreen.delete(chatId);
+    lastScreen.set(chatId, sent.message_id);
+    if (lastScreen.size > SCREEN_MAP_MAX) lastScreen.delete(lastScreen.keys().next().value);
+  }
 }
 
 /** Uzun matnni Telegram limitiga (4096) mos bo'laklarga bo'lib yuborish */
