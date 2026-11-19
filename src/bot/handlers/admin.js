@@ -22,6 +22,7 @@ const BOOL_KEYS = ['force_sub_enabled', 'referral_enabled', 'referral_fake_prote
 const TEXT_KEYS = ['donation_channel_id'];
 const MIN1_KEYS = ['premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'fan_card_club_change_price', 'fan_card_first_fans'];
+const MAX_VALUES = { quiz_notify_hour: 23 };
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
 const SECTIONS = {
@@ -33,7 +34,7 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
+  games: { title: 'a_btn_games_settings', keys: ['quiz_notify_hour', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -625,7 +626,7 @@ const states = {
     } else {
       const n = Number(text.replace(/\s/g, ''));
       const min = MIN1_KEYS.includes(key) ? 1 : 0;
-      if (!Number.isInteger(n) || n < min) return ctx.reply(t(ctx.lang, 'a_value_invalid'));
+      if (!Number.isInteger(n) || n < min || (key in MAX_VALUES && n > MAX_VALUES[key])) return ctx.reply(t(ctx.lang, 'a_value_invalid'));
       value = n;
       const pair = MIN_MAX.find((p) => p.includes(key));
       if (pair) {

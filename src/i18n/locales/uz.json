@@ -447,5 +447,6 @@
   "btn_arcade_open": "🎮 O'yinni ochish",
   "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy raqib bilan g'alaba (points)",
   "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy raqib bilan durang (points)",
-  "a_set_arcade_pvp_daily_limit": "Kuniga points beradigan raqibli o'yinlar (har biri)"
+  "a_set_arcade_pvp_daily_limit": "Kuniga points beradigan raqibli o'yinlar (har biri)",
+  "a_set_quiz_notify_hour": "Quiz xabari soati (kuniga 1 marta, 0—23)"
 }

@@ -447,5 +447,6 @@
   "btn_arcade_open": "🎮 Ўйинни очиш",
   "a_set_arcade_pvp_win_points": "Цроссбар/Keepy-уппй рақиб билан ғалаба (points)",
   "a_set_arcade_pvp_draw_points": "Цроссбар/Keepy-уппй рақиб билан дуранг (points)",
-  "a_set_arcade_pvp_daily_limit": "Кунига points берадиган рақибли ўйинлар (ҳар бири)"
+  "a_set_arcade_pvp_daily_limit": "Кунига points берадиган рақибли ўйинлар (ҳар бири)",
+  "a_set_quiz_notify_hour": "Quiz хабари соати (кунига 1 марта, 0—23)"
 }

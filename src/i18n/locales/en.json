@@ -445,5 +445,6 @@
   "btn_arcade_open": "🎮 Open game",
   "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy win vs opponent (points)",
   "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy draw vs opponent (points)",
-  "a_set_arcade_pvp_daily_limit": "Opponent games with points per day (each)"
+  "a_set_arcade_pvp_daily_limit": "Opponent games with points per day (each)",
+  "a_set_quiz_notify_hour": "Quiz notification hour (once a day, 0—23)"
 }

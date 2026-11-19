@@ -11,7 +11,7 @@ const community = require('../services/community');
 const donations = require('../services/donations');
 const leaderboard = require('../services/leaderboard');
 const referral = require('../services/referral');
-const { prevRange, parts, formatDate, HOUR } = require('../services/time');
+const { prevRange, parts, formatDate, HOUR, ymd } = require('../services/time');
 
 const PERIOD_GRACE_MS = 3 * HOUR; // kechikkan o'yin natijalari uchun
 
@@ -61,11 +61,21 @@ async function quizTick() {
   if (cur && !staleEnglish && Date.now() - new Date(cur.published_at).getTime() < HOUR) return;
   const q = await quiz.publishNext();
   if (!q) return;
+  await quizDailyNotify();
+}
+
+/** 🧠 Yangi savol haqida xabar — kuniga 1 marta (egasi talabi): settings.quiz_notify_hour dan keyingi birinchi savolda */
+async function quizDailyNotify(now = new Date()) {
+  const hour = Number(await settings.get('quiz_notify_hour'));
+  if (parts(now).hour < hour) return false;
+  const mark = await db.one("INSERT INTO daily_notify_log (kind, day) VALUES ('quiz_new', $1) ON CONFLICT DO NOTHING RETURNING *", [ymd(now)]);
+  if (!mark) return false;
   const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked');
   for (const u of rows) {
     await notify.toUser(u, 'quiz_new_notify', {}, { kind: 'quiz_new' });
     await new Promise((r) => setTimeout(r, 40));
   }
+  return true;
 }
 
 /** Davr (hafta/oy) yakunlanganda g'olibni yozish va xabar berish */
@@ -154,4 +164,4 @@ function start() {
   return () => timers.forEach((x) => clearInterval(x));
 }
 
-module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, finalizePeriods };
+module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, quizDailyNotify, finalizePeriods };

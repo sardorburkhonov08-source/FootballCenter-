@@ -445,5 +445,6 @@
   "btn_arcade_open": "🎮 Открыть игру",
   "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy победа над соперником (points)",
   "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy ничья с соперником (points)",
-  "a_set_arcade_pvp_daily_limit": "Игр с соперником с points в день (каждой)"
+  "a_set_arcade_pvp_daily_limit": "Игр с соперником с points в день (каждой)",
+  "a_set_quiz_notify_hour": "Час уведомления Quiz (раз в день, 0—23)"
 }

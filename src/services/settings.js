@@ -34,6 +34,8 @@ const DEFAULTS = {
   arcade_pvp_win_points: 5,
   arcade_pvp_draw_points: 2,
   arcade_pvp_daily_limit: 10,
+  // 🧠 Yangi Quiz savoli haqidagi xabar kuniga 1 marta: shu soatdan (Toshkent, 0—23) keyin chiqqan birinchi savolda
+  quiz_notify_hour: 12,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

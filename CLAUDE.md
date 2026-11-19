@@ -68,6 +68,7 @@ test/                   avtomatik testlar
 - **4 tilli savollar banki**: `src/data/quiz-bank/qNN.json` (1000+ savol) + `dict.json` (davlat nomlari 3 tilda). Format va qoidalar — `src/services/quizBank.js`. Kirill matni o'zbek lotindan transliteratsiya qilinadi, umumiy nomlar (futbolchi, klub) lotinda qoladi. Server ishga tushganda (`migrate`) bazaga bir marta qo'shiladi (`source = 'bank'`, `quiz_questions.i18n`).
 - Savol foydalanuvchi tilida ko'rsatiladi (`quiz.publicQuestion`). Navbat: admin qo'shgani → bank (tasodifiy) → bank tugasa eng eskisi nusxa bo'lib qayta chiqadi (`bank_repeat`).
 - Inglizcha Open Trivia DB avtomatik ishlatilmaydi (`settings.quiz_api_enabled = false`).
+- 🧠 **"Yangi Quiz savoli" xabari kuniga 1 marta** (egasi talabi; savollar esa har soatda chiqadi): `settings.quiz_notify_hour` (standart 12, Toshkent) dan keyin chiqqan birinchi savolda (`scheduler.quizDailyNotify`, `daily_notify_log`, 019-migratsiya). Bot admin → 🎮 O'yinlar sozlamalari.
 - Yangi savol qo'shilganda: faktlar aniq, 4 variant har xil, to'g'ri javob — birinchi; `test/quizbank.test.js` tekshiradi.
 
 ## 🎯 Hisobni top (SPEC'dan tashqari, egasi talabi bilan)
