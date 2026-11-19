@@ -9,9 +9,9 @@ const quiz = require('../src/services/quiz');
 test.before(async () => { await resetDb(); });
 test.after(async () => { await db.pool.end(); });
 
-test('bazada 1000+ savol, har biri 4 tilda, 4 xil variant bilan', () => {
+test('bazada 1900+ savol, har biri 4 tilda, 4 xil variant bilan', () => {
   const list = bank.load();
-  assert.ok(list.length >= 1000, `savollar soni: ${list.length}`);
+  assert.ok(list.length >= 1900, `savollar soni: ${list.length}`);
   const seen = new Set();
   const letters = { A: 0, B: 0, C: 0, D: 0 };
   for (const x of list) {
@@ -26,6 +26,7 @@ test('bazada 1000+ savol, har biri 4 tilda, 4 xil variant bilan', () => {
       assert.strictEqual(new Set(opts.map((o) => String(o).toLowerCase())).size, 4, `${where} ${lang}: takror variant`);
     }
     assert.match(x.uz_cyrl.q, /[а-яўқғҳ]/i, `${where}: kirill matni`);
+    for (const lang of ['uz', 'uz_cyrl', 'ru', 'en']) assert.ok(!/[⟦⟧]/.test(x[lang].q), `${where} ${lang}: ⟦⟧ belgisi qolgan`);
     assert.match(x.ru.q, /[а-я]/i, `${where}: rus matni`);
     assert.ok(!seen.has(x.en.q.toLowerCase()), `${where}: takror savol`);
     seen.add(x.en.q.toLowerCase());
