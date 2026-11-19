@@ -84,7 +84,7 @@ test("📈 /api/today: daraja va vazifalar; Premiumsizga vazifalar yo'q", async 
   assert.strictEqual((await call('/api/quests/claim', 7602, { method: 'POST' })).status, 402);
 });
 
-test("⚽ bonus: Telegram animatsiyasi, gol bo'lsa ×2; /start xabari o'chiriladi", async () => {
+test("⚽ bonus: Telegram animatsiyasi, gol bo'lsa ×2; chatdagi xabarlar o'chirilmaydi", async () => {
   await db.query('DELETE FROM bonuses_log');
   h.overrides.sendDice = () => ({ message_id: 900, date: 0, chat: { id: U, type: 'private' }, dice: { emoji: '⚽', value: 5 } });
   h.clear();
@@ -96,5 +96,5 @@ test("⚽ bonus: Telegram animatsiyasi, gol bo'lsa ×2; /start xabari o'chirilad
   delete h.overrides.sendDice;
   h.clear();
   await h.text(U, '/start');
-  assert.ok(h.calls.some((c) => c.method === 'deleteMessage' && c.payload.chat_id === U), '/start buyrug\'i o\'chiriladi');
+  assert.ok(!h.calls.some((c) => c.method === 'deleteMessage'), 'chat tozalanmaydi: /start va eski menyular o\'chirilmaydi');
 });
