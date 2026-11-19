@@ -490,5 +490,8 @@
   "mc_quests_locked": "Kunlik vazifalar — Premium bilan",
   "mc_premium": "PREMIUM · {date} gacha",
   "mc_free": "ODDIY TARIF",
-  "a_set_menu_image_enabled": "Bosh menyu rasm bilan"
+  "a_set_menu_image_enabled": "Bosh menyu rasm bilan",
+  "btn_ref_share": "📤 Do'stlarga yuborish",
+  "a_btn_edit_ref_invite": "✏️ Taklif matni",
+  "ref_invite_default": "⚽ O'zingni futbol bo'yicha bilimdon deb bilasanmi? Unda FootballCenter aynan sen uchun!\n\n🧠 Quiz, ⚔️ duellar va 🎯 «Hisobni top» — kuchingni sinab ko'r, points to'pla va reytingda birinchi bo'l!\n📊 Bundan tashqari — jonli natijalar, o'yinlar jadvali va futbol statistikasi bir joyda.\n\n👇 Qo'shil:"
 }

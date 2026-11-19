@@ -156,6 +156,7 @@ test/                   avtomatik testlar
 - 🎁 **Yangi foydalanuvchiga bepul Premium** (standart 3 kun, `settings.welcome_premium_days`, 0 — o'chiq; bot admin → 💎 Tarif sozlamalari): bot yoki Mini App orqali birinchi kirganda bir marta beriladi (`users.welcomePremium`, `premium_purchases.source = 'welcome'`), til tanlagach botda xabar. Testlarda standart 0 (`test/helpers.js`).
 - 💎 **Ikki tarif: 7 kunlik (standart 10 000 so'm) va 30 kunlik (30 000 so'm)** — `premium_week_price/premium_week_days`, `premium_price/premium_days` (bot admin → 💎 Tarif sozlamalari); `premium.plans()`, tugmalar `tf:buy:week|month`.
 - 🎁 **Do'stga Premium sovg'a qilish** (bot → 💎 Premium → 🎁): tarif → do'stning @username yoki ID → tasdiqlash; pul sovg'a qiluvchining balansidan yechiladi, do'st Premium oladi va xabar keladi (`premium.gift`, `premium_purchases.source = 'gift'`, `from_user_id`). Do'stning referrali ham faollashadi.
+- 📤 **Referral havolasini bir bosishda yuborish** (bot → Balans → Referral → 🔗 Havola → "📤 Do'stlarga yuborish"): Telegram ulashish oynasi (`t.me/share/url`) havola va chorlovchi taklif matni bilan ochiladi. Matn — admin tahrirlaydi (bot admin → 👥 Referral sozlamalari → ✏️ Taklif matni, `texts.ref_invite`, 4 tilda), bo'lmasa `ref_invite_default`.
 - Mini App'dagi "💎 Premium sotib olish" tugmalari botni `?start=premium` bilan ochadi — Premium sahifasi darhol chiqadi.
 
 ## Bosqichlar

@@ -22,6 +22,8 @@ const BOOL_KEYS = ['menu_image_enabled', 'force_sub_enabled', 'referral_enabled'
 const TEXT_KEYS = ['donation_channel_id'];
 const MIN1_KEYS = ['bonus_goal_multiplier', 'premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'fan_card_club_change_price', 'fan_card_first_fans'];
+// Admin tahrirlaydigan matnlar (texts jadvali) va ularning bo'limi
+const TEXT_BACK = { premium_description: 'a:tariff', ref_invite: 'a:referral' };
 const MAX_VALUES = { digest_hour: 23 };
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
@@ -52,6 +54,9 @@ async function renderSection(ctx, name) {
   let extraText = '';
   if (name === 'tariff') {
     rows.push([ui.btn(t(lang, 'a_btn_edit_premium_desc'), 'at:premium_description')]);
+  }
+  if (name === 'referral') {
+    rows.push([ui.btn(t(lang, 'a_btn_edit_ref_invite'), 'at:ref_invite')]);
   }
   if (name === 'forcesub') {
     const channels = (await settings.get('force_sub_channels')) || [];
@@ -397,9 +402,9 @@ function register(bot) {
     await state.clear(ctx.from.id);
     await ui.show(ctx, L(ctx, 'a_rules_title'), ui.kb([...RULE_KEYS.map((k) => [ui.btn(L(ctx, `rule_${k}`), `ar:rules:${k}`)]), [ui.btn(L(ctx, 'back'), 'm:admin')]]));
   });
-  admin.callbackQuery(/^at:(premium_description)$/, async (ctx) => {
+  admin.callbackQuery(/^at:(premium_description|ref_invite)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ui.show(ctx, L(ctx, 'a_lang_choose'), ui.kb([...ui.grid(LANGS.map((l) => ui.btn(LANG_NAMES[l], `ar:texts:${ctx.match[1]}:${l}`))), [ui.btn(L(ctx, 'back'), 'a:tariff')]]));
+    await ui.show(ctx, L(ctx, 'a_lang_choose'), ui.kb([...ui.grid(LANGS.map((l) => ui.btn(LANG_NAMES[l], `ar:texts:${ctx.match[1]}:${l}`))), [ui.btn(L(ctx, 'back'), TEXT_BACK[ctx.match[1]])]]));
   });
   admin.callbackQuery(/^ar:rules:(\w+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -408,11 +413,11 @@ function register(bot) {
   admin.callbackQuery(/^ar:(rules|texts):(\w+?):(uz|uz_cyrl|ru|en)$/, async (ctx) => {
     const [, table, key, lang] = ctx.match;
     if (table === 'rules' && !RULE_KEYS.includes(key)) return ctx.answerCallbackQuery();
-    if (table === 'texts' && !['premium_description'].includes(key)) return ctx.answerCallbackQuery();
+    if (table === 'texts' && !TEXT_BACK[key]) return ctx.answerCallbackQuery();
     await ctx.answerCallbackQuery();
     const row = await db.one(`SELECT text_${lang} AS v FROM ${table} WHERE key = $1`, [key]);
     await state.set(ctx.from.id, 'admin_text', { table, key, lang });
-    return ui.show(ctx, L(ctx, 'a_text_enter', { lang: LANG_NAMES[lang], current: (row && row.v) || t(ctx.lang, 'a_none') }), ui.kb([[ui.btn(L(ctx, 'back'), table === 'rules' ? 'a:rules' : 'a:tariff')]]));
+    return ui.show(ctx, L(ctx, 'a_text_enter', { lang: LANG_NAMES[lang], current: (row && row.v) || t(ctx.lang, 'a_none') }), ui.kb([[ui.btn(L(ctx, 'back'), table === 'rules' ? 'a:rules' : (TEXT_BACK[key] || 'a:tariff'))]]));
   });
 
   // Murojaatlar
@@ -745,7 +750,7 @@ const states = {
     if (!text) return undefined;
     await db.query(`INSERT INTO ${table} (key, text_${lang}) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET text_${lang} = EXCLUDED.text_${lang}`, [key, text.slice(0, 3800)]);
     await state.clear(ctx.from.id);
-    return ctx.reply(t(ctx.lang, 'a_saved'), { reply_markup: ui.kb([[ui.btn(t(ctx.lang, 'back'), table === 'rules' ? 'a:rules' : 'a:tariff')]]) });
+    return ctx.reply(t(ctx.lang, 'a_saved'), { reply_markup: ui.kb([[ui.btn(t(ctx.lang, 'back'), table === 'rules' ? 'a:rules' : (TEXT_BACK[key] || 'a:tariff'))]]) });
   },
 
   async admin_ticket_reply(ctx, { id }) {
