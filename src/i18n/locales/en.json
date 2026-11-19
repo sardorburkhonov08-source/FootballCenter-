@@ -435,5 +435,8 @@
   "a_set_duel_daily_limit": "Duels with points per day",
   "a_set_penalty_win_points": "Penalty win (points)",
   "a_set_penalty_draw_points": "Penalty draw (points)",
-  "a_set_penalty_daily_games": "Penalty games per day"
+  "a_set_penalty_daily_games": "Penalty games per day",
+  "a_set_arcade_win_points": "Crossbar/Keepy-uppy win (points)",
+  "a_set_arcade_draw_points": "Crossbar/Keepy-uppy draw (points)",
+  "a_set_arcade_daily_games": "Crossbar/Keepy-uppy games per day (each)"
 }

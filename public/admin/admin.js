@@ -518,7 +518,7 @@
       el('h2', { text: '🏅 TOP faol foydalanuvchilar' }),
       el('div', { class: 'card' }, s.top.length ? s.top.map((u, i) => el('div', { class: 'lb-row' }, el('span', { class: 'pl', text: i + 1 }),
         el('span', { class: 'grow ellipsis' }, el('b', { text: u.name }), u.coach_name ? el('span', { class: 'small muted', text: ` · 👔 ${u.coach_name}` }) : null),
-        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz} · 🎯 ${u.points_score} · ⚔️ ${u.points_duel} · 🥅 ${u.points_penalty}` }), el('span', { class: 'pts', text: u.total })))
+        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz} · 🎯 ${u.points_score} · ⚔️ ${u.points_duel} · 🥅 ${u.points_penalty} · 🕹 ${u.points_arcade}` }), el('span', { class: 'pts', text: u.total })))
         : el('div', { class: 'muted center', text: '📭 Hali yo\'q' })),
       el('h2', { text: '🏆 Davr g\'oliblari (sovrin topshirish uchun)' }),
       el('div', { class: 'card' }, s.winners.length ? s.winners.map((w) => el('div', { class: 'kv' },

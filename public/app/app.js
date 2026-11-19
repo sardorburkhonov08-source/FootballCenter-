@@ -11,7 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
-    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly' },
+    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly', crossbar: 'weekly', keepy: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
   };
@@ -709,6 +709,10 @@
       open: () => push({ render: (v) => { v.append(backBar(`⚔️ ${t('du_title')}`)); return renderDuels(v); } }) },
     { key: 'penalty', icon: '🥅', title: () => t('pk_title'), desc: () => t('games_pk_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🥅 ${t('pk_title')}`)); return renderPenalty(v); } }) },
+    { key: 'crossbar', icon: '💥', title: () => t('cb_title'), desc: () => t('games_cb_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar(`💥 ${t('cb_title')}`)); return renderArcade(v, 'crossbar'); } }) },
+    { key: 'keepy', icon: '⚽', title: () => t('ku_title'), desc: () => t('games_ku_desc'), premium: true,
+      open: () => push({ render: (v) => { v.append(backBar(`⚽ ${t('ku_title')}`)); return renderArcade(v, 'keepy'); } }) },
     { key: 'score', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
   ];
@@ -975,6 +979,186 @@
   }
 
 
+
+
+  // ================= 🥅 CROSSBAR CHALLENGE va ⚽ KEEPY-UPPY — taymingli o'yinlar (faqat Premium)
+  // Server parametrlarni beradi, o'yin brauzerda o'ynaladi, bosish vaqtlari oxirida yuboriladi va natija serverda qayta hisoblanadi.
+  const AR = {
+    crossbar: { icon: '💥', title: () => t('cb_title') },
+    keepy: { icon: '⚽', title: () => t('ku_title') },
+  };
+  const cbPos = (ms, period) => 50 - 50 * Math.cos((2 * Math.PI * ms) / period);
+  const cbPoints = (pos) => { const d = Math.abs(pos - 75); return d <= 2.5 ? 3 : d <= 6 ? 2 : d <= 12 ? 1 : 0; };
+
+  async function renderArcade(view, kind) {
+    if (!S.me.premium) { lockedSection(view, AR[kind].icon); return; }
+    const box = el('div', null, skeleton(3));
+    view.append(box, leaderboardBlock(kind));
+    let st;
+    try { st = await api(`/arcade/${kind}`, { fresh: true }); } catch (err) {
+      if (err.status === 402) { S.me.premium = false; box.replaceChildren(); premiumModal(); return; }
+      box.replaceChildren(errorBox(err, () => render())); return;
+    }
+    const play = (g) => (kind === 'crossbar' ? crossbarGame : keepyGame)(box, st, g);
+    if (st.game) { play(st.game); return; }
+    const startBtn = el('button', { class: 'btn block', disabled: st.left <= 0, text: st.left > 0 ? t('pk_start', { n: st.left }) : t('pk_limit') });
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      try { const g = await api(`/arcade/${kind}/start`, { method: 'POST' }); haptic(); play(g); } catch (err) { toast(t('error_generic')); startBtn.disabled = false; }
+    });
+    box.replaceChildren(
+      el('div', { class: 'card' }, el('p', { class: 'small muted', style: 'margin-top:0', text: t(`ar_rules_${kind}`, { n: st.rules.attempts, win: st.rules.win, draw: st.rules.draw, limit: st.rules.limit }) }), startBtn),
+      el('div', { class: 'stats3', style: 'margin-top:10px' },
+        el('div', { class: 'stat' }, el('b', { text: st.stats.played }), el('span', { text: t('pk_played') })),
+        el('div', { class: 'stat' }, el('b', { class: 'gold', text: st.stats.wins }), el('span', { text: t('pk_wins') })),
+        el('div', { class: 'stat' }, el('b', { text: st.stats.best }), el('span', { text: t('ar_best') }))));
+  }
+
+  /** O'yin tugadi: bosish vaqtlarini yuborish va natijani ko'rsatish */
+  async function arcadeFinish(box, st, kind, taps, card) {
+    const wait = el('div', { class: 'small muted center', style: 'padding:14px 0', text: t('ar_sending') });
+    box.replaceChildren(card, wait);
+    let g;
+    try { g = await api(`/arcade/${kind}/finish`, { method: 'POST', body: { taps } }); } catch (err) { wait.replaceWith(errorBox(err, () => arcadeFinish(box, st, kind, taps, card))); return; }
+    haptic(g.result === 'win' ? 'success' : g.result === 'loss' ? 'error' : undefined);
+    const left = st.left - (st.game ? 0 : 1);
+    wait.replaceWith(el('div', { class: `card center du-final ${g.result}`, style: 'padding:18px 0' },
+      el('div', { style: 'font-size:42px', text: g.result === 'win' ? '🏆' : g.result === 'draw' ? '🤝' : '💪' }),
+      el('h2', { style: 'margin:4px 0', text: `${t(`du_res_${g.result}`)} ${g.score}:${g.botScore}` }),
+      el('div', { class: g.points ? 'gold' : 'muted', text: g.points ? `+${g.points} points` : t('du_next_time') }),
+      left > 0 ? el('button', { class: 'btn', style: 'margin:12px auto 0;min-width:60%', text: t('pk_again'), onclick: () => render() }) : null));
+  }
+
+  function arcadeHead(kind, botScore, my) {
+    return el('div', { class: 'row between ar-head' },
+      el('b', { text: `${t('du_you')}: ${my}` }),
+      el('span', { class: 'muted small', text: t(`ar_target_${kind}`, { n: botScore }) }));
+  }
+
+  // 🥅 Crossbar: 5 urinish, indikator tebranadi — crossbar (75) chizig'ida bosish kerak
+  function crossbarGame(box, st, g) {
+    const taps = [];
+    let total = 0;
+    let i = 0;
+    let t0 = 0;
+    let running = false;
+    let raf = 0;
+    const head = el('div');
+    const dots = el('div', { class: 'pk-dots', style: 'justify-content:center;margin:8px 0' });
+    const marker = el('div', { class: 'cb-marker' });
+    const meter = el('div', { class: 'cb-meter' }, el('div', { class: 'cb-band b1' }), el('div', { class: 'cb-band b2' }), el('div', { class: 'cb-band b3' }), marker);
+    const ball = el('div', { class: 'cb-ball', text: '⚽' });
+    const flash = el('div', { class: 'pk-flash' });
+    const field = el('div', { class: 'cb-field' }, el('div', { class: 'cb-goal' }), ball, flash, meter);
+    const shot = el('button', { class: 'btn block', style: 'margin-top:10px;height:54px;font-size:18px', text: t('cb_shot') });
+    const card = el('div', { class: 'card' }, head, dots, field, shot);
+    const drawHead = () => {
+      put(head, arcadeHead('crossbar', g.botScore, total));
+      put(dots, g.params.attempts.map((_, k) => el('span', { class: `pk-dot${k < taps.length ? (taps[k].p ? ' goal' : ' miss') : ''}` })));
+    };
+    const frame = () => {
+      if (!running) return;
+      const pos = cbPos(performance.now() - t0, g.params.attempts[i].period);
+      marker.style.bottom = `${pos}%`;
+      raf = requestAnimationFrame(frame);
+    };
+    const begin = () => {
+      ball.style.bottom = '6%'; ball.style.transform = 'translateX(-50%) scale(1)';
+      flash.className = 'pk-flash'; flash.textContent = '';
+      shot.disabled = false;
+      t0 = performance.now();
+      running = true;
+      raf = requestAnimationFrame(frame);
+    };
+    cleanups.push(() => { running = false; cancelAnimationFrame(raf); });
+    shot.addEventListener('click', () => {
+      if (!running) return;
+      const ms = Math.round(performance.now() - t0);
+      running = false;
+      cancelAnimationFrame(raf);
+      shot.disabled = true;
+      const pos = cbPos(ms, g.params.attempts[i].period);
+      const p = cbPoints(pos);
+      taps.push({ ms, p });
+      total += p;
+      // Crossbar (75) — darvoza ustuni balandligi
+      ball.style.bottom = `${Math.min(88, 8 + pos * 0.93)}%`; ball.style.transform = 'translateX(-50%) scale(.65)';
+      setTimeout(() => {
+        flash.textContent = p ? t(`cb_hit${p}`) : t(pos > 75 ? 'cb_over' : 'cb_under');
+        flash.className = `pk-flash on ${p ? 'good' : 'bad'}`;
+        haptic(p ? 'success' : 'error');
+        drawHead();
+      }, 380);
+      setTimeout(() => {
+        i += 1;
+        if (i >= g.params.attempts.length) arcadeFinish(box, st, 'crossbar', taps.map((x) => x.ms), card);
+        else begin();
+      }, 1400);
+    });
+    drawHead();
+    box.replaceChildren(card);
+    begin();
+  }
+
+  // ⚽ Keepy-uppy: to'p oyoqqa tushgan paytda bosish — har safar tezlashadi
+  function keepyGame(box, st, g) {
+    const taps = [];
+    let k = 0;
+    let phase = 'ready';   // ready | up | fall | over
+    let t0 = 0;
+    let raf = 0;
+    const head = el('div');
+    const count = el('div', { class: 'ku-count', text: '0' });
+    const ball = el('div', { class: 'ku-ball', text: '⚽' });
+    const flash = el('div', { class: 'pk-flash' });
+    const hint = el('div', { class: 'ku-hint', text: t('ku_hint') });
+    const field = el('div', { class: 'ku-field' }, count, ball, el('div', { class: 'ku-foot', text: '🦶' }), flash, hint);
+    const card = el('div', { class: 'card' }, head, field);
+    const drawHead = () => put(head, arcadeHead('keepy', g.botScore, k));
+    const setY = (f) => { ball.style.top = `${4 + Math.min(1.1, f) * 67}%`; };
+    const over = () => {
+      phase = 'over';
+      cancelAnimationFrame(raf);
+      flash.textContent = t('ku_drop');
+      flash.className = 'pk-flash on bad';
+      haptic('error');
+      setTimeout(() => arcadeFinish(box, st, 'keepy', taps, card), 900);
+    };
+    const frame = () => {
+      const now = performance.now();
+      if (phase === 'up') {
+        const f = Math.min(1, (now - t0) / 260);
+        setY(1 - f);
+        if (f >= 1) { phase = 'fall'; t0 = now; }
+      } else if (phase === 'fall') {
+        const f = g.params.falls[k];
+        const el2 = now - t0;
+        setY(el2 / f.t);
+        if (el2 > f.t + f.w) { taps.push(null); over(); return; }
+      } else return;
+      raf = requestAnimationFrame(frame);
+    };
+    cleanups.push(() => { phase = 'over'; cancelAnimationFrame(raf); });
+    field.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (phase === 'ready') { hint.remove(); phase = 'up'; t0 = performance.now(); raf = requestAnimationFrame(frame); return; }
+      if (phase !== 'fall') return;
+      const ms = Math.round(performance.now() - t0);
+      const f = g.params.falls[k];
+      taps.push(ms);
+      if (Math.abs(ms - f.t) > f.w) { over(); return; }
+      k += 1;
+      count.textContent = String(k);
+      drawHead();
+      haptic();
+      if (k >= g.params.falls.length) { phase = 'over'; arcadeFinish(box, st, 'keepy', taps, card); return; }
+      phase = 'up';
+      t0 = performance.now();
+    });
+    drawHead();
+    setY(0);
+    box.replaceChildren(card);
+  }
 
   // ================= 🥅 PENALTY (sinov) — botga qarshi seriya: 5 zarba urasiz, 5 tasini qaytarasiz
   const PK_POS = { left: 24, center: 50, right: 76 };

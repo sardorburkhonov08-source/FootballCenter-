@@ -33,7 +33,7 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games'] },
+  games: { title: 'a_btn_games_settings', keys: ['duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games'] },
 };
 
 function fmtValue(lang, key, v) {

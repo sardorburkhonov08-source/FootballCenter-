@@ -26,6 +26,10 @@ const DEFAULTS = {
   penalty_win_points: 3,
   penalty_draw_points: 1,
   penalty_daily_games: 3,
+  // 🎮 Crossbar challenge va Keepy-uppy: g'alaba / durang points, kuniga nechta o'yin (har bir tur uchun)
+  arcade_win_points: 3,
+  arcade_draw_points: 1,
+  arcade_daily_games: 3,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,
