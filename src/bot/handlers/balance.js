@@ -60,6 +60,13 @@ async function sendTopupToAdmins(api, topup, user) {
   }
 }
 
+/** Do'stlarga yuboriladigan taklif matni: admin tahrirlagani (texts.ref_invite) yoki standart */
+async function inviteText(lang) {
+  const row = await db.one('SELECT * FROM texts WHERE key = $1', ['ref_invite']);
+  const v = row && (row[`text_${lang}`] || row.text_uz);
+  return v || t(lang, 'ref_invite_default');
+}
+
 function register(bot) {
   bot.callbackQuery('m:balance', async (ctx) => { await ctx.answerCallbackQuery(); await state.clear(ctx.from.id); await showBalance(ctx); });
 
@@ -130,7 +137,14 @@ function register(bot) {
     const what = ctx.match[1];
     if (what === 'link') {
       const link = `https://t.me/${ctx.me.username}?start=ref_${ctx.user.ref_code}`;
-      return ui.show(ctx, t(lang, 'ref_link', { link }), back);
+      // 📤 Bir bosishda do'stlarga yuborish: Telegram "ulashish" oynasi chorlovchi matn bilan ochiladi
+      // (matnni admin o'zgartiradi: bot admin → 👥 Referral sozlamalari → ✏️ Taklif matni)
+      const invite = await inviteText(lang);
+      const share = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(invite)}`;
+      return ui.show(ctx, t(lang, 'ref_link', { link }), ui.kb([
+        [ui.urlBtn(t(lang, 'btn_ref_share'), share)],
+        [ui.btn(t(lang, 'back'), 'bal:ref')],
+      ]));
     }
     if (what === 'stats') return ui.show(ctx, t(lang, 'ref_stats', await referral.stats(ctx.user)), back);
     if (what === 'bal') {

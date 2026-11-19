@@ -488,5 +488,8 @@
   "mc_quests_locked": "Daily quests — with Premium",
   "mc_premium": "PREMIUM · until {date}",
   "mc_free": "FREE PLAN",
-  "a_set_menu_image_enabled": "Main menu with image"
+  "a_set_menu_image_enabled": "Main menu with image",
+  "btn_ref_share": "📤 Send to friends",
+  "a_btn_edit_ref_invite": "✏️ Invite text",
+  "ref_invite_default": "⚽ Think you know football? Then FootballCenter is for you!\n\n🧠 Quiz, ⚔️ duels and 🎯 Guess the score — test yourself, earn points and top the leaderboard!\n📊 Plus live scores, fixtures and football stats all in one place.\n\n👇 Join me:"
 }
