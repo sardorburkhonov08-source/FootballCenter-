@@ -30,6 +30,10 @@ const DEFAULTS = {
   arcade_win_points: 3,
   arcade_draw_points: 1,
   arcade_daily_games: 3,
+  // Raqib (tasodifiy / do'st) bilan: g'alaba / durang points; kuniga shu turdagi nechta match points beradi
+  arcade_pvp_win_points: 5,
+  arcade_pvp_draw_points: 2,
+  arcade_pvp_daily_limit: 10,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

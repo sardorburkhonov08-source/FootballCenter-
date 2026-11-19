@@ -438,5 +438,12 @@
   "a_set_penalty_daily_games": "Игр в пенальти в день",
   "a_set_arcade_win_points": "Победа в Crossbar/Keepy-uppy (points)",
   "a_set_arcade_draw_points": "Ничья в Crossbar/Keepy-uppy (points)",
-  "a_set_arcade_daily_games": "Игр Crossbar/Keepy-uppy в день (каждой)"
+  "a_set_arcade_daily_games": "Игр Crossbar/Keepy-uppy в день (каждой)",
+  "arcade_kind_crossbar": "Crossbar challenge",
+  "arcade_kind_keepy": "Keepy-uppy",
+  "arcade_invite_msg": "🎮 <b>{name}</b> вызывает вас на поединок в «{kind}»! Вы играете в одинаковых условиях — у кого больше очков, тот и победил. Нажмите кнопку, чтобы принять 👇",
+  "btn_arcade_open": "🎮 Открыть игру",
+  "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy победа над соперником (points)",
+  "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy ничья с соперником (points)",
+  "a_set_arcade_pvp_daily_limit": "Игр с соперником с points в день (каждой)"
 }

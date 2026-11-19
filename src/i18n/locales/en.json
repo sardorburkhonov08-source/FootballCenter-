@@ -438,5 +438,12 @@
   "a_set_penalty_daily_games": "Penalty games per day",
   "a_set_arcade_win_points": "Crossbar/Keepy-uppy win (points)",
   "a_set_arcade_draw_points": "Crossbar/Keepy-uppy draw (points)",
-  "a_set_arcade_daily_games": "Crossbar/Keepy-uppy games per day (each)"
+  "a_set_arcade_daily_games": "Crossbar/Keepy-uppy games per day (each)",
+  "arcade_kind_crossbar": "Crossbar challenge",
+  "arcade_kind_keepy": "Keepy-uppy",
+  "arcade_invite_msg": "🎮 <b>{name}</b> challenges you to «{kind}»! You both play the same setup — whoever scores more wins. Tap the button to accept 👇",
+  "btn_arcade_open": "🎮 Open game",
+  "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy win vs opponent (points)",
+  "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy draw vs opponent (points)",
+  "a_set_arcade_pvp_daily_limit": "Opponent games with points per day (each)"
 }
