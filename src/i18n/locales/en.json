@@ -471,5 +471,6 @@
   "digest_quiz": "🧠 A new Quiz question every hour",
   "digest_bonus": "🎁 Your bonus is ready — ⚽ score for ×2!",
   "digest_footer": "Come and play 👇",
-  "btn_digest_play": "🎮 Play"
+  "btn_digest_play": "🎮 Play",
+  "kind_overall": "🏆 Overall ranking"
 }

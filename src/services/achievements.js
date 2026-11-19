@@ -14,7 +14,7 @@ const LIST = [
   { id: 'score_exact_10', icon: '🎯', sql: 'EXACT >= 10' },
   { id: 'manager_1', icon: '🎮', sql: 'EXISTS (SELECT 1 FROM mini_manager_predictions WHERE user_id = $1 AND points_earned IS NOT NULL)' },
   { id: 'manager_100', icon: '🎮', sql: 'EXISTS (SELECT 1 FROM mini_manager_predictions WHERE user_id = $1 AND points_earned >= 100)' },
-  { id: 'weekly_top', icon: '🏆', sql: "EXISTS (SELECT 1 FROM period_winners WHERE user_id = $1 AND kind IN ('manager', 'quiz'))" },
+  { id: 'weekly_top', icon: '🏆', sql: "EXISTS (SELECT 1 FROM period_winners WHERE user_id = $1 AND kind IN ('manager', 'quiz', 'overall'))" },
   { id: 'fan_card', icon: '🪪', sql: 'EXISTS (SELECT 1 FROM fan_cards WHERE user_id = $1)' },
   { id: 'first_fans', icon: '⭐', sql: 'EXISTS (SELECT 1 FROM fan_cards WHERE user_id = $1 AND fan_number <= $2)' },
   { id: 'fan_club_week', icon: '👥', sql: null },

@@ -122,7 +122,7 @@ test/                   avtomatik testlar
 - Community sahifasi klub logotipi va ranglarida (`fancard.clubColors`); statistika a'zolarning muxlislik kartalaridan (yosh, jins, hudud, GOAT, sevimli futbolchi, muxlislik yili).
 - **📈 Daraja (Lv 1—7: Yangi, Bronza, Kumush, Oltin, Platina, Olmos, Afsona)** — faqat belgi va nom. XP = a'zolarning community'da to'plagan jami points: tugagan haftalar `communities.xp` ga qo'shiladi (`finalizeWeek` → `addWeekXp`, `community_xp_weeks` bilan bir marta), joriy hafta points'i jonli qo'shib ko'rsatiladi. Chegaralar — `settings.community_level_xp` (web admin → "👥 Fan community" → Darajalar). 014-migratsiya.
 - **⚔️ Haftalik derbi** — hafta boshida (seshanba 12:00, `ensureDerbies`) o'tgan hafta reytingidagi qo'shnilar juftlanadi (1–2, 3–4, ...; toq qolgani derbisiz). Hafta tugagach (`resolveDerbies`) ko'proq points to'plagan g'olib; teng — durang. G'olib keyingi derbi natijasigacha **👑 toj** bilan ko'rsatiladi; xabar yuborilmaydi (egasi talabi). `community_derbies`, `community_derby_weeks`.
-- **Haftalik fan reytingi** — a'zolarning hafta (seshanba 12:00 dan) davomidagi points yig'indisi (Mini Manager + Quiz). Hafta tugagach (`finalizePeriods`) g'olib bir marta yoziladi, `wins + 1`, **hamma foydalanuvchiga** xabar ketadi; g'olib keyingi hafta 🏆 belgisi bilan ko'rsatiladi, jami g'alabalar — 🏆×N.
+- **Haftalik fan reytingi** — a'zolarning hafta (seshanba 12:00 dan) davomidagi points yig'indisi (hamma o'yinlar; bu community'ning o'z reytingi, foydalanuvchilar umumiy reytingi va g'oliblaridan alohida). Hafta tugagach (`finalizePeriods`) g'olib bir marta yoziladi, `wins + 1`, **hamma foydalanuvchiga** xabar ketadi; g'olib keyingi hafta 🏆 belgisi bilan ko'rsatiladi, jami g'alabalar — 🏆×N.
 
 ## ✨ UI/UX (egasi talabi bilan)
 
@@ -134,6 +134,12 @@ test/                   avtomatik testlar
 - **📈 Shaxsiy daraja** (`src/services/levels.js`, `users.level`) — umumiy points bo'yicha Lv 1—13 (`settings.user_level_xp`), unvonlar `ulv_1..7` (har 2 darajaga bittasi). Yangi darajada botda 🎉 tabrik (`achievements.check` orqali; birinchi marta — xabarsiz).
 - **Mini App**: Home va Games tepasida "Bugun" kartasi (`GET /api/today`: salom, daraja va progress, vazifalar; Home'da ixcham), profilda daraja belgisi, 🎉 konfetti (g'alaba, mukofot, yangi daraja), raqamlar sanab chiqadi, SVG pastki menyu ikonkalari, o'yin kartochkalarida rangli gradient ikonkalar.
 - **SPEC 19 dan farq**: gradientlar ishlatiladi va Telegram **yorug' mavzusiga** moslashadi (`tg.colorScheme`, `:root[data-theme="light"]`); ko'k rang ishlatilmaydi.
+
+## 🏆 Umumiy reyting va g'oliblar (egasi talabi bilan)
+
+- Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
+- Mini App → Games tepasida "🏆 Umumiy reyting": **Bugun / Haftalik / Oylik** (`period` `daily|weekly|monthly`), 5 qator + "Hammasi"; Premiumsizga ham ko'rinadi.
+- **Kunlik g'olib yo'q.** Haftalik va oylik g'oliblar **faqat umumiy reyting** bo'yicha aniqlanadi (`finalizePeriods`, `period_winners.kind = 'overall'`); har o'yin bo'yicha alohida g'olib aniqlanmaydi (SPEC 13.5 / 14 dagi bo'lim g'oliblari o'rniga). Sovrinlar — `prizes.kind = 'overall'` (021-migratsiya; web admin → "🏆 Sovrinlar"), Games'da umumiy reyting ustida ko'rsatiladi; Mini Manager va Quiz ichidagi sovrin bloklari olib tashlangan.
 
 ## Egasi talabi bilan SPEC'dan farqlar
 

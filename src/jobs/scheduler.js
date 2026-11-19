@@ -118,7 +118,8 @@ async function finalizePeriods(now = new Date()) {
   for (const period of ['weekly', 'monthly']) {
     const r = prevRange(period, now);
     if (now.getTime() < r.end.getTime() + PERIOD_GRACE_MS) continue;
-    for (const kind of ['manager', 'quiz']) {
+    // 🏆 G'oliblar — umumiy points bo'yicha (egasi talabi; har o'yin alohida g'olib aniqlanmaydi)
+    for (const kind of ['overall']) {
       const rows = await leaderboard.computeRanking(kind, r); // keshsiz — g'olib aniq bo'lishi kerak
       const winner = rows[0];
       const ins = await db.one(
@@ -129,7 +130,7 @@ async function finalizePeriods(now = new Date()) {
       if (!ins || !winner) continue;
       const winnerUser = await users.byId(winner.id);
       require('../services/achievements').checkLater(winner.id);
-      const kindKey = kind === 'manager' ? 'kind_manager' : 'kind_quiz';
+      const kindKey = `kind_${kind}`;
       await notify.toUser(winnerUser, 'leaderboard_winner_notify', {
         kind: t(winnerUser.language || 'uz', kindKey), period: t(winnerUser.language || 'uz', `period_${period}`),
       });
