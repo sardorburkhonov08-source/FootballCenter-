@@ -435,5 +435,8 @@
   "a_set_duel_daily_limit": "Дуэлей с points в день",
   "a_set_penalty_win_points": "Победа в пенальти (points)",
   "a_set_penalty_draw_points": "Ничья в пенальти (points)",
-  "a_set_penalty_daily_games": "Игр в пенальти в день"
+  "a_set_penalty_daily_games": "Игр в пенальти в день",
+  "a_set_arcade_win_points": "Победа в Crossbar/Keepy-uppy (points)",
+  "a_set_arcade_draw_points": "Ничья в Crossbar/Keepy-uppy (points)",
+  "a_set_arcade_daily_games": "Игр Crossbar/Keepy-uppy в день (каждой)"
 }

@@ -76,7 +76,7 @@ test/                   avtomatik testlar
 - Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi.
 - Foydalanuvchi aniq hisobni (0—20) o'yin boshlanguncha kiritadi/o'zgartiradi; boshlangach qulflanadi.
 - Ball: aniq hisob — `settings.score_exact_points` (5), faqat natija (g'alaba/durang/mag'lubiyat) — `score_outcome_points` (2); web admin'da o'zgaradi.
-- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
+- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
 - API yuklamasi: natijalar kun bo'yicha **bitta** `/fixtures?date=` so'rovida olinadi (kesh); kun ro'yxatida bo'lmagan yoki qoldirilgan o'yin alohida tekshiriladi va boshqa kunga ko'chirilgan bo'lsa qayta ochiladi.
 
 ## ⚔️ Duel o'yinlari (SPEC'dan tashqari, egasi talabi bilan)
@@ -94,6 +94,14 @@ test/                   avtomatik testlar
 - Botga qarshi seriya: navbat bilan siz urasiz (chap/o'rta/o'ng; bot-darvozabon tasodifiy sakraydi) va darvozabon bo'lasiz (bot tasodifiy uradi). 5 tadan zarba, natija aniq bo'lsa erta tugaydi; teng bo'lsa sudden death (5 juftgacha), so'ng durang. Botning tanlovi serverda (`crypto.randomInt`).
 - Points: g'alaba `penalty_win_points` (3), durang `penalty_draw_points` (1); kuniga `penalty_daily_games` (3) o'yin (bot admin → 🎮 O'yinlar sozlamalari). Umumiy points'ga qo'shiladi, o'z reytingi bor (`leaderboard` kind `penalty`).
 - **Points ustunlari bitta joyda**: `users.POINT_COLUMNS` / `totalPoints` / `totalPointsSql` — yangi o'yin ustuni shu ro'yxatga qo'shiladi (karta, yutuq, admin, eksport shundan oladi); community haftalik reytingi — `community.weekPoints` dagi turlar ro'yxati.
+
+## 💥 Crossbar challenge va ⚽ Keepy-uppy (egasi talabi bilan)
+
+- `src/services/arcade.js`, 017-migratsiya (`arcade_games`, `users.points_arcade`), Mini App → Games. **Faqat Premium.** Taymingli o'yinlar, botning natijasini yengish kerak (kattaroq — g'alaba, teng — durang).
+- **Crossbar**: 5 urinish; indikator 0—100 tebranadi (`pos = 50 − 50·cos(2πt/T)`, T har urinishda 1,1—1,8 s), crossbar — 75. Aniq (±2,5) — 3, ±6 — 2, ±12 — 1 ball. Bot: 6—10.
+- **Keepy-uppy**: to'p oyoqqa `t` ms da tushadi, ±`w` ms ichida bosish kerak; har safar tezlashadi (t 1300 → 420 ms, w 240 → 70 ms, ±10% tasodif). Natija — ketma-ket to'g'ri bosishlar. Bot: 8—16.
+- O'yin brauzerda o'ynaladi: server parametrlarni beradi, o'yinchi oxirida bosish vaqtlarini (`taps`, ms) yuboradi, natija serverda shu formulalar bilan qayta hisoblanadi; har o'yin bir marta yakunlanadi.
+- Points: g'alaba `arcade_win_points` (3), durang `arcade_draw_points` (1); har tur uchun kuniga `arcade_daily_games` (3) o'yin (bot admin → 🎮 O'yinlar sozlamalari). Umumiy points'ga qo'shiladi, har birining o'z reytingi (`leaderboard` kind `crossbar` / `keepy`).
 
 ## 🏅 Yutuqlar va 📤 natija kartasi (SPEC'dan tashqari, egasi talabi bilan)
 
@@ -117,7 +125,7 @@ test/                   avtomatik testlar
 ## Egasi talabi bilan SPEC'dan farqlar
 
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
-- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager, Football Quiz (Quiz alohida menyu bo'limi emas), Duel, Penalty va Hisobni top; yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Community, Profil.
+- 🎮 Mini App pastki menyusida **"Manager" o'rniga "Games"** bo'limi: o'yinlar ro'yxati (`GAMES`, `public/app/app.js`): Mini Manager, Football Quiz (Quiz alohida menyu bo'limi emas), Duel, Penalty, Crossbar challenge, Keepy-uppy va Hisobni top; yangi o'yinlar shu ro'yxatga qo'shiladi. Pastki menyu: Home, Games, Community, Profil.
 - 🎮 **Mini Manager — faqat Premium** (SPEC'da hamma uchun): API `requirePremium`, Mini App'da yopiq bo'lim, profilda yopiq blok. Oldin berilgan taxminlar va ballar saqlanadi.
 - 🎁 **Yangi foydalanuvchiga bepul Premium** (standart 3 kun, `settings.welcome_premium_days`, 0 — o'chiq; bot admin → 💎 Tarif sozlamalari): bot yoki Mini App orqali birinchi kirganda bir marta beriladi (`users.welcomePremium`, `premium_purchases.source = 'welcome'`), til tanlagach botda xabar. Testlarda standart 0 (`test/helpers.js`).
 - 💎 **Ikki tarif: 7 kunlik (standart 10 000 so'm) va 30 kunlik (30 000 so'm)** — `premium_week_price/premium_week_days`, `premium_price/premium_days` (bot admin → 💎 Tarif sozlamalari); `premium.plans()`, tugmalar `tf:buy:week|month`.

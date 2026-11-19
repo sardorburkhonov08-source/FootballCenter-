@@ -38,6 +38,17 @@ async function computeRanking(kind, r) {
       [r.start, r.end],
     );
   }
+  if (kind === 'crossbar' || kind === 'keepy') {
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(g.points)::int AS points, max(g.finished_at) AS last_at
+       FROM arcade_games g JOIN users u ON u.id = g.user_id
+       WHERE g.kind = $3 AND g.status = 'finished' AND g.finished_at >= $1 AND g.finished_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id HAVING sum(g.points) > 0
+       ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end, kind],
+    );
+  }
   if (kind === 'penalty') {
     return db.many(
       `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,

@@ -8,6 +8,7 @@ const scorePredict = require('../services/scorePredict');
 const achievements = require('../services/achievements');
 const duels = require('../services/duels');
 const penalty = require('../services/penalty');
+const arcade = require('../services/arcade');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -258,9 +259,24 @@ router.get('/penalty', requirePremium, penaltyRoute((req) => penalty.state(req.u
 router.post('/penalty/start', requirePremium, penaltyRoute((req) => penalty.start(req.user)));
 router.post('/penalty/kick', requirePremium, express.json(), penaltyRoute((req) => penalty.kick(req.user, req.body && req.body.dir)));
 
+// ---------- 🥅 Crossbar challenge va ⚽ Keepy-uppy (faqat Premium)
+function arcadeRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof arcade.ArcadeError) return res.status(['bad_kind', 'bad_taps'].includes(e.message) ? 400 : 409).json({ error: e.message });
+      throw e;
+    }
+  });
+}
+router.get('/arcade/:kind', requirePremium, arcadeRoute((req) => arcade.state(req.user, req.params.kind)));
+router.post('/arcade/:kind/start', requirePremium, arcadeRoute((req) => arcade.start(req.user, req.params.kind)));
+router.post('/arcade/:kind/finish', requirePremium, express.json(), arcadeRoute((req) => arcade.finish(req.user, req.params.kind, req.body && req.body.taps)));
+
 router.get('/leaderboard/:kind/:period', wrap(async (req, res) => {
   const { kind, period } = req.params;
-  if (!['manager', 'quiz', 'score', 'duel', 'penalty'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
+  if (!['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
   if (kind !== 'manager' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
   const top = Number(await settings.get('leaderboard_top')) || 30;
   return res.json(await leaderboard.board(kind, period, req.user.id, top));

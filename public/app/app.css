@@ -308,3 +308,22 @@ input[type=search].input { margin-bottom: 4px; }
 .pk-flash.on { opacity: 1; transform: scale(1); }
 .pk-flash.good { color: var(--gold); }
 .pk-flash.bad { color: #fff; }
+.ar-head { gap: 8px; }
+.cb-field { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; user-select: none;
+  background: repeating-linear-gradient(180deg, #1f7a3e 0 34px, #23863f 34px 68px); }
+.cb-goal { position: absolute; left: 10%; right: 22%; top: 18%; height: 62%; border: 6px solid #f4f7f5; border-bottom: none; border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.16) 0 2px, transparent 2px 12px), repeating-linear-gradient(-45deg, rgba(255,255,255,.16) 0 2px, transparent 2px 12px), rgba(0,0,0,.16); }
+.cb-ball { position: absolute; left: 44%; bottom: 6%; transform: translateX(-50%); font-size: 30px; transition: bottom .4s ease-out, transform .4s ease-out; pointer-events: none; }
+.cb-meter { position: absolute; right: 5%; top: 8%; bottom: 8%; width: 22px; border-radius: 11px; background: rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.4); overflow: hidden; }
+.cb-band { position: absolute; left: 0; right: 0; }
+.cb-band.b1 { bottom: 63%; height: 24%; background: rgba(242, 201, 76, .25); }
+.cb-band.b2 { bottom: 69%; height: 12%; background: rgba(242, 201, 76, .5); }
+.cb-band.b3 { bottom: 72.5%; height: 5%; background: var(--gold); }
+.cb-marker { position: absolute; left: -2px; right: -2px; height: 4px; margin-bottom: -2px; background: #fff; box-shadow: 0 0 6px #fff; bottom: 0; }
+.ku-field { position: relative; height: 380px; border-radius: 14px; overflow: hidden; user-select: none; touch-action: manipulation; cursor: pointer;
+  background: linear-gradient(180deg, #123122 0%, #1f7a3e 70%, #23863f 100%); }
+.ku-count { position: absolute; top: 10px; right: 14px; font-size: 34px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
+.ku-ball { position: absolute; left: 50%; top: 4%; transform: translateX(-50%); font-size: 46px; pointer-events: none; }
+.ku-foot { position: absolute; left: 50%; bottom: 2%; transform: translateX(-50%); font-size: 44px; pointer-events: none; }
+.ku-field::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 15%; background: linear-gradient(180deg, transparent, rgba(242, 201, 76, .12)); pointer-events: none; }
+.ku-hint { position: absolute; left: 0; right: 0; top: 42%; text-align: center; font-weight: 800; font-size: 18px; color: #fff; pointer-events: none; }

@@ -437,5 +437,8 @@
   "a_set_duel_daily_limit": "Kuniga points beradigan duellar soni",
   "a_set_penalty_win_points": "Penalty g'alabasi (points)",
   "a_set_penalty_draw_points": "Penalty durangi (points)",
-  "a_set_penalty_daily_games": "Kuniga penalty o'yinlari soni"
+  "a_set_penalty_daily_games": "Kuniga penalty o'yinlari soni",
+  "a_set_arcade_win_points": "Crossbar/Keepy-uppy g'alabasi (points)",
+  "a_set_arcade_draw_points": "Crossbar/Keepy-uppy durangi (points)",
+  "a_set_arcade_daily_games": "Kuniga Crossbar/Keepy-uppy o'yinlari (har biri)"
 }
