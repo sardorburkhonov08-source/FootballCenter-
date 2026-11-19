@@ -115,6 +115,15 @@ function register(bot) {
     return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
   });
 
+  // ---- 🗳 "Kim yutadi?" (sinov): ovoz → foizlar
+  bot.callbackQuery(/^pl:(\d+):([HDA])$/, async (ctx) => {
+    const poll = require('../../services/poll');
+    const r = await poll.vote(ctx.user, Number(ctx.match[1]), ctx.match[2]);
+    if (r.status === 'closed' || r.status === 'off') return ctx.answerCallbackQuery({ text: t(ctx.lang, 'poll_closed'), show_alert: true });
+    await ctx.answerCallbackQuery({ text: r.status === 'ok' ? t(ctx.lang, 'poll_saved') : t(ctx.lang, 'poll_already') });
+    return ctx.editMessageText(await poll.resultText(r.game, ctx.lang, r.pick), ui.HTML).catch(() => {});
+  });
+
   // ---- ⭐ Telegram Stars bilan Premium: hisob-faktura → pre_checkout tekshiruvi → successful_payment
   bot.callbackQuery(/^tf:stars:(week|month)$/, async (ctx) => {
     const plan = (await premium.starPlans())[ctx.match[1]];

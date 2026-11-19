@@ -205,4 +205,4 @@ const states = {
   },
 };
 
-module.exports = { register, states, parseAmount, CARD_LABEL, cardKb, formatCardNumber, sendTopupToAdmins, escapeHtml };
+module.exports = { register, states, inviteText, parseAmount, CARD_LABEL, cardKb, formatCardNumber, sendTopupToAdmins, escapeHtml };
