@@ -471,5 +471,6 @@
   "digest_quiz": "🧠 Каждый час новый вопрос Quiz",
   "digest_bonus": "🎁 Бонус готов — ⚽ гол и ×2!",
   "digest_footer": "Заходите играть 👇",
-  "btn_digest_play": "🎮 Играть"
+  "btn_digest_play": "🎮 Играть",
+  "kind_overall": "🏆 Общий рейтинг"
 }

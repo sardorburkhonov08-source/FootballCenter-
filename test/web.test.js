@@ -319,11 +319,13 @@ test('fon vazifalari: davr g\'olibi, eslatmalar', async () => {
   await db.query("UPDATE quiz_answers SET answered_at = $1 WHERE answered_at IS NOT NULL", [new Date(weekRange().start.getTime() + HOUR)]);
   h.clear();
   await jobs.finalizePeriods(later);
-  const w = await db.many("SELECT kind, period, points FROM period_winners WHERE period = 'weekly' ORDER BY kind");
-  assert.deepStrictEqual(w.map((x) => [x.kind, x.points]), [['manager', 147], ['quiz', 2]]);
-  assert.ok(h.texts(FREE).some((x) => x.startsWith('🏆 Tabriklaymiz! Siz 🎮 Mini Manager haftalik')));
+  // G'olib — umumiy points bo'yicha (hamma o'yinlar), har o'yin alohida emas (egasi talabi)
+  const w = await db.many("SELECT kind, period, points, user_id FROM period_winners WHERE period = 'weekly' ORDER BY kind");
+  assert.deepStrictEqual(w.map((x) => x.kind), ['overall']);
+  assert.ok(w[0].points >= 147, `umumiy points: ${w[0].points}`);
+  assert.ok(h.texts(FREE).some((x) => x.startsWith('🏆 Tabriklaymiz! Siz 🏆 Umumiy reyting haftalik')), h.texts(FREE).join('\n'));
   await jobs.finalizePeriods(later);
-  assert.strictEqual((await db.one("SELECT count(*)::int AS c FROM period_winners WHERE period = 'weekly'")).c, 2, 'takrorlanmaydi');
+  assert.strictEqual((await db.one("SELECT count(*)::int AS c FROM period_winners WHERE period = 'weekly'")).c, 1, 'takrorlanmaydi');
 
   await db.query("UPDATE users SET premium_expires_at = now() + interval '2 days' WHERE telegram_id = $1", [PREM]);
   h.clear();

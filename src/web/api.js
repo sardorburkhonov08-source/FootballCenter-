@@ -68,7 +68,7 @@ router.get('/banners', wrap(async (req, res) => {
 }));
 
 router.get('/prizes', wrap(async (req, res) => {
-  const kind = req.query.kind === 'quiz' ? 'quiz' : 'manager';
+  const kind = ['quiz', 'overall'].includes(req.query.kind) ? req.query.kind : 'manager';
   const rows = await db.many('SELECT * FROM prizes WHERE is_active AND kind = $1 ORDER BY period DESC, id DESC', [kind]);
   res.json(rows.map((p) => ({ id: p.id, period: p.period, text: p.text, url: p.media_path ? `/uploads/${p.media_path}` : null, type: p.media_type })));
 }));
@@ -297,8 +297,8 @@ router.post('/arcade/:kind/finish', requirePremium, express.json(), arcadeRoute(
 
 router.get('/leaderboard/:kind/:period', wrap(async (req, res) => {
   const { kind, period } = req.params;
-  if (!['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy'].includes(kind) || !['weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
-  if (kind !== 'manager' && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
+  if (!['overall', 'manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy'].includes(kind) || !['daily', 'weekly', 'monthly'].includes(period)) return res.status(404).json({ error: 'not_found' });
+  if (!['manager', 'overall'].includes(kind) && !users.isPremium(req.user)) return res.status(402).json({ error: 'premium_required' });
   const top = Number(await settings.get('leaderboard_top')) || 30;
   return res.json(await leaderboard.board(kind, period, req.user.id, top));
 }));

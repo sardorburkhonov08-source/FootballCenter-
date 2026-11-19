@@ -1,9 +1,14 @@
 const db = require('../db/pool');
-const { weekRange, monthRange } = require('./time');
+const { weekRange, monthRange, dayStart } = require('./time');
 
 function range(period, date = new Date()) {
+  if (period === 'daily') { const start = dayStart(date); return { start, end: new Date(start.getTime() + 86400000) }; }
   return period === 'monthly' ? monthRange(date) : weekRange(date);
 }
+
+// 🏆 Umumiy reyting (egasi talabi bilan): hamma o'yinlar points'i yig'indisi — faqat foydalanuvchining o'zi to'plagani
+// (community bunga kirmaydi). Haftalik va oylik g'oliblar shu reyting bo'yicha aniqlanadi.
+const GAME_KINDS = ['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest'];
 
 // Reyting hisoblash og'ir (barcha javoblarni yig'adi). Natija 30 soniya umumiy keshda saqlanadi:
 // minglab foydalanuvchi bir vaqtda ochsa ham bazada bitta hisob-kitob bajariladi.
@@ -25,6 +30,19 @@ async function ranking(kind, r) {
 }
 
 async function computeRanking(kind, r) {
+  if (kind === 'overall') {
+    const lists = await Promise.all(GAME_KINDS.map((k) => computeRanking(k, r)));
+    const acc = new Map();
+    for (const row of lists.flat()) {
+      const cur = acc.get(row.id) || { ...row, points: 0, last_at: null };
+      cur.points += Number(row.points) || 0;
+      if (row.last_at && (!cur.last_at || new Date(row.last_at) > new Date(cur.last_at))) cur.last_at = row.last_at;
+      acc.set(row.id, cur);
+    }
+    // teng bo'lsa — kim oldin yetib olgan (oxirgi points vaqti erta)
+    return [...acc.values()].filter((x) => x.points > 0).sort((a, b) => b.points - a.points
+      || (a.last_at && b.last_at ? new Date(a.last_at) - new Date(b.last_at) : 0) || a.id - b.id);
+  }
   if (kind === 'manager') {
     return db.many(
       `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
@@ -136,4 +154,4 @@ async function overallPlace(kind, userId) {
   return r && r.points > 0 ? r : { points: r ? r.points : 0, place: null };
 }
 
-module.exports = { range, ranking, computeRanking, board, overallPlace, label, clearRankingCache, RANKING_TTL_MS };
+module.exports = { GAME_KINDS, range, ranking, computeRanking, board, overallPlace, label, clearRankingCache, RANKING_TTL_MS };

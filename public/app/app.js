@@ -11,7 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
-    lb: { manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly', crossbar: 'weekly', keepy: 'weekly' },
+    lb: { overall: 'daily', manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly', crossbar: 'weekly', keepy: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
   };
@@ -782,26 +782,31 @@
   }
 
   // ================= 🎮 MINI MANAGER
-  function leaderboardBlock(kind) {
+  /** opts.periods — ['daily','weekly','monthly'] (umumiy reyting), opts.title, opts.hint */
+  function leaderboardBlock(kind, opts = {}) {
     const wrap = el('div');
+    const periods = opts.periods || ['weekly', 'monthly'];
+    const LBL = { daily: 'lb_daily', weekly: 'lb_weekly', monthly: 'lb_monthly' };
     const draw = async () => {
-      const period = S.lb[kind];
-      const seg = el('div', { class: 'seg' }, ['weekly', 'monthly'].map((p) => el('button', {
-        class: p === period ? 'on' : '', text: t(p === 'weekly' ? 'lb_weekly' : 'lb_monthly'), onclick: () => { S.lb[kind] = p; haptic(); draw(); },
+      const period = periods.includes(S.lb[kind]) ? S.lb[kind] : periods[0];
+      const seg = el('div', { class: 'seg' }, periods.map((p) => el('button', {
+        class: p === period ? 'on' : '', text: t(LBL[p]), onclick: () => { S.lb[kind] = p; haptic(); draw(); },
       })));
       const list = el('div', { class: 'card', style: 'margin-top:8px' }, skeleton(2));
-      wrap.replaceChildren(el('h2', { text: t('lb_title') }), seg, list);
+      put(wrap, el('h2', { text: opts.title || t('lb_title') }), opts.hint ? el('p', { class: 'small muted', style: 'margin:-4px 2px 10px', text: opts.hint }) : null, seg, list);
       try {
         const d = await api(`/leaderboard/${kind}/${period}`);
         list.replaceChildren();
         list.append(el('div', { class: 'small muted', style: 'margin-bottom:4px', text: `${ddmmyyyy(d.start)} – ${ddmmyyyy(new Date(new Date(d.end).getTime() - 60000).toISOString())}` }));
         if (!d.top.length) list.append(el('div', { class: 'center muted', style: 'padding:16px 0', text: t('lb_empty') }));
-        for (const r of d.top) {
+        const rows = opts.limit && !wrap.expanded ? d.top.slice(0, opts.limit) : d.top;
+        for (const r of rows) {
           list.append(el('div', { class: `lb-row${r.place === 1 ? ' top1' : ''}${r.me ? ' me' : ''}` },
             el('span', { class: 'pl', text: r.place === 1 ? '🥇' : r.place === 2 ? '🥈' : r.place === 3 ? '🥉' : r.place }),
             el('span', { class: 'grow ellipsis', text: r.name }), el('span', { class: 'pts', text: r.points })));
         }
-        if (d.me && !d.top.some((r) => r.me)) list.append(el('div', { class: 'lb-row me' }, el('span', { class: 'grow', text: t('lb_me', { place: d.me.place, points: d.me.points }) })));
+        if (d.me && !rows.some((r) => r.me)) list.append(el('div', { class: 'lb-row me' }, el('span', { class: 'grow', text: t('lb_me', { place: d.me.place, points: d.me.points }) })));
+        if (rows.length < d.top.length) list.append(el('button', { class: 'btn ghost block', style: 'margin-top:8px;height:38px', text: t('lb_all', { n: d.top.length }), onclick: () => { wrap.expanded = true; draw(); } }));
       } catch (err) { list.replaceChildren(errorBox(err, draw)); }
     };
     draw();
@@ -1076,6 +1081,8 @@
 
   function renderGames(view) {
     todayCard(view);
+    // 🏆 Umumiy reyting (hamma o'yinlar points'i): haftalik va oylik g'oliblar shu bo'yicha
+    view.append(prizeBlock('overall'), leaderboardBlock('overall', { limit: 5, periods: ['daily', 'weekly', 'monthly'], title: t('lb_overall_title'), hint: t('lb_overall_hint') }));
     view.append(el('h2', { style: 'margin:16px 2px 12px', text: t('games_title') }),
       el('div', { class: 'list' }, GAMES.map((g) => el('button', { class: 'item game-item', type: 'button', onclick: g.open },
         el('span', { class: 'game-ico', style: `--g:${g.grad || 'var(--grad)'}`, text: g.icon }),
@@ -1090,7 +1097,6 @@
     view.append(el('div', { class: 'card row between' },
       el('span', null, el('span', { class: 'muted', text: `${t('coach_label')}: ` }), el('b', { text: S.me.coachName })),
       el('button', { class: 'btn ghost', style: 'height:34px;font-size:13px', text: t('coach_change'), onclick: () => modal(t('coach_prompt_title'), null, [coachPrompt(() => { closeModal(); render(); }, S.me.coachName)]) })));
-    view.append(el('div', { style: 'margin-top:10px' }, prizeBlock('manager')));
     view.append(el('h2', { text: t('mm_games') }));
     const list = el('div', null, skeleton(2));
     view.append(list, leaderboardBlock('manager'));
@@ -1938,7 +1944,6 @@
         el('div', { class: 'card' }, el('div', { class: 'q-text', text: '??? ??? ???' }), ['A', 'B', 'C', 'D'].map((l) => el('div', { class: 'opt' }, el('span', { class: 'l', text: l }), el('span', { text: '— — —' }))))));
       return;
     }
-    view.append(prizeBlock('quiz'));
     const box = el('div', { style: 'margin-top:10px' }, skeleton(3));
     const lb = leaderboardBlock('quiz');
     box.onAnswered = () => lb.refresh();

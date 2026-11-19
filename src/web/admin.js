@@ -381,7 +381,7 @@ router.get('/prizes', wrap(async (req, res) => res.json(await db.many('SELECT * 
 router.post('/prizes', upload.single('media'), wrap(async (req, res) => {
   const { kind, period } = req.body;
   const text = String(req.body.text || '').trim();
-  if (!['manager', 'quiz'].includes(kind) || !['weekly', 'monthly'].includes(period) || !text) {
+  if (!['overall', 'manager', 'quiz'].includes(kind) || !['weekly', 'monthly'].includes(period) || !text) {
     if (req.file) removeUpload(req.file.filename);
     return res.status(400).json({ error: 'bad_prize' });
   }

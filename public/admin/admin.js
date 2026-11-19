@@ -424,7 +424,7 @@
   // 🏆 Sovrinlar
   async function prizes(v) {
     const list = await api('/prizes');
-    const kind = el('select', { class: 'input' }, el('option', { value: 'manager', text: '🎮 Mini Manager' }), el('option', { value: 'quiz', text: '🧠 Quiz' }));
+    const kind = el('select', { class: 'input' }, el('option', { value: 'overall', text: '🏆 Umumiy reyting (hamma o\'yinlar)' }));
     const period = el('select', { class: 'input' }, el('option', { value: 'weekly', text: 'Haftalik' }), el('option', { value: 'monthly', text: 'Oylik' }));
     const text = el('textarea', { class: 'input', placeholder: 'Sovrin matni', maxlength: '1000' });
     const file = el('input', { class: 'input', type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm' });
@@ -445,7 +445,7 @@
       el('h2', { text: `Sovrinlar (${list.length})` }),
       list.length ? el('div', { class: 'list' }, list.map((p) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
         mediaThumb(p.media_path ? `/uploads/${p.media_path}` : null, p.media_type),
-        el('div', { class: 'grow', style: 'min-width:180px' }, el('div', { class: 'small muted', text: `${p.kind === 'manager' ? '🎮 Mini Manager' : '🧠 Quiz'} · ${p.period === 'weekly' ? 'haftalik' : 'oylik'} · ${p.is_active ? '🟢 faol' : '⚪️ o\'chirilgan'}` }),
+        el('div', { class: 'grow', style: 'min-width:180px' }, el('div', { class: 'small muted', text: `${{ overall: '🏆 Umumiy reyting', manager: '🎮 Mini Manager (eski)', quiz: '🧠 Quiz (eski)' }[p.kind]} · ${p.period === 'weekly' ? 'haftalik' : 'oylik'} · ${p.is_active ? '🟢 faol' : '⚪️ o\'chirilgan'}` }),
           el('div', { style: 'white-space:pre-wrap', text: p.text })),
         el('div', { class: 'row' },
           el('button', { class: 'mini', text: p.is_active ? '⏸' : '▶️', onclick: async () => { try { await api(`/prizes/${p.id}`, { method: 'PATCH', body: { isActive: !p.is_active } }); show(); } catch (e) { fail(e); } } }),
@@ -506,7 +506,7 @@
     const s = await api('/stats');
     const max = Math.max(1, ...s.days.map((d) => d.visits));
     const kpi = (val, label) => el('div', { class: 'kpi' }, el('b', { text: val }), el('span', { text: label }));
-    const winnerKind = { manager: '🎮 Mini Manager', quiz: '🧠 Quiz', referral: '👥 Referral League' };
+    const winnerKind = { overall: '🏆 Umumiy reyting', manager: '🎮 Mini Manager', quiz: '🧠 Quiz', referral: '👥 Referral League' };
     v.replaceChildren(
       el('div', { class: 'kpis' },
         kpi(s.visits_today, '🌐 Bugungi Web App tashriflari'), kpi(s.manager_participants_week, '🎮 Mini Manager qatnashchilari (7 kun)'),
