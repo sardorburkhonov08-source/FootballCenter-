@@ -2,6 +2,7 @@
 //
 // Fayl formati (qNN.json): [ [uz, ru, en, [to'g'ri, xato, xato, xato]], ... ]
 //   variant: "matn" (hamma tilda bir xil), ["uz", "ru", "en"] yoki "#KOD" (dict.json lug'atidan).
+//   O'zbekcha savol matnida ⟦Nom⟧ — umumiy nom (futbolchi, klub, stadion): kirillchada ham lotincha qoladi.
 // Kirill (uz_cyrl) matni o'zbek lotindan transliteratsiya qilinadi (umumiy nomlar lotinda qoladi). To'g'ri javob o'rni har savol uchun
 // barqaror tasodifiy (savol matnidan hisoblanadi) — barcha tillarda bir xil harf.
 const crypto = require('crypto');
@@ -45,7 +46,10 @@ function load() {
         const o = order.map((k) => optionText(opts[k], lang, d));
         return { q, a: o[0], b: o[1], c: o[2], d: o[3] };
       };
-      const uzRow = build('uz', uz);
+      // ⟦Nom⟧ — o'zbekcha matnda belgisiz, kirillchada transliteratsiyasiz qoladi
+      const uzQ = uz.replace(/⟦([^⟧]+)⟧/g, '$1');
+      const cyrlQ = uz.split(/⟦([^⟧]+)⟧/).map((part, k) => (k % 2 ? part : translit(part))).join('');
+      const uzRow = build('uz', uzQ);
       // Kirill: o'zbekcha matn transliteratsiya qilinadi; hamma tilda bir xil yoziladigan nomlar
       // (futbolchi, klub, raqam) lotin harfida qoladi — «Manchester City» → «Манчестер Цитй» bo'lib ketmasin
       const shared = (opt) => typeof opt === 'string' && !opt.startsWith('#');
@@ -53,7 +57,7 @@ function load() {
       out.push({
         hash, file, index: i + 1, correct: 'ABCD'[order.indexOf(0)],
         uz: uzRow,
-        uz_cyrl: { q: translit(uz), a: cyrlOpts[0], b: cyrlOpts[1], c: cyrlOpts[2], d: cyrlOpts[3] },
+        uz_cyrl: { q: cyrlQ, a: cyrlOpts[0], b: cyrlOpts[1], c: cyrlOpts[2], d: cyrlOpts[3] },
         ru: build('ru', ru),
         en: build('en', en),
       });

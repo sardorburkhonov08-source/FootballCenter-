@@ -65,7 +65,7 @@ test/                   avtomatik testlar
 
 ## 🧠 Quiz savollari
 
-- **4 tilli savollar banki**: `src/data/quiz-bank/qNN.json` (1000+ savol) + `dict.json` (davlat nomlari 3 tilda). Format va qoidalar — `src/services/quizBank.js`. Kirill matni o'zbek lotindan transliteratsiya qilinadi, umumiy nomlar (futbolchi, klub) lotinda qoladi. Server ishga tushganda (`migrate`) bazaga bir marta qo'shiladi (`source = 'bank'`, `quiz_questions.i18n`).
+- **4 tilli savollar banki**: `src/data/quiz-bank/qNN.json` (~2000 savol: q01—q11 qo'lda yozilgan, q12—q21 — `scripts/gen-quiz-extra.js` aniq ma'lumot jadvallaridan yaratadi: liga chempionlari mavsumlar bo'yicha, Chempionlar ligasi / UEFA Kubogi / Yevropa ligasi g'oliblari, Oltin to'p, futbolchilarning davlati / tug'ilgan yili / pozitsiyasi / klubi, klubning davlati va shahri, stadionlar, murabbiylar millati; o'zbekcha matnda `⟦Nom⟧` — kirillchada lotincha qoladigan nom) + `dict.json` (davlat nomlari 3 tilda). Format va qoidalar — `src/services/quizBank.js`. Kirill matni o'zbek lotindan transliteratsiya qilinadi, umumiy nomlar (futbolchi, klub) lotinda qoladi. Server ishga tushganda (`migrate`) bazaga bir marta qo'shiladi (`source = 'bank'`, `quiz_questions.i18n`).
 - Savol foydalanuvchi tilida ko'rsatiladi (`quiz.publicQuestion`). Navbat: admin qo'shgani → bank (tasodifiy) → bank tugasa eng eskisi nusxa bo'lib qayta chiqadi (`bank_repeat`).
 - Inglizcha Open Trivia DB avtomatik ishlatilmaydi (`settings.quiz_api_enabled = false`).
 - 🧠 **Har soatlik "Yangi Quiz savoli" xabari yo'q** (egasi talabi) — o'rniga kuniga 1 marta ☀️ kunlik dayjest (pastda).
