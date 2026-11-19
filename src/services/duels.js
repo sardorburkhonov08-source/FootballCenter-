@@ -291,6 +291,7 @@ async function complete(duelId, { force = false } = {}) {
     const u = await users.byId(me.uid);
     const ou = await users.byId(opp.uid);
     const lang = langOf(u);
+    if (me.result === 'win') await notify.celebrate(u, '🏆');
     await notify.toUser(u, `duel_result_${me.result}`, {
       kind: t(lang, `duel_kind_${res.d.kind}`), name: users.displayName(ou), my: me.score, their: opp.score, points: me.pts,
     }).catch(() => {});

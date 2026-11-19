@@ -9,6 +9,8 @@ const achievements = require('../services/achievements');
 const duels = require('../services/duels');
 const penalty = require('../services/penalty');
 const arcade = require('../services/arcade');
+const quests = require('../services/quests');
+const levels = require('../services/levels');
 const manager = require('../services/manager');
 const quiz = require('../services/quiz');
 const leaderboard = require('../services/leaderboard');
@@ -388,6 +390,25 @@ router.post('/community/:id/posts', express.json(), communityRoute(async (req) =
 router.post('/community/posts/:postId/react', express.json(), communityRoute(async (req) => community.react(req.user, req.params.postId, req.body && req.body.reaction)));
 router.delete('/community/posts/:postId', communityRoute(async (req) => { await community.deletePost(req.user, req.params.postId); return { ok: true }; }));
 
+// ---------- ✅ Bugun: daraja va kunlik vazifalar (Home va Games sahifalari tepasida)
+router.get('/today', wrap(async (req, res) => {
+  await levels.check(req.user.id).catch(() => {});
+  const u = await users.byId(req.user.id);
+  res.json({
+    level: await levels.forUser(u, u.language || 'uz'),
+    points: users.totalPoints(u),
+    quests: users.isPremium(u) ? await quests.today(u) : null,
+  });
+}));
+router.post('/quests/claim', requirePremium, wrap(async (req, res) => {
+  try {
+    return res.json(await quests.claim(req.user));
+  } catch (e) {
+    if (e instanceof quests.QuestError) return res.status(409).json({ error: e.message });
+    throw e;
+  }
+}));
+
 // ---------- 🏅 Yutuqlar va 📤 natija kartasi
 router.get('/share', wrap(async (req, res) => res.json(await require('../services/shareCard').info(req.user))));
 
@@ -421,6 +442,7 @@ router.get('/profile', wrap(async (req, res) => {
       `SELECT count(*) FILTER (WHERE result = 'win')::int AS wins, count(*) FILTER (WHERE result = 'draw')::int AS draws,
               count(*) FILTER (WHERE result = 'loss')::int AS losses FROM duel_results WHERE user_id = $1`, [u.id])) } : null,
     achievements: await achievements.forUser(u.id, u.language || 'uz'),
+    level: await levels.forUser(u, u.language || 'uz'),
   });
 }));
 

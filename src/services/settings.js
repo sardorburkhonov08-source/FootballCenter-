@@ -34,6 +34,16 @@ const DEFAULTS = {
   arcade_pvp_win_points: 5,
   arcade_pvp_draw_points: 2,
   arcade_pvp_daily_limit: 10,
+  // ☀️ Kunlik dayjest (va yangi Quiz savoli haqida) — kuniga 1 marta: shu soatdan (Toshkent, 0—23) keyin chiqqan birinchi savolda
+  digest_hour: 12,
+  // 🎁 Bonus: ⚽ zarba gol bo'lsa bonus shuncha baravar (1 — animatsiya o'chiq)
+  bonus_goal_multiplier: 2,
+  // ✅ Kunlik vazifalar: hammasi bajarilsa mukofot; ketma-ket har kun uchun +bonus (ko'pi bilan max kun)
+  quest_reward_points: 5,
+  quest_streak_bonus: 1,
+  quest_streak_max: 7,
+  // 📈 Shaxsiy daraja: 2, 3, ... darajalar uchun kerakli jami points
+  user_level_xp: [30, 80, 150, 250, 400, 600, 850, 1200, 1700, 2400, 3300, 4500],
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

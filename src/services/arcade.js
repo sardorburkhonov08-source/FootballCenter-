@@ -147,7 +147,7 @@ async function finish(user, kind, taps) {
        WHERE id = $1 RETURNING *`, [g.id, score, JSON.stringify(detail), result, points],
     )).rows[0];
     return publicGame(row);
-  });
+  }).then((g) => { require('./achievements').checkLater(user.id); return g; });
 }
 
 // ---------- 🎲 Tasodifiy raqib / 🤝 do'st (match)
@@ -315,10 +315,12 @@ async function completeMatch(matchId, { force = false } = {}) {
     return { m, out };
   });
   if (!res) return null;
+  require('./achievements').checkLater(...res.out.map((x) => x.uid));
   for (const me of res.out) {
     const opp = res.out.find((x) => x.uid !== me.uid);
     const [u, ou] = await Promise.all([users.byId(me.uid), users.byId(opp.uid)]);
     const lang = (u && u.language) || 'uz';
+    if (me.result === 'win') await notify.celebrate(u, '🏆');
     await notify.toUser(u, `duel_result_${me.result}`, {
       kind: t(lang, `arcade_kind_${res.m.kind}`), name: users.displayName(ou), my: me.my, their: me.their, points: me.pts,
     }).catch(() => {});

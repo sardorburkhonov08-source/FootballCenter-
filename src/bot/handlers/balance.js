@@ -11,6 +11,9 @@ const { formatDateTime, monthRange, parts } = require('../../services/time');
 const state = require('../state');
 const ui = require('../ui');
 
+// ⚽ animatsiyasi tugashini kutish (testlarda 0)
+const DICE_WAIT_MS = Number(process.env.DICE_WAIT_MS ?? 3500);
+
 const CARD_LABEL = { humo: 'Humo', uzcard: 'Uzcard', visa: 'Visa', mastercard: 'Mastercard' };
 
 /** "50 000" / "50000" -> 50000; noto'g'ri bo'lsa null */
@@ -83,13 +86,26 @@ function register(bot) {
   });
 
   // ---- 🎁 Bonus
+  // 🎁 Bonus: ⚽ Telegram animatsiyasi — gol bo'lsa bonus ×N (settings.bonus_goal_multiplier; 1 — o'chiq)
   bot.callbackQuery('bal:bonus', async (ctx) => {
     await ctx.answerCallbackQuery();
-    const r = await bonus.claim(ctx.user);
-    const text = r.ok
-      ? t(ctx.lang, 'bonus_got', { amount: money(r.amount), balance: money(r.balance) })
-      : t(ctx.lang, 'bonus_wait', { time: ui.duration(ctx.lang, r.waitMs) });
-    await ui.show(ctx, text, ui.backKb(ctx.lang, 'm:balance'));
+    const lang = ctx.lang;
+    const wait = await bonus.waitMs(ctx.user);
+    if (wait > 0) return ui.show(ctx, t(lang, 'bonus_wait', { time: ui.duration(lang, wait) }), ui.backKb(lang, 'm:balance'));
+    const mult = Math.max(1, Math.floor(Number(await settings.get('bonus_goal_multiplier')) || 1));
+    let goal = false;
+    if (mult > 1) {
+      await ui.show(ctx, t(lang, 'bonus_kick', { mult }));
+      const m = await ctx.replyWithDice('⚽').catch(() => null);
+      goal = !!(m && m.dice && m.dice.value >= 3);   // ⚽: 3—5 — gol
+      await new Promise((r) => setTimeout(r, DICE_WAIT_MS));
+    }
+    const r = await bonus.claim(ctx.user, { multiplier: goal ? mult : 1 });
+    const params = { amount: money(r.amount || 0), balance: money(r.balance || 0), mult };
+    const text = !r.ok ? t(lang, 'bonus_wait', { time: ui.duration(lang, r.waitMs) })
+      : t(lang, mult === 1 ? 'bonus_got' : goal ? 'bonus_got_goal' : 'bonus_got_miss', params);
+    if (mult > 1) return ctx.reply(text, { ...ui.HTML, reply_markup: ui.backKb(lang, 'm:balance') });
+    return ui.show(ctx, text, ui.backKb(lang, 'm:balance'));
   });
 
   // ---- 👥 Referral

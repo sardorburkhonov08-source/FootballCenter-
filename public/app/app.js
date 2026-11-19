@@ -272,8 +272,142 @@
     return ({ home: renderHome, games: renderGames, community: renderCommunity, profile: renderProfile })[S.tab](view);
   }
 
+
+  // ================= ✨ Effektlar: 🎉 konfetti, raqamlarni sanab chiqish, Telegram mavzusi
+  function confetti() {
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const cv = document.createElement('canvas');
+      cv.id = 'confetti';
+      cv.width = window.innerWidth * 2; cv.height = window.innerHeight * 2;
+      document.body.append(cv);
+      const ctx = cv.getContext('2d');
+      const colors = ['#2ecc71', '#f2c94c', '#ffffff', '#27ae60', '#f7d774', '#e5534b'];
+      const parts = Array.from({ length: 140 }, () => ({
+        x: cv.width / 2 + (Math.random() - 0.5) * cv.width * 0.3, y: cv.height * 0.35,
+        vx: (Math.random() - 0.5) * 26, vy: -Math.random() * 30 - 10, s: 8 + Math.random() * 10,
+        r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4, c: colors[Math.floor(Math.random() * colors.length)],
+      }));
+      const t0 = performance.now();
+      const frame = (now) => {
+        const k = (now - t0) / 1800;
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        for (const p of parts) {
+          p.vy += 1.1; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vx *= 0.99;
+          ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+          ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore();
+        }
+        if (k < 1) requestAnimationFrame(frame); else cv.remove();
+      };
+      requestAnimationFrame(frame);
+      haptic('success');
+    } catch (e) { /* */ }
+  }
+
+  /** Statistikadagi raqamlar 0 dan sanab chiqadi (bir marta) */
+  function countUp(node) {
+    const txt = node.textContent.trim();
+    if (node.dataset.counted || !/^\d[\d\s]*$/.test(txt)) return;
+    node.dataset.counted = '1';
+    const target = Number(txt.replace(/\s/g, ''));
+    if (!target) return;
+    const t0 = performance.now();
+    const dur = Math.min(900, 300 + target * 4);
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / dur);
+      node.textContent = money(Math.round(target * (1 - (1 - k) ** 3)));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  try {
+    new MutationObserver((muts) => {
+      for (const m of muts) for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        n.querySelectorAll && n.querySelectorAll('.stat b, .count-up').forEach(countUp);
+      }
+    }).observe(document.getElementById('view'), { childList: true, subtree: true });
+  } catch (e) { /* */ }
+
+  /** Telegram mavzusi: yorug' / qorong'i (egasi talabi bilan) */
+  function applyTheme() {
+    const light = !!(tg && tg.colorScheme === 'light');
+    document.documentElement.dataset.theme = light ? 'light' : 'dark';
+    const bg = light ? '#f2f6f3' : '#0c1712';
+    try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); if (tg.setBottomBarColor) tg.setBottomBarColor(bg); } catch (e) { /* eski versiyalar */ }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', bg);
+  }
+
+  // ================= ✅ BUGUN: salom, daraja va kunlik vazifalar (Home va Games tepasida)
+  const QUEST_GAME = { quiz: 'quiz', quiz3: 'quiz', duel: 'duel', penalty: 'penalty', crossbar: 'crossbar', keepy: 'keepy', score: 'score' };
+  function greeting() {
+    const h = new Date().getHours();
+    return t(h < 5 ? 'today_night' : h < 12 ? 'today_morning' : h < 18 ? 'today_day' : h < 23 ? 'today_evening' : 'today_night', { name: S.me.firstName || '' });
+  }
+
+  function todayCard(container, compact) {
+    const box = el('div', { class: 'card today', style: 'margin-bottom:12px' }, el('div', { class: 'hello', text: greeting() }), el('div', { class: 'sub', text: '…' }));
+    container.append(box);
+    const draw = async () => {
+      let d;
+      try { d = await api('/today', { fresh: true }); } catch (e) { box.remove(); return; }
+      const lv = d.level;
+      // Yangi daraja — 🎉
+      try {
+        const prev = Number(localStorage.getItem('fc_level') || 0);
+        if (prev && lv.level > prev) confetti();
+        localStorage.setItem('fc_level', String(lv.level));
+      } catch (e) { /* */ }
+      const pct = lv.next ? Math.round(((lv.xp - lv.from) / (lv.next - lv.from)) * 100) : 100;
+      const bar = el('div', { class: 'lv-bar' }, el('span', { style: 'width:0%' }));
+      setTimeout(() => { bar.firstChild.style.width = `${Math.max(3, pct)}%`; }, 60);
+      const parts = [
+        el('div', { class: 'row between' }, el('div', { class: 'hello', text: greeting() }), el('span', { class: 'lv-badge', text: `Lv ${lv.level} · ${lv.name}` })),
+        bar,
+        el('div', { class: 'row between sub' }, el('span', null, el('b', { class: 'count-up', text: money(d.points) }), ` points`),
+          el('span', { text: lv.next ? t('lv_next', { left: money(lv.next - lv.xp), n: lv.level + 1 }) : t('lv_max') })),
+      ];
+      const q = d.quests;
+      if (q && compact) {
+        parts.push(el('button', { type: 'button', class: 'q-mini', onclick: () => { S.tab = 'games'; S.stacks.games = []; render(); } },
+          el('span', { text: q.claimed ? t('q_claimed', { n: q.reward }) : `${t('q_title')}: ${q.done}/${q.total}` }),
+          q.streak ? el('span', { class: 'streak', text: t('q_streak', { n: q.streak }) }) : null, el('span', { text: '›' })));
+      } else if (q) {
+        const qbox = el('div', { class: 'card quests', style: 'color:var(--text)' },
+          el('div', { class: 'row between' }, el('b', { text: t('q_title') }),
+            q.streak ? el('span', { class: 'streak', text: t('q_streak', { n: q.streak }) }) : null),
+          q.quests.map((x) => el('button', { type: 'button', class: `quest${x.done ? ' done' : ''}`, style: 'width:100%;text-align:left', onclick: () => {
+            if (x.id === 'bonus') { openBot(); return; }
+            if (x.id === 'react') { S.tab = 'community'; S.stacks.community = []; render(); return; }
+            const g = GAMES.find((y) => y.key === QUEST_GAME[x.id]);
+            if (g) { S.tab = 'games'; S.stacks.games = []; render(); g.open(); }
+          } },
+          el('span', { class: 'qi', text: x.icon }),
+          el('span', { class: 'grow' }, el('div', { class: 'qn', text: t(`q_${x.id}`, { n: x.target }) }), el('div', { class: 'qp', text: `${x.progress}/${x.target}` })),
+          el('span', { class: 'qc', text: x.done ? '✅' : '›' }))));
+        if (q.claimed) qbox.append(el('div', { class: 'small gold', style: 'margin-top:8px;font-weight:700;text-align:center', text: t('q_claimed', { n: q.reward }) }));
+        else if (q.allDone) {
+          const claim = el('button', { class: 'btn block gold-btn', style: 'margin-top:10px', text: t('q_claim', { n: q.reward }) });
+          claim.addEventListener('click', async () => {
+            claim.disabled = true;
+            try { await api('/quests/claim', { method: 'POST' }); confetti(); toast(t('q_claimed_toast', { n: q.reward })); draw(); } catch (err) { toast(t('error_generic')); claim.disabled = false; }
+          });
+          qbox.append(claim);
+        } else qbox.append(el('div', { class: 'small muted', style: 'margin-top:8px;text-align:center', text: t('q_left', { done: q.done, total: q.total, n: q.reward }) }));
+        parts.push(qbox);
+      } else {
+        parts.push(el('button', { class: 'card quests', type: 'button', style: 'width:100%;color:var(--text);opacity:.8', onclick: () => premiumModal(t('q_locked')) },
+          el('b', { text: t('q_title') }), el('div', { class: 'small muted', style: 'margin-top:4px', text: t('q_locked') })));
+      }
+      put(box, ...parts);
+    };
+    draw();
+  }
+
   // ================= 🏠 HOME
   function renderHome(view) {
+    todayCard(view, true);
     const subs = [['matches', 'home_matches'], ['competitions', 'home_competitions']];
     if (S.features && S.features.news) subs.push(['news', 'home_news']);
     view.append(el('div', { class: 'seg' }, subs.map(([k, label]) => el('button', {
@@ -701,19 +835,19 @@
 
   // ================= 🎮 GAMES — o'yinlar ro'yxati (Mini Manager, Football Quiz; keyin yangi o'yinlar qo'shiladi)
   const GAMES = [
-    { key: 'manager', icon: '🎮', title: () => 'Mini Manager', desc: () => t('games_mm_desc'), premium: true,
+    { key: 'manager', grad: 'linear-gradient(135deg,#2ecc71,#178a49)', icon: '🎮', title: () => 'Mini Manager', desc: () => t('games_mm_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🎮 Mini Manager')); return renderManager(v); } }) },
-    { key: 'quiz', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
+    { key: 'quiz', grad: 'linear-gradient(135deg,#f7a6c1,#d9467c)', icon: '🧠', title: () => 'Football Quiz', desc: () => t('games_quiz_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar('🧠 Football Quiz')); return renderQuiz(v); } }) },
-    { key: 'duel', icon: '⚔️', title: () => t('du_title'), desc: () => t('games_du_desc'), premium: true,
+    { key: 'duel', grad: 'linear-gradient(135deg,#f2c94c,#e07b1a)', icon: '⚔️', title: () => t('du_title'), desc: () => t('games_du_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`⚔️ ${t('du_title')}`)); return renderDuels(v); } }) },
-    { key: 'penalty', icon: '🥅', title: () => t('pk_title'), desc: () => t('games_pk_desc'), premium: true,
+    { key: 'penalty', grad: 'linear-gradient(135deg,#9be15d,#2f9e44)', icon: '🥅', title: () => t('pk_title'), desc: () => t('games_pk_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🥅 ${t('pk_title')}`)); return renderPenalty(v); } }) },
-    { key: 'crossbar', icon: '💥', title: () => t('cb_title'), desc: () => t('games_cb_desc'), premium: true,
+    { key: 'crossbar', grad: 'linear-gradient(135deg,#ff8a5b,#e5534b)', icon: '💥', title: () => t('cb_title'), desc: () => t('games_cb_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`💥 ${t('cb_title')}`)); return renderArcade(v, 'crossbar'); } }) },
-    { key: 'keepy', icon: '⚽', title: () => t('ku_title'), desc: () => t('games_ku_desc'), premium: true,
+    { key: 'keepy', grad: 'linear-gradient(135deg,#e9e4d0,#a89f7d)', icon: '⚽', title: () => t('ku_title'), desc: () => t('games_ku_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`⚽ ${t('ku_title')}`)); return renderArcade(v, 'keepy'); } }) },
-    { key: 'score', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
+    { key: 'score', grad: 'linear-gradient(135deg,#c084fc,#7c3aed)', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
   ];
 
@@ -941,9 +1075,10 @@
   }
 
   function renderGames(view) {
-    view.append(el('h2', { style: 'margin:4px 2px 12px', text: t('games_title') }),
+    todayCard(view);
+    view.append(el('h2', { style: 'margin:16px 2px 12px', text: t('games_title') }),
       el('div', { class: 'list' }, GAMES.map((g) => el('button', { class: 'item game-item', type: 'button', onclick: g.open },
-        el('span', { class: 'game-ico', text: g.icon }),
+        el('span', { class: 'game-ico', style: `--g:${g.grad || 'var(--grad)'}`, text: g.icon }),
         el('span', { class: 'grow' }, el('b', { text: g.title() }), el('div', { class: 'small muted', text: g.desc() })),
         g.premium && !S.me.premium ? el('span', { class: 'badge gold', text: '💎' }) : el('span', { class: 'chev', text: '›' })))),
       el('p', { class: 'small muted', style: 'margin:12px 2px', text: t('games_soon') }));
@@ -1063,6 +1198,7 @@
     let g;
     try { g = await api(`/arcade/${kind}/finish`, { method: 'POST', body: { taps } }); } catch (err) { wait.replaceWith(errorBox(err, () => arcadeFinish(box, st, kind, taps, card))); return; }
     haptic(g.result === 'win' ? 'success' : g.result === 'loss' ? 'error' : undefined);
+    if (g.result === 'win') confetti();
     const left = st.left - (st.game ? 0 : 1);
     wait.replaceWith(arcadeResultCard(g.result, g.score, g.botScore, g.points, left > 0 ? () => render() : null));
   }
@@ -1382,7 +1518,7 @@
         flash.className = `pk-flash on ${good ? 'good' : 'bad'}`;
         haptic(good ? 'success' : 'error');
       }, 380);
-      setTimeout(() => { g = r.game; reset(); draw(); busy = false; }, 1400);
+      setTimeout(() => { g = r.game; reset(); draw(); busy = false; if (g.status === 'finished' && g.result === 'win') confetti(); }, 1400);
     }
     reset();
     draw();
@@ -1555,6 +1691,7 @@
         haptic(res.correct ? 'success' : 'error');
         resultLine.textContent = res.correct ? t('du_correct', { s: (res.timeMs / 1000).toFixed(1) }) : t('du_wrong');
         if (res.correct) resultLine.className = 'gold';
+        if (res.duel && res.duel.result && res.duel.result.result === 'win') confetti();
         resultLine.style.cssText = 'margin-top:12px;font-weight:800;text-align:center';
         finish(res);
       } catch (err) { duelError(err); finish(null); }
@@ -2242,7 +2379,8 @@
     box.replaceChildren(
       el('div', { class: 'card row' }, el('div', { class: 'avatar', text: (name || '?').trim().charAt(0).toUpperCase() }),
         el('div', { class: 'grow' }, el('div', { style: 'font-weight:800;font-size:17px', class: 'ellipsis', text: name }),
-          el('div', { class: 'small muted', text: [u.username ? `@${u.username}` : null, `ID ${d.telegramId}`].filter(Boolean).join(' · ') }))),
+          el('div', { class: 'small muted', text: [u.username ? `@${u.username}` : null, `ID ${d.telegramId}`].filter(Boolean).join(' · ') })),
+        d.level ? el('span', { class: 'badge gold', text: `Lv ${d.level.level} · ${d.level.name}` }) : null),
       el('div', { class: 'card' },
         el('div', { class: 'kv' }, el('span', { text: t('prof_balance') }), el('b', { text: `${money(d.balance)} ${t('som')}` })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
@@ -2289,9 +2427,10 @@
   async function boot() {
     if (tg) {
       try { tg.ready(); tg.expand(); } catch (e) { /* */ }
-      try { tg.setHeaderColor('#0c1712'); tg.setBackgroundColor('#0c1712'); } catch (e) { /* eski versiyalar */ }
       try { if (tg.BackButton) tg.BackButton.onClick(goBack); } catch (e) { /* */ }
     }
+    applyTheme();
+    try { if (tg) tg.onEvent('themeChanged', applyTheme); } catch (e) { /* */ }
     if (!initData) return outsideTelegram();
     try {
       const me = await api('/me');

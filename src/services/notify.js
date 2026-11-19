@@ -65,4 +65,10 @@ async function adminIds() {
   return [...new Set([...config.adminIds, ...rows.map((r) => Number(r.telegram_id))])];
 }
 
-module.exports = { setApi, getApi, NOTIFICATIONS, isEnabled, toggle, sendRaw, toUser, adminIds };
+/** 🎉 Bayram animatsiyasi: Telegram bitta emojidan iborat xabarni katta animatsiya qilib ko'rsatadi (g'alaba, yutuq, daraja) */
+async function celebrate(user, emoji = '🎉') {
+  if (!user || user.is_blocked || !api) return false;
+  try { await api.sendMessage(user.telegram_id, emoji); return true; } catch (e) { return false; }
+}
+
+module.exports = { setApi, getApi, NOTIFICATIONS, isEnabled, toggle, sendRaw, toUser, adminIds, celebrate };
