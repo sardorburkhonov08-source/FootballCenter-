@@ -1206,8 +1206,7 @@
       el('div', { class: 'list' }, GAMES.map((g) => el('button', { class: 'item game-item', type: 'button', onclick: g.open },
         el('span', { class: 'game-ico', style: `--g:${g.grad || 'var(--grad)'}`, text: g.icon }),
         el('span', { class: 'grow' }, el('b', { text: g.title() }), el('div', { class: 'small muted', text: g.desc() })),
-        g.premium && !S.me.premium ? el('span', { class: 'badge gold', text: '💎' }) : el('span', { class: 'chev', text: '›' })))),
-      el('p', { class: 'small muted', style: 'margin:12px 2px', text: t('games_soon') }));
+        g.premium && !S.me.premium ? el('span', { class: 'badge gold', text: '💎' }) : el('span', { class: 'chev', text: '›' })))));
     // 🏆 Umumiy reyting (hamma o'yinlar points'i) — o'yinlar ro'yxatidan keyin; haftalik va oylik g'oliblar shu bo'yicha
     view.append(prizeBlock('overall'), leaderboardBlock('overall', { limit: 5, periods: ['daily', 'weekly', 'monthly'], title: t('lb_overall_title'), hint: t('lb_overall_hint') }));
   }
