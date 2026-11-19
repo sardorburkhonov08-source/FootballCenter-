@@ -440,5 +440,12 @@
   "a_set_penalty_daily_games": "Кунига пеналтй ўйинлари сони",
   "a_set_arcade_win_points": "Цроссбар/Keepy-уппй ғалабаси (points)",
   "a_set_arcade_draw_points": "Цроссбар/Keepy-уппй дуранги (points)",
-  "a_set_arcade_daily_games": "Кунига Цроссбар/Keepy-уппй ўйинлари (ҳар бири)"
+  "a_set_arcade_daily_games": "Кунига Цроссбар/Keepy-уппй ўйинлари (ҳар бири)",
+  "arcade_kind_crossbar": "Цроссбар чалленге",
+  "arcade_kind_keepy": "Кеепй-уппй",
+  "arcade_invite_msg": "🎮 <b>{name}</b> сизни «{kind}» ўйинида беллашувга чақирди! Иккалангиз бир хил шароитда ўйнайсиз — ким кўпроқ балл олса, ўша ғолиб. Қабул қилиш учун тугмани босинг 👇",
+  "btn_arcade_open": "🎮 Ўйинни очиш",
+  "a_set_arcade_pvp_win_points": "Цроссбар/Keepy-уппй рақиб билан ғалаба (points)",
+  "a_set_arcade_pvp_draw_points": "Цроссбар/Keepy-уппй рақиб билан дуранг (points)",
+  "a_set_arcade_pvp_daily_limit": "Кунига points берадиган рақибли ўйинлар (ҳар бири)"
 }

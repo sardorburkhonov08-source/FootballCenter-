@@ -265,11 +265,30 @@ function arcadeRoute(fn) {
     try {
       return res.json(await fn(req));
     } catch (e) {
-      if (e instanceof arcade.ArcadeError) return res.status(['bad_kind', 'bad_taps'].includes(e.message) ? 400 : 409).json({ error: e.message });
+      if (e instanceof arcade.ArcadeError) return res.status(['bad_kind', 'bad_taps', 'bad_mode'].includes(e.message) ? 400 : e.message === 'not_found' ? 404 : 409).json({ error: e.message });
       throw e;
     }
   });
 }
+const arcadeLink = (m) => (config.botUsername ? `https://t.me/${config.botUsername}?start=ag_${m.code}` : null);
+// Raqib bilan (match) — :kind marshrutlaridan oldin
+router.get('/arcade/match/:id', requirePremium, arcadeRoute(async (req) => {
+  const s = await arcade.matchDetail(req.user, req.params.id);
+  const m = await db.one('SELECT * FROM arcade_matches WHERE id = $1', [s.id]);
+  return { ...s, link: m.mode === 'invite' && m.status === 'waiting' ? arcadeLink(m) : null };
+}));
+router.post('/arcade/match/:id/start', requirePremium, arcadeRoute((req) => arcade.startMatchGame(req.user, req.params.id)));
+router.post('/arcade/match/:id/finish', requirePremium, express.json(), arcadeRoute((req) => arcade.finishMatchGame(req.user, req.params.id, req.body && req.body.taps)));
+router.get('/arcade/invite/:code', arcadeRoute((req) => arcade.invitePreview(req.user, req.params.code)));
+router.post('/arcade/invite/:code/join', requirePremium, arcadeRoute(async (req) => {
+  const m = await arcade.joinMatch(req.user, req.params.code);
+  return arcade.matchDetail(req.user, m.id);
+}));
+router.get('/arcade/:kind/matches', requirePremium, arcadeRoute((req) => arcade.listMatches(req.user, req.params.kind)));
+router.post('/arcade/:kind/match', requirePremium, express.json(), arcadeRoute(async (req) => {
+  const m = await arcade.createMatch(req.user, req.params.kind, req.body && req.body.mode);
+  return { ...(await arcade.matchDetail(req.user, m.id)), link: m.mode === 'invite' ? arcadeLink(m) : null };
+}));
 router.get('/arcade/:kind', requirePremium, arcadeRoute((req) => arcade.state(req.user, req.params.kind)));
 router.post('/arcade/:kind/start', requirePremium, arcadeRoute((req) => arcade.start(req.user, req.params.kind)));
 router.post('/arcade/:kind/finish', requirePremium, express.json(), arcadeRoute((req) => arcade.finish(req.user, req.params.kind, req.body && req.body.taps)));

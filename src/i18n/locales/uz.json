@@ -440,5 +440,12 @@
   "a_set_penalty_daily_games": "Kuniga penalty o'yinlari soni",
   "a_set_arcade_win_points": "Crossbar/Keepy-uppy g'alabasi (points)",
   "a_set_arcade_draw_points": "Crossbar/Keepy-uppy durangi (points)",
-  "a_set_arcade_daily_games": "Kuniga Crossbar/Keepy-uppy o'yinlari (har biri)"
+  "a_set_arcade_daily_games": "Kuniga Crossbar/Keepy-uppy o'yinlari (har biri)",
+  "arcade_kind_crossbar": "Crossbar challenge",
+  "arcade_kind_keepy": "Keepy-uppy",
+  "arcade_invite_msg": "🎮 <b>{name}</b> sizni «{kind}» o'yinida bellashuvga chaqirdi! Ikkalangiz bir xil sharoitda o'ynaysiz — kim ko'proq ball olsa, o'sha g'olib. Qabul qilish uchun tugmani bosing 👇",
+  "btn_arcade_open": "🎮 O'yinni ochish",
+  "a_set_arcade_pvp_win_points": "Crossbar/Keepy-uppy raqib bilan g'alaba (points)",
+  "a_set_arcade_pvp_draw_points": "Crossbar/Keepy-uppy raqib bilan durang (points)",
+  "a_set_arcade_pvp_daily_limit": "Kuniga points beradigan raqibli o'yinlar (har biri)"
 }

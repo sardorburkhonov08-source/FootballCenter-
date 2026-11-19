@@ -97,9 +97,10 @@ test/                   avtomatik testlar
 
 ## 💥 Crossbar challenge va ⚽ Keepy-uppy (egasi talabi bilan)
 
-- `src/services/arcade.js`, 017-migratsiya (`arcade_games`, `users.points_arcade`), Mini App → Games. **Faqat Premium.** Taymingli o'yinlar, botning natijasini yengish kerak (kattaroq — g'alaba, teng — durang).
+- `src/services/arcade.js`, 017-migratsiya (`arcade_games`, `users.points_arcade`), Mini App → Games. **Faqat Premium.** Taymingli o'yinlar: 🤖 botning natijasini yengish (kattaroq — g'alaba, teng — durang) yoki raqib bilan bellashuv.
 - **Crossbar**: 5 urinish; indikator 0—100 tebranadi (`pos = 50 − 50·cos(2πt/T)`, T har urinishda 1,1—1,8 s), crossbar — 75. Aniq (±2,5) — 3, ±6 — 2, ±12 — 1 ball. Bot: 6—10.
-- **Keepy-uppy**: to'p oyoqqa `t` ms da tushadi, ±`w` ms ichida bosish kerak; har safar tezlashadi (t 1300 → 420 ms, w 240 → 70 ms, ±10% tasodif). Natija — ketma-ket to'g'ri bosishlar. Bot: 8—16.
+- **Keepy-uppy**: to'p maydon bo'ylab uchadi va har safar boshqa joyga (`x`, 12—88%, oldingisidan kamida 15% uzoqda) tushadi; yerga tegish paytida (`t` ms, ±`w` ms) to'pning ustiga (±16%) bosish kerak (`taps: [{ ms, x }]`). Har safar tezlashadi (t 1300 → 420 ms, w 240 → 70 ms, ±10% tasodif). Natija — ketma-ket to'g'ri bosishlar. Bot: 8—16.
+- **Raqib bilan** (018-migratsiya `arcade_matches`, `arcade_games.match_id`): 🎲 tasodifiy yoki 🤝 do'st (havola `t.me/<bot>?start=ag_<kod>` → bot taklif xabari, Mini App `/app/?ag=<kod>`; yangi foydalanuvchi referral bo'ladi). Ikkalasi bir xil parametrlarda (match.params) bir martadan o'ynaydi, 24 soat; ko'proq ball — g'olib. Points: `arcade_pvp_win_points` (5), `arcade_pvp_draw_points` (2), kuniga `arcade_pvp_daily_limit` (10) ta match points beradi; botga qarshi limitga kirmaydi. Natija ikkalasiga botda. Fon vazifasi `arcade.tick`: muddati tugagan kutayotgan — bekor, faol — o'ynagani yutadi (o'ynamagan — 0).
 - O'yin brauzerda o'ynaladi: server parametrlarni beradi, o'yinchi oxirida bosish vaqtlarini (`taps`, ms) yuboradi, natija serverda shu formulalar bilan qayta hisoblanadi; har o'yin bir marta yakunlanadi.
 - Points: g'alaba `arcade_win_points` (3), durang `arcade_draw_points` (1); har tur uchun kuniga `arcade_daily_games` (3) o'yin (bot admin → 🎮 O'yinlar sozlamalari). Umumiy points'ga qo'shiladi, har birining o'z reytingi (`leaderboard` kind `crossbar` / `keepy`).
 

@@ -108,7 +108,7 @@ test('i18n: koddagi barcha kalitlar 4 tilda mavjud', () => {
 
 test('har bir bot xabari emoji bilan boshlanadi', () => {
   const noEmoji = [];
-  const exempt = /^(sum|none|anonymous|dur_|tariff_free$|tariff_premium|a_set_|a_on|a_off|a_none|a_type_|a_premium_only_tag|a_owner_tag|period_|place_none|a_promo_line|ref_league_line|donation_channel_comment|a_btn_card_|a_btn_promo_|a_btn_faq_delete|a_btn_remove|sub_channel_btn|ref_step3_|region_|card_|share_|ach_(?!unlocked)|duel_kind_|a_fancard_(photo_yes|photo_no|birth_year)$)/;
+  const exempt = /^(sum|none|anonymous|dur_|tariff_free$|tariff_premium|a_set_|a_on|a_off|a_none|a_type_|a_premium_only_tag|a_owner_tag|period_|place_none|a_promo_line|ref_league_line|donation_channel_comment|a_btn_card_|a_btn_promo_|a_btn_faq_delete|a_btn_remove|sub_channel_btn|ref_step3_|region_|card_|share_|ach_(?!unlocked)|duel_kind_|arcade_kind_|a_fancard_(photo_yes|photo_no|birth_year)$)/;
   for (const lang of ['uz', 'ru', 'en', 'uz_cyrl']) {
     for (const [k, v] of Object.entries(LOCALES[lang])) {
       if (exempt.test(k)) continue;

@@ -57,6 +57,19 @@ async function sendDuelInvite(ctx, code) {
   });
 }
 
+/** 💥/⚽ Do'stning Crossbar / Keepy-uppy taklifi: t.me/<bot>?start=ag_<kod> */
+async function sendArcadeInvite(ctx, code) {
+  const m = await require('../../services/arcade').byCode(code);
+  if (!m || m.mode !== 'invite') return;
+  const creator = await users.byId(m.creator_id);
+  if (ctx.userCreated && creator && creator.ref_code) await referral.attach(ctx.user, creator.ref_code).catch(() => {});
+  const lang = ctx.lang || 'uz';
+  const url = config.webAppUrl ? `${config.webAppUrl}/?ag=${encodeURIComponent(code)}` : null;
+  await ctx.reply(t(lang, 'arcade_invite_msg', { name: users.displayName(creator), kind: t(lang, `arcade_kind_${m.kind}`) }), {
+    ...ui.HTML, reply_markup: url ? { inline_keyboard: [[{ text: t(lang, 'btn_arcade_open'), web_app: { url } }]] } : undefined,
+  });
+}
+
 async function onStart(ctx) {
   await state.clear(ctx.from.id);
   const payload = (ctx.match || '').trim();
@@ -70,6 +83,7 @@ async function onStart(ctx) {
   await afterSubscription(ctx);
   // ⚔️ Do'stning duel taklifi: t.me/<bot>?start=duel_<kod> — Mini App'da duel ochiladi
   if (payload.startsWith('duel_')) await sendDuelInvite(ctx, payload.slice(5));
+  if (payload.startsWith('ag_')) await sendArcadeInvite(ctx, payload.slice(3));
   return undefined;
 }
 

@@ -324,6 +324,7 @@ input[type=search].input { margin-bottom: 4px; }
   background: linear-gradient(180deg, #123122 0%, #1f7a3e 70%, #23863f 100%); }
 .ku-count { position: absolute; top: 10px; right: 14px; font-size: 34px; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
 .ku-ball { position: absolute; left: 50%; top: 4%; transform: translateX(-50%); font-size: 46px; pointer-events: none; }
-.ku-foot { position: absolute; left: 50%; bottom: 2%; transform: translateX(-50%); font-size: 44px; pointer-events: none; }
+.ku-kick { position: absolute; bottom: 3%; transform: translateX(-50%); font-size: 40px; pointer-events: none; animation: ku-kick .45s ease-out forwards; }
+@keyframes ku-kick { 0% { opacity: 1; transform: translateX(-50%) translateY(0) rotate(-20deg); } 100% { opacity: 0; transform: translateX(-50%) translateY(-18px) rotate(10deg); } }
 .ku-field::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 15%; background: linear-gradient(180deg, transparent, rgba(242, 201, 76, .12)); pointer-events: none; }
-.ku-hint { position: absolute; left: 0; right: 0; top: 42%; text-align: center; font-weight: 800; font-size: 18px; color: #fff; pointer-events: none; }
+.ku-hint { position: absolute; left: 16px; right: 16px; top: 40%; text-align: center; font-weight: 800; font-size: 18px; color: #fff; pointer-events: none; }
