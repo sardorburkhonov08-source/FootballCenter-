@@ -472,5 +472,21 @@
   "digest_bonus": "🎁 Your bonus is ready — ⚽ score for ×2!",
   "digest_footer": "Come and play 👇",
   "btn_digest_play": "🎮 Play",
-  "kind_overall": "🏆 Overall ranking"
+  "kind_overall": "🏆 Overall ranking",
+  "mc_morning": "Good morning, {name}!",
+  "mc_day": "Good afternoon, {name}!",
+  "mc_evening": "Good evening, {name}!",
+  "mc_night": "Good night, {name}!",
+  "mc_next": "{left} points to level {n}",
+  "mc_max": "Top level!",
+  "mc_points": "Points",
+  "mc_place": "Weekly place",
+  "mc_streak": "Streak",
+  "mc_days": "{n} days",
+  "mc_quests": "Daily quests {done}/{total}",
+  "mc_quests_done": "Today's quests done!",
+  "mc_quests_locked": "Daily quests — with Premium",
+  "mc_premium": "PREMIUM · until {date}",
+  "mc_free": "FREE PLAN",
+  "a_set_menu_image_enabled": "Main menu with image"
 }

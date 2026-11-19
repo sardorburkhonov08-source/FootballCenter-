@@ -474,5 +474,21 @@
   "digest_bonus": "🎁 Bonusingiz tayyor — ⚽ gol bo'lsa ×2!",
   "digest_footer": "Kirib o'ynang 👇",
   "btn_digest_play": "🎮 O'ynash",
-  "kind_overall": "🏆 Umumiy reyting"
+  "kind_overall": "🏆 Umumiy reyting",
+  "mc_morning": "Xayrli tong, {name}!",
+  "mc_day": "Xayrli kun, {name}!",
+  "mc_evening": "Xayrli kech, {name}!",
+  "mc_night": "Xayrli tun, {name}!",
+  "mc_next": "{n}-darajagacha {left} points",
+  "mc_max": "Eng yuqori daraja!",
+  "mc_points": "Points",
+  "mc_place": "Haftalik o'rin",
+  "mc_streak": "Ketma-ket",
+  "mc_days": "{n} kun",
+  "mc_quests": "Kunlik vazifalar {done}/{total}",
+  "mc_quests_done": "Bugungi vazifalar bajarildi!",
+  "mc_quests_locked": "Kunlik vazifalar — Premium bilan",
+  "mc_premium": "PREMIUM · {date} gacha",
+  "mc_free": "ODDIY TARIF",
+  "a_set_menu_image_enabled": "Bosh menyu rasm bilan"
 }

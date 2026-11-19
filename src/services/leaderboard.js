@@ -134,7 +134,10 @@ function label(row, kind) {
 async function board(kind, period, userId, top = 30) {
   const r = range(period);
   const rows = await ranking(kind, r);
-  const list = rows.slice(0, top).map((row, i) => ({ place: i + 1, name: label(row, kind), points: row.points, me: row.id === userId }));
+  const slice = rows.slice(0, top);
+  // Profil rasmlari (podium uchun) — bitta so'rov
+  const photos = slice.length ? new Map((await db.many('SELECT id, photo_url FROM users WHERE id = ANY($1::bigint[])', [slice.map((x) => x.id)])).map((x) => [Number(x.id), x.photo_url])) : new Map();
+  const list = slice.map((row, i) => ({ place: i + 1, name: label(row, kind), points: row.points, me: row.id === userId, photo: photos.get(Number(row.id)) || null }));
   const idx = rows.findIndex((row) => row.id === userId);
   return {
     period, start: r.start, end: r.end, top: list,

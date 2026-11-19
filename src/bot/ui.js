@@ -90,9 +90,30 @@ function mainMenuKb(lang, user) {
   return kb(rows);
 }
 
+/** Rasmli ekran (bosh menyu): yangi rasm yuboriladi, oldingi ekran va bosilgan xabar o'chiriladi */
+async function showPhoto(ctx, png, caption, markup) {
+  const { InputFile } = require('grammy');
+  const chatId = ctx.chat.id;
+  const prev = lastScreen.get(chatId);
+  const cbMsg = ctx.callbackQuery && ctx.callbackQuery.message;
+  const sent = await ctx.replyWithPhoto(new InputFile(png, 'menu.png'), { caption, parse_mode: 'HTML', reply_markup: markup });
+  const sentId = sent && sent.message_id;
+  for (const id of new Set([prev, cbMsg && cbMsg.message_id])) if (id && id !== sentId) ctx.api.deleteMessage(chatId, id).catch(() => {});
+  if (sentId) { lastScreen.delete(chatId); lastScreen.set(chatId, sentId); }
+}
+
+/** 🏠 Bosh menyu: shaxsiy karta-rasm bilan (settings.menu_image_enabled), xato bo'lsa — matn */
 async function showMenu(ctx) {
   const lang = ctx.lang;
-  await show(ctx, t(lang, 'menu_title', { name: ctx.from.first_name || '' }), mainMenuKb(lang, ctx.user));
+  const caption = t(lang, 'menu_title', { name: ctx.from.first_name || '' });
+  const markup = mainMenuKb(lang, ctx.user);
+  if (await require('../services/settings').get('menu_image_enabled')) {
+    try {
+      const png = await require('../services/menuCard').renderPng(ctx.user);
+      return await showPhoto(ctx, png, caption, markup);
+    } catch (e) { console.error('[menu image]', e.message); }
+  }
+  return show(ctx, caption, markup);
 }
 
 /** Davomiylik: "3 soat 20 daqiqa" */
@@ -103,4 +124,4 @@ function duration(lang, ms) {
   return h ? t(lang, 'dur_hm', { h, m }) : t(lang, 'dur_m', { m });
 }
 
-module.exports = { btn, urlBtn, kb, grid, HTML, show, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, duration };
+module.exports = { btn, urlBtn, kb, grid, HTML, show, showPhoto, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, duration };

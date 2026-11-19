@@ -474,5 +474,21 @@
   "digest_bonus": "🎁 Бонусингиз тайёр — ⚽ гол бўлса ×2!",
   "digest_footer": "Кириб ўйнанг 👇",
   "btn_digest_play": "🎮 Ўйнаш",
-  "kind_overall": "🏆 Умумий рейтинг"
+  "kind_overall": "🏆 Умумий рейтинг",
+  "mc_morning": "Хайрли тонг, {name}!",
+  "mc_day": "Хайрли кун, {name}!",
+  "mc_evening": "Хайрли кеч, {name}!",
+  "mc_night": "Хайрли тун, {name}!",
+  "mc_next": "{n}-даражагача {left} points",
+  "mc_max": "Энг юқори даража!",
+  "mc_points": "Points",
+  "mc_place": "Ҳафталик ўрин",
+  "mc_streak": "Кетма-кет",
+  "mc_days": "{n} кун",
+  "mc_quests": "Кунлик вазифалар {done}/{total}",
+  "mc_quests_done": "Бугунги вазифалар бажарилди!",
+  "mc_quests_locked": "Кунлик вазифалар — Premium билан",
+  "mc_premium": "ПРЕМИУМ · {date} гача",
+  "mc_free": "ОДДИЙ ТАРИФ",
+  "a_set_menu_image_enabled": "Бош меню расм билан"
 }

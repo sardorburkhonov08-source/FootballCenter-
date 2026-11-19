@@ -50,7 +50,7 @@ function footballRoute(fn) {
 function publicUser(u) {
   return {
     id: u.telegram_id, firstName: u.first_name, lastName: u.last_name, username: u.username, language: u.language || 'uz',
-    premium: users.isPremium(u), premiumExpiresAt: u.premium_expires_at, isAdmin: users.isAdmin(u), coachName: u.coach_name,
+    premium: users.isPremium(u), premiumExpiresAt: u.premium_expires_at, isAdmin: users.isAdmin(u), coachName: u.coach_name, photoUrl: u.photo_url || null,
   };
 }
 
@@ -122,7 +122,10 @@ router.post('/stats/league/:id', wrap(async (req, res) => {
 router.get('/matches/:id', requirePremium, footballRoute(async (req) => {
   const d = await football.matchDetail(req.params.id);
   if (d.competition) track(req, d.competition.id);
-  return d;
+  // 🎨 O'yin sahifasi sarlavhasi — ikkala klubning rasmiy ranglarida (topilmasa — standart)
+  const colors = async (team) => (team && team.id ? fancard.clubColors(team.id, team.crest).then((c) => c.primary).catch(() => null) : null);
+  const [home, away] = await Promise.all([colors(d.home), colors(d.away)]);
+  return { ...d, colors: { home, away } };
 }));
 
 // ⚽ O'yin boshlanishidan 15 daqiqa oldin eslatma (Premium)
@@ -390,6 +393,20 @@ router.post('/community/:id/posts', express.json(), communityRoute(async (req) =
 router.post('/community/posts/:postId/react', express.json(), communityRoute(async (req) => community.react(req.user, req.params.postId, req.body && req.body.reaction)));
 router.delete('/community/posts/:postId', communityRoute(async (req) => { await community.deletePost(req.user, req.params.postId); return { ok: true }; }));
 
+/** 🎨 Sevimli klub rangi (muxlislik kartasidagi klub): Mini App aksent rangi shu klub rangiga o'zgaradi */
+async function clubTheme(u) {
+  const card = await fancard.cardRow(u.id);
+  if (!card) return null;
+  const col = await fancard.clubColors(card.team_id, card.team_logo);
+  const { lighten, luminance, textOn } = fancard.colorUtils;
+  // Qorong'i fonda yorqinroq, yorug' fonda to'qroq bo'lsin (o'qiladigan kontrast)
+  let dark = col.primary;
+  for (let i = 0; i < 6 && luminance(dark) < 0.32; i += 1) dark = lighten(dark, 0.18);
+  let light = col.primary;
+  for (let i = 0; i < 6 && luminance(light) > 0.42; i += 1) light = lighten(light, -0.18);
+  return { team: card.team_name, primary: col.primary, secondary: col.secondary, dark, light, inkDark: textOn(dark), inkLight: textOn(light) };
+}
+
 // ---------- ✅ Bugun: daraja va kunlik vazifalar (Home va Games sahifalari tepasida)
 router.get('/today', wrap(async (req, res) => {
   await levels.check(req.user.id).catch(() => {});
@@ -398,6 +415,7 @@ router.get('/today', wrap(async (req, res) => {
     level: await levels.forUser(u, u.language || 'uz'),
     points: users.totalPoints(u),
     quests: users.isPremium(u) ? await quests.today(u) : null,
+    club: users.isPremium(u) ? await clubTheme(u).catch(() => null) : null,
   });
 }));
 router.post('/quests/claim', requirePremium, wrap(async (req, res) => {
@@ -443,6 +461,11 @@ router.get('/profile', wrap(async (req, res) => {
               count(*) FILTER (WHERE result = 'loss')::int AS losses FROM duel_results WHERE user_id = $1`, [u.id])) } : null,
     achievements: await achievements.forUser(u.id, u.language || 'uz'),
     level: await levels.forUser(u, u.language || 'uz'),
+    overall: {
+      points: users.totalPoints(u),
+      weekPlace: ((await leaderboard.board('overall', 'weekly', u.id, 0)).me || {}).place || null,
+      streak: users.isPremium(u) ? (await quests.today(u)).streak : 0,
+    },
   });
 }));
 

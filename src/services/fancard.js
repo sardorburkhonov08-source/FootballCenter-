@@ -673,4 +673,5 @@ module.exports = {
   imagePath, verifyImagePath, cardSvg, renderPng, samplePng, clearImageCache, FONT_FILES,
   // 📤 Natija kartasi (shareCard.js) uchun umumiy chizish yordamchilari
   draw: { esc, up, fit, num, toPng, plainT, cached, D, I },
+  colorUtils: { lighten: shade, luminance, textOn },
 };

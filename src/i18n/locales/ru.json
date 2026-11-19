@@ -472,5 +472,21 @@
   "digest_bonus": "🎁 Бонус готов — ⚽ гол и ×2!",
   "digest_footer": "Заходите играть 👇",
   "btn_digest_play": "🎮 Играть",
-  "kind_overall": "🏆 Общий рейтинг"
+  "kind_overall": "🏆 Общий рейтинг",
+  "mc_morning": "Доброе утро, {name}!",
+  "mc_day": "Добрый день, {name}!",
+  "mc_evening": "Добрый вечер, {name}!",
+  "mc_night": "Доброй ночи, {name}!",
+  "mc_next": "до {n} уровня {left} points",
+  "mc_max": "Максимальный уровень!",
+  "mc_points": "Points",
+  "mc_place": "Место недели",
+  "mc_streak": "Подряд",
+  "mc_days": "{n} дн.",
+  "mc_quests": "Задания дня {done}/{total}",
+  "mc_quests_done": "Задания на сегодня выполнены!",
+  "mc_quests_locked": "Задания дня — с Premium",
+  "mc_premium": "PREMIUM · до {date}",
+  "mc_free": "ОБЫЧНЫЙ ТАРИФ",
+  "a_set_menu_image_enabled": "Главное меню с картинкой"
 }

@@ -44,6 +44,8 @@ const DEFAULTS = {
   quest_streak_max: 7,
   // 📈 Shaxsiy daraja: 2, 3, ... darajalar uchun kerakli jami points
   user_level_xp: [30, 80, 150, 250, 400, 600, 850, 1200, 1700, 2400, 3300, 4500],
+  // 🖼 Botdagi bosh menyu shaxsiy karta-rasm bilan
+  menu_image_enabled: true,
   // 🎯 Hisobni top
   score_exact_points: 5,
   score_outcome_points: 2,

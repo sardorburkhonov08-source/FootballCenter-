@@ -8,18 +8,25 @@ function newRefCode() {
 }
 
 /** Telegram `from` obyektidan foydalanuvchini yaratish/yangilash. { user, created } */
+/** Telegram profil rasmi (faqat Mini App initData'da keladi; faqat https://t.me/ manzillari) */
+function photoOf(from) {
+  const u = from && from.photo_url;
+  return typeof u === 'string' && /^https:\/\/t\.me\/[^\s"'<>]{1,400}$/.test(u) ? u : null;
+}
+
 async function upsertFromTelegram(from) {
   const existing = await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]);
+  const photo = photoOf(from);
   if (existing) {
     // Bazaga keraksiz yozuv yubormaslik: ism o'zgarmagan va oxirgi faollik 5 daqiqadan yangi bo'lsa — yozmaymiz
     const same = existing.username === (from.username || null) && existing.first_name === (from.first_name || null)
-      && existing.last_name === (from.last_name || null);
+      && existing.last_name === (from.last_name || null) && (!photo || photo === existing.photo_url);
     const recent = existing.last_seen_at && Date.now() - new Date(existing.last_seen_at).getTime() < 5 * 60 * 1000;
     if (same && recent) return { user: existing, created: false };
     const user = await db.one(
-      `UPDATE users SET username = $2, first_name = $3, last_name = $4, last_seen_at = now()
+      `UPDATE users SET username = $2, first_name = $3, last_name = $4, photo_url = COALESCE($5, photo_url), last_seen_at = now()
        WHERE telegram_id = $1 RETURNING *`,
-      [from.id, from.username || null, from.first_name || null, from.last_name || null],
+      [from.id, from.username || null, from.first_name || null, from.last_name || null, photo],
     );
     return { user, created: false };
   }
@@ -27,10 +34,10 @@ async function upsertFromTelegram(from) {
   for (let i = 0; i < 5; i += 1) {
     try {
       const user = await db.one(
-        `INSERT INTO users (telegram_id, username, first_name, last_name, ref_code, is_admin, last_seen_at)
-         VALUES ($1, $2, $3, $4, $5, $6, now())
+        `INSERT INTO users (telegram_id, username, first_name, last_name, ref_code, is_admin, photo_url, last_seen_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, now())
          ON CONFLICT (telegram_id) DO NOTHING RETURNING *`,
-        [from.id, from.username || null, from.first_name || null, from.last_name || null, newRefCode(), isOwner],
+        [from.id, from.username || null, from.first_name || null, from.last_name || null, newRefCode(), isOwner, photo],
       );
       if (user) return { user: await welcomePremium(user), created: true };
       return { user: await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]), created: false };
