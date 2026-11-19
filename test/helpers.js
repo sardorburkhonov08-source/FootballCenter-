@@ -21,6 +21,8 @@ async function resetDb() {
   settings.invalidate();
   // Testlarda yangi foydalanuvchi standart holatda Oddiy tarifda (sovg'a Premium alohida testda)
   await settings.set('welcome_premium_days', 0);
+  // Bosh menyu testlarda matn ko'rinishida (rasmli menyu alohida testda)
+  await settings.set('menu_image_enabled', false);
 }
 
 /** grammY bot + barcha API chaqiruvlarini yozib boruvchi soxta API */

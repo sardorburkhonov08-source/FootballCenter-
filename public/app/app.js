@@ -11,6 +11,7 @@
   const S = {
     me: null, botUsername: null, tab: 'home', homeSub: 'matches', date: null,
     stacks: { home: [], games: [], community: [], profile: [] },
+    scores: {},
     lb: { overall: 'daily', manager: 'weekly', quiz: 'weekly', score: 'weekly', duel: 'weekly', penalty: 'weekly', crossbar: 'weekly', keepy: 'weekly' },
     prizeRotate: 15,
     expanded: new Set(),
@@ -244,8 +245,10 @@
 
   // ---------------- Navigatsiya
   function currentStack() { return S.stacks[S.tab]; }
-  function push(page) { currentStack().push(page); haptic(); render(); }
-  function goBack() { if (currentStack().length) { currentStack().pop(); render(); } }
+  // ✨ Sahifalar surilib ochiladi (oldinga — o'ngdan, orqaga — chapdan)
+  let navDir = '';
+  function push(page) { currentStack().push(page); haptic(); navDir = 'fwd'; render(); }
+  function goBack() { if (currentStack().length) { currentStack().pop(); navDir = 'back'; render(); } }
 
   function updateBackButton() {
     if (!tg || !tg.BackButton) return;
@@ -264,6 +267,8 @@
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === S.tab));
     const view = $('view');
     view.replaceChildren();
+    view.classList.remove('nav-fwd', 'nav-back');
+    if (navDir) { void view.offsetWidth; view.classList.add(`nav-${navDir}`); navDir = ''; }
     const stack = currentStack();
     const page = stack[stack.length - 1];
     updateBackButton();
@@ -272,6 +277,81 @@
     return ({ home: renderHome, games: renderGames, community: renderCommunity, profile: renderProfile })[S.tab](view);
   }
 
+
+
+  // ================= 🖼 Avatar, 🔊 ovozlar, 🎨 klub rangi
+  function avatar(url, name, cls = '') {
+    const letter = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
+    if (!url) return el('span', { class: `ava ${cls}`, text: letter });
+    const img = el('img', { class: `ava ${cls}`, src: url, alt: '', referrerpolicy: 'no-referrer', loading: 'lazy' });
+    img.addEventListener('error', () => img.replaceWith(el('span', { class: `ava ${cls}`, text: letter })));
+    return img;
+  }
+
+  /** O'yin ovozlari — WebAudio bilan sintez qilinadi (fayl yuklanmaydi). Profil → 🔊 dan o'chiriladi. */
+  const SFX = (() => {
+    let ctx = null;
+    const on = () => { try { return localStorage.getItem('fc_sound') !== 'off'; } catch (e) { return true; } };
+    const ac = () => { if (!ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; ctx = new A(); } if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+    const tone = (freq, dur, { type = 'sine', vol = 0.18, slide = 0, delay = 0 } = {}) => {
+      const a = ac(); if (!a) return;
+      const t0 = a.currentTime + delay;
+      const o = a.createOscillator(); const g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t0);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t0 + dur);
+      g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    };
+    const noise = (dur, vol = 0.25) => {
+      const a = ac(); if (!a) return;
+      const buf = a.createBuffer(1, Math.floor(a.sampleRate * dur), a.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const src = a.createBufferSource(); const g = a.createGain(); const f = a.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = vol;
+      src.buffer = buf; src.connect(f).connect(g).connect(a.destination); src.start();
+    };
+    const play = {
+      none: () => { ac(); },
+      kick: () => { noise(0.08, 0.35); tone(140, 0.12, { type: 'triangle', vol: 0.3, slide: -80 }); },
+      goal: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, { type: 'triangle', vol: 0.16, delay: i * 0.09 })); },
+      save: () => { tone(330, 0.25, { type: 'sawtooth', vol: 0.08, slide: -150 }); },
+      whistle: () => { tone(2600, 0.18, { vol: 0.08 }); tone(2600, 0.32, { vol: 0.08, delay: 0.22 }); },
+      tick: () => tone(880, 0.05, { type: 'square', vol: 0.05 }),
+      win: () => { [392, 523, 659, 784].forEach((f, i) => tone(f, 0.3, { type: 'triangle', vol: 0.15, delay: i * 0.12 })); },
+      lose: () => { tone(300, 0.3, { type: 'triangle', vol: 0.12, slide: -120 }); tone(200, 0.4, { type: 'triangle', vol: 0.1, delay: 0.25, slide: -80 }); },
+    };
+    return {
+      on,
+      set(v) { try { localStorage.setItem('fc_sound', v ? 'on' : 'off'); } catch (e) { /* */ } },
+      play(name) { if (!on()) return; try { play[name] && play[name](); } catch (e) { /* */ } },
+    };
+  })();
+
+  /** 🎨 Sevimli klub rangi: Mini App aksenti foydalanuvchining klubi rangida (muxlislik kartasi bo'lsa) */
+  function applyClub(club) {
+    const root = document.documentElement;
+    try { if (club) localStorage.setItem('fc_club', JSON.stringify(club)); else localStorage.removeItem('fc_club'); } catch (e) { /* */ }
+    if (!club) { ['--accent', '--accent-ink', '--grad'].forEach((k) => root.style.removeProperty(k)); return; }
+    const light = root.dataset.theme === 'light';
+    const c = light ? club.light : club.dark;
+    root.style.setProperty('--accent', c);
+    root.style.setProperty('--accent-ink', light ? club.inkLight : club.inkDark);
+    root.style.setProperty('--grad', `linear-gradient(135deg, ${c} 0%, ${club.primary} 60%, ${club.secondary || club.primary} 140%)`);
+  }
+  function applySavedClub() { try { const c = JSON.parse(localStorage.getItem('fc_club') || 'null'); if (c) applyClub(c); } catch (e) { /* */ } }
+
+  /** Daraja halqasi (SVG) — profil rasmi atrofida */
+  function levelRing(url, name, pct) {
+    const r = 46; const c = 2 * Math.PI * r;
+    const ring = el('span', { class: 'ring' });
+    ring.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="6"/>`
+      + `<circle class="ring-fill" cx="50" cy="50" r="${r}" fill="none" stroke="url(#ringg)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" transform="rotate(-90 50 50)"/>`
+      + '<defs><linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7d774"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs></svg>';
+    ring.append(avatar(url, name, 'big'));
+    setTimeout(() => { const f = ring.querySelector('.ring-fill'); if (f) f.style.strokeDashoffset = String(c * (1 - Math.max(0.02, Math.min(1, pct)))); }, 80);
+    return ring;
+  }
 
   // ================= ✨ Effektlar: 🎉 konfetti, raqamlarni sanab chiqish, Telegram mavzusi
   function confetti() {
@@ -301,7 +381,25 @@
       };
       requestAnimationFrame(frame);
       haptic('success');
+      SFX.play('win');
     } catch (e) { /* */ }
+  }
+
+  const MASCOT = '<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="56" r="40" fill="#f4f7f5" stroke="#1d2b23" stroke-width="3"/>'
+    + '<path d="M60 30l13 9-5 15H52l-5-15z" fill="#1d2b23"/><path d="M27 52l13-4 7 15-8 12-13-6zM93 52l-13-4-7 15 8 12 13-6z" fill="#1d2b23" opacity=".85"/>'
+    + '<circle cx="48" cy="66" r="5" fill="#1d2b23"/><circle cx="72" cy="66" r="5" fill="#1d2b23"/><circle cx="50" cy="64" r="1.6" fill="#fff"/><circle cx="74" cy="64" r="1.6" fill="#fff"/>'
+    + '<path d="M50 79q10 8 20 0" fill="none" stroke="#1d2b23" stroke-width="3" stroke-linecap="round"/>'
+    + '<path d="M24 92q-8 8-2 16M96 92q8 8 2 16" fill="none" stroke="#2ecc71" stroke-width="6" stroke-linecap="round"/><ellipse cx="60" cy="112" rx="26" ry="5" fill="#000" opacity=".18"/></svg>';
+  /** "📭 Hali yo'q" kartalari — futbol personaji va matn bilan */
+  function emptyState(node) {
+    if (node.dataset.empty || !/^📭/.test(node.textContent.trim()) || node.children.length) return;
+    node.dataset.empty = '1';
+    const text = node.textContent.trim().replace(/^📭\s*/, '');
+    node.classList.add('empty');
+    node.innerHTML = '';
+    const pic = el('div', { class: 'mascot' });
+    pic.innerHTML = MASCOT;
+    node.append(pic, el('div', { text }));
   }
 
   /** Statistikadagi raqamlar 0 dan sanab chiqadi (bir marta) */
@@ -325,6 +423,10 @@
       for (const m of muts) for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         n.querySelectorAll && n.querySelectorAll('.stat b, .count-up').forEach(countUp);
+        // 📭 Bo'sh holatlar — futbol personaji bilan
+        const empties = n.matches && n.matches('.card.center.muted, .center.muted') ? [n] : [];
+        if (n.querySelectorAll) n.querySelectorAll('.card.center.muted, .center.muted').forEach((x) => empties.push(x));
+        empties.forEach(emptyState);
       }
     }).observe(document.getElementById('view'), { childList: true, subtree: true });
   } catch (e) { /* */ }
@@ -337,6 +439,7 @@
     try { tg.setHeaderColor(bg); tg.setBackgroundColor(bg); if (tg.setBottomBarColor) tg.setBottomBarColor(bg); } catch (e) { /* eski versiyalar */ }
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', bg);
+    applySavedClub();
   }
 
   // ================= ✅ BUGUN: salom, daraja va kunlik vazifalar (Home va Games tepasida)
@@ -352,6 +455,7 @@
     const draw = async () => {
       let d;
       try { d = await api('/today', { fresh: true }); } catch (e) { box.remove(); return; }
+      applyClub(d.club || null);
       const lv = d.level;
       // Yangi daraja — 🎉
       try {
@@ -533,8 +637,13 @@
         return undefined;
       });
     }
-    const card = el('div', { class: 'match', role: 'button' },
-      el('div', { class: 'teams' }, teamLine(m.home, m.score.home), teamLine(m.away, m.score.away)),
+    // ⚽ Gol bo'lsa hisob bir lahza yonadi (oldingi ko'rilgan hisob bilan solishtiriladi)
+    const scoreKey = `${m.score.home}:${m.score.away}`;
+    const flash = m.state === 'live' && S.scores[m.id] && S.scores[m.id] !== scoreKey;
+    if (started) S.scores[m.id] = scoreKey;
+    const card = el('div', { class: `match${m.state === 'live' ? ' live' : ''}${flash ? ' flash' : ''}`, role: 'button' },
+      el('div', { class: 'teams' }, teamLine(m.home, m.score.home), teamLine(m.away, m.score.away),
+        m.state === 'live' ? el('div', { class: 'live-bar' }, el('span', { style: `width:${Math.min(100, Math.round(((m.minute || 0) / 90) * 100))}%` }), el('em', { text: m.minute ? `${m.minute}'` : '' })) : null),
       el('div', { class: 'side' },
         m.state === 'scheduled' ? el('span', { class: 'time', text: showDate ? `${ddmm(m.utcDate)} ${hhmm(m.utcDate)}` : hhmm(m.utcDate) }) : statusBadge(m),
         showDate && m.state !== 'scheduled' ? el('span', { class: 'small muted', text: ddmm(m.utcDate) }) : null,
@@ -652,8 +761,10 @@
       return;
     }
     const started = m.state !== 'scheduled';
-    const head = el('div', { class: 'card' },
-      el('div', { class: 'row between small muted', style: 'margin-bottom:10px' }, el('span', { class: 'ellipsis', text: m.competition ? m.competition.name : '' }), statusBadge(m)),
+    const hc = (m.colors && m.colors.home) || '#1e8f4e';
+    const ac = (m.colors && m.colors.away) || '#0f2f20';
+    const head = el('div', { class: 'card match-hero', style: `background:linear-gradient(115deg, ${hc} 0%, ${hc}cc 30%, #0c1712 50%, ${ac}cc 70%, ${ac} 100%)` },
+      el('div', { class: 'row between small', style: 'margin-bottom:10px;opacity:.9' }, el('span', { class: 'ellipsis', text: m.competition ? m.competition.name : '' }), statusBadge(m)),
       el('div', { class: 'scoreboard' },
         el('div', null, crest(m.home.crest), el('div', { style: 'font-weight:700', text: m.home.name })),
         el('div', null, el('div', { class: 'big', text: started ? `${m.score.home ?? '-'} : ${m.score.away ?? '-'}` : hhmm(m.utcDate) }),
@@ -799,14 +910,24 @@
         list.replaceChildren();
         list.append(el('div', { class: 'small muted', style: 'margin-bottom:4px', text: `${ddmmyyyy(d.start)} – ${ddmmyyyy(new Date(new Date(d.end).getTime() - 60000).toISOString())}` }));
         if (!d.top.length) list.append(el('div', { class: 'center muted', style: 'padding:16px 0', text: t('lb_empty') }));
-        const rows = opts.limit && !wrap.expanded ? d.top.slice(0, opts.limit) : d.top;
+        // 🏆 Podium: TOP-3 shohsupada (profil rasmlari bilan), qolganlar ro'yxatda
+        const podium = d.top.slice(0, 3);
+        if (podium.length) {
+          const order = [podium[1], podium[0], podium[2]].filter(Boolean);
+          list.append(el('div', { class: 'podium' }, order.map((r) => el('div', { class: `pod p${r.place}${r.me ? ' me' : ''}` },
+            el('span', { class: 'pod-ava' }, avatar(r.photo, r.name), el('span', { class: 'pod-medal', text: ['🥇', '🥈', '🥉'][r.place - 1] })),
+            el('b', { class: 'ellipsis pod-name', text: r.name }), el('span', { class: 'pod-pts', text: money(r.points) }),
+            el('div', { class: 'pod-step', text: String(r.place) })))));
+        }
+        const rest = d.top.slice(3);
+        const rows = opts.limit && !wrap.expanded ? rest.slice(0, Math.max(0, opts.limit - 3)) : rest;
         for (const r of rows) {
           list.append(el('div', { class: `lb-row${r.place === 1 ? ' top1' : ''}${r.me ? ' me' : ''}` },
             el('span', { class: 'pl', text: r.place === 1 ? '🥇' : r.place === 2 ? '🥈' : r.place === 3 ? '🥉' : r.place }),
             el('span', { class: 'grow ellipsis', text: r.name }), el('span', { class: 'pts', text: r.points })));
         }
-        if (d.me && !rows.some((r) => r.me)) list.append(el('div', { class: 'lb-row me' }, el('span', { class: 'grow', text: t('lb_me', { place: d.me.place, points: d.me.points }) })));
-        if (rows.length < d.top.length) list.append(el('button', { class: 'btn ghost block', style: 'margin-top:8px;height:38px', text: t('lb_all', { n: d.top.length }), onclick: () => { wrap.expanded = true; draw(); } }));
+        if (d.me && !rows.some((r) => r.me) && !podium.some((r) => r.me)) list.append(el('div', { class: 'lb-row me' }, el('span', { class: 'grow', text: t('lb_me', { place: d.me.place, points: d.me.points }) })));
+        if (rows.length < rest.length) list.append(el('button', { class: 'btn ghost block', style: 'margin-top:8px;height:38px', text: t('lb_all', { n: d.top.length }), onclick: () => { wrap.expanded = true; draw(); } }));
       } catch (err) { list.replaceChildren(errorBox(err, draw)); }
     };
     draw();
@@ -1342,12 +1463,14 @@
       shot.disabled = true;
       const pos = cbPos(ms, g.params.attempts[i].period);
       const p = cbPoints(pos);
+      SFX.play('kick');
       taps.push({ ms, p });
       total += p;
       ball.style.bottom = `${Math.min(88, 8 + pos * 0.93)}%`; ball.style.transform = 'translateX(-50%) scale(.65)';
       setTimeout(() => {
         flash.textContent = p ? t(`cb_hit${p}`) : t(pos > 75 ? 'cb_over' : 'cb_under');
         flash.className = `pk-flash on ${p ? 'good' : 'bad'}`;
+        SFX.play(p ? 'goal' : 'save');
         haptic(p ? 'success' : 'error');
         drawHead();
       }, 380);
@@ -1391,6 +1514,7 @@
       phase = 'over';
       cancelAnimationFrame(raf);
       flash.textContent = t('ku_drop');
+      SFX.play('lose');
       flash.className = 'pk-flash on bad';
       haptic('error');
       setTimeout(() => opts.onDone(taps, card), 900);
@@ -1425,6 +1549,7 @@
       kick(x);
       if (Math.abs(ms - f.t) > f.w || (f.x !== undefined && Math.abs(x - f.x) > KU_X_TOL)) { over(); return; }
       k += 1;
+      SFX.play('kick');
       count.textContent = String(k);
       drawHead();
       haptic();
@@ -1516,11 +1641,13 @@
       let r;
       try { r = await api('/penalty/kick', { method: 'POST', body: { dir } }); } catch (err) { toast(t('error_generic')); busy = false; return; }
       const k = r.kick;
+      SFX.play('kick');
       ball.style.left = `${PK_POS[k.shot]}%`; ball.style.bottom = '52%'; ball.style.transform = 'translateX(-50%) scale(.7)';
       keeper.style.left = `${PK_POS[k.dive]}%`;
       const good = k.by === 'user' ? k.goal : !k.goal;
       setTimeout(() => {
         flash.textContent = k.goal ? t('pk_goal') : t('pk_saved');
+        SFX.play(good ? 'goal' : 'save');
         flash.className = `pk-flash on ${good ? 'good' : 'bad'}`;
         haptic(good ? 'success' : 'error');
       }, 380);
@@ -1695,6 +1822,7 @@
         const res = await api(`/duels/${d.id}/answer`, { method: 'POST', body: { round: r.round, key: o.dataset.k } });
         if (!res.correct) o.classList.add('wrong');
         haptic(res.correct ? 'success' : 'error');
+        SFX.play(res.correct ? 'goal' : 'save');
         resultLine.textContent = res.correct ? t('du_correct', { s: (res.timeMs / 1000).toFixed(1) }) : t('du_wrong');
         if (res.correct) resultLine.className = 'gold';
         if (res.duel && res.duel.result && res.duel.result.result === 'win') confetti();
@@ -2363,6 +2491,12 @@
     return box;
   }
 
+  function soundCard() {
+    const sw = el('button', { class: `switch${SFX.on() ? ' on' : ''}`, type: 'button', 'aria-label': 'sound' });
+    sw.addEventListener('click', () => { const v = !SFX.on(); SFX.set(v); sw.classList.toggle('on', v); if (v) SFX.play('whistle'); haptic(); });
+    return el('div', { class: 'card row between' }, el('span', { text: t('prof_sound') }), sw);
+  }
+
   async function renderProfile(view) {
     const cardBox = el('div');
     view.append(cardBox);
@@ -2382,10 +2516,16 @@
         el('div', { class: 'stat' }, el('b', { text: s.total }), el('span', { text: t('prof_total') }), place(s.overallPlace ? { place: s.overallPlace } : null))),
       el('div', { style: 'margin-top:8px' }, extra));
     box.replaceChildren(
-      el('div', { class: 'card row' }, el('div', { class: 'avatar', text: (name || '?').trim().charAt(0).toUpperCase() }),
-        el('div', { class: 'grow' }, el('div', { style: 'font-weight:800;font-size:17px', class: 'ellipsis', text: name }),
-          el('div', { class: 'small muted', text: [u.username ? `@${u.username}` : null, `ID ${d.telegramId}`].filter(Boolean).join(' · ') })),
-        d.level ? el('span', { class: 'badge gold', text: `Lv ${d.level.level} · ${d.level.name}` }) : null),
+      el('div', { class: 'card prof-head' },
+        levelRing(u.photoUrl, name, d.level && d.level.next ? (d.level.xp - d.level.from) / (d.level.next - d.level.from) : 1),
+        el('div', { style: 'font-weight:800;font-size:19px;margin-top:10px', class: 'ellipsis', text: name }),
+        el('div', { class: 'small muted', text: [u.username ? `@${u.username}` : null, `ID ${d.telegramId}`].filter(Boolean).join(' · ') }),
+        d.level ? el('span', { class: 'badge gold', style: 'margin-top:8px', text: `Lv ${d.level.level} · ${d.level.name}` }) : null,
+        d.overall ? el('div', { class: 'stats3', style: 'margin-top:12px;width:100%' },
+          el('div', { class: 'stat' }, el('b', { text: d.overall.points }), el('span', { text: 'Points' })),
+          el('div', { class: 'stat' }, el('b', { text: d.overall.weekPlace ? `#${d.overall.weekPlace}` : '—' }), el('span', { text: t('prof_week_place') })),
+          el('div', { class: 'stat' }, el('b', { text: `🔥 ${d.overall.streak}` }), el('span', { text: t('prof_streak') }))) : null),
+      soundCard(),
       el('div', { class: 'card' },
         el('div', { class: 'kv' }, el('span', { text: t('prof_balance') }), el('b', { text: `${money(d.balance)} ${t('som')}` })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
@@ -2436,6 +2576,8 @@
     }
     applyTheme();
     try { if (tg) tg.onEvent('themeChanged', applyTheme); } catch (e) { /* */ }
+    // Birinchi bosishda ovoz ruxsati (brauzer talabi)
+    document.addEventListener('pointerdown', () => SFX.play('none'), { once: true });
     if (!initData) return outsideTelegram();
     try {
       const me = await api('/me');
