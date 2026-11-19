@@ -55,6 +55,7 @@ async function requireTelegramUser(req, res, next) {
     const { user } = await users.upsertFromTelegram(v.user);
     if (user.is_blocked) return res.status(403).json({ error: 'blocked' });
     req.user = user;
+    require('../services/activity').touch(user.id);
     return next();
   } catch (e) { return next(e); }
 }

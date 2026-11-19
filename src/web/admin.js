@@ -463,4 +463,65 @@ router.get('/stats', wrap(async (req, res) => {
   res.json({ ...s, days, top: top.map((u) => ({ ...u, name: users.displayName(u) })), winners: winners.map((w) => ({ ...w, name: w.user_id ? users.displayName(w) : null })) });
 }));
 
+// ---- 📈 Grafiklar: kunlik faol (DAU), yangi foydalanuvchilar, retention (D1/D7), Premium (manba bo'yicha), o'yinlar
+const TZ_DAY = (col) => `((${col} AT TIME ZONE 'Asia/Tashkent')::date)`;
+// Kunlik soni: jadval, vaqt ustuni, qo'shimcha shart
+const daily = (table, col, where = '') => `SELECT ${TZ_DAY(col)}::text AS d, count(*)::int AS n FROM ${table} WHERE ${col} >= $1 ${where} GROUP BY 1`;
+const PLAY_SOURCES = {
+  manager: daily('mini_manager_predictions', 'updated_at'),
+  quiz: daily('quiz_answers', 'answered_at'),
+  score: daily('score_predictions', 'created_at'),
+  duel: daily('duel_results', 'created_at'),
+  penalty: daily('penalty_games', 'created_at'),
+  crossbar: daily('arcade_games', 'created_at', "AND kind = 'crossbar'"),
+  keepy: daily('arcade_games', 'created_at', "AND kind = 'keepy'"),
+  quest: daily('user_quest_days', 'claimed_at'),
+};
+
+async function chartStats(daysCount) {
+  const n = Math.min(90, Math.max(7, Number(daysCount) || 30));
+  const today = ymd();
+  const dates = (await db.many(
+    `SELECT to_char(d, 'YYYY-MM-DD') AS d FROM generate_series($1::date - ($2::int - 1), $1::date, interval '1 day') d`, [today, n],
+  )).map((r) => r.d);
+  const from = new Date(`${dates[0]}T00:00:00+05:00`);
+  const series = (rows) => { const m = new Map(rows.map((r) => [r.d, r.n])); return dates.map((d) => m.get(d) || 0); };
+  const dau = series(await db.many('SELECT day::text AS d, count(*)::int AS n FROM daily_active WHERE day >= $1::date GROUP BY 1', [dates[0]]));
+  const newUsers = series(await db.many(daily('users', 'registered_at'), [from]));
+  const premiumRows = await db.many(
+    `SELECT ${TZ_DAY('created_at')}::text AS d, source AS k, count(*)::int AS n FROM premium_purchases WHERE created_at >= $1 GROUP BY 1, 2`, [from],
+  );
+  const premium = {};
+  for (const k of new Set(premiumRows.map((r) => r.k))) premium[k] = series(premiumRows.filter((r) => r.k === k));
+  const plays = {};
+  for (const [k, sql] of Object.entries(PLAY_SOURCES)) plays[k] = series(await db.many(sql, [from]));
+  // Retention: shu kuni ro'yxatdan o'tganlarning necha foizi 1 / 7 kundan keyin faol bo'lgan
+  const ret = await db.many(
+    `WITH c AS (SELECT id, ${TZ_DAY('registered_at')} AS d FROM users WHERE registered_at >= $1)
+     SELECT c.d::text AS d, count(*)::int AS cohort,
+            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM daily_active a WHERE a.user_id = c.id AND a.day = c.d + 1))::int AS d1,
+            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM daily_active a WHERE a.user_id = c.id AND a.day = c.d + 7))::int AS d7
+     FROM c GROUP BY c.d`, [from],
+  );
+  const retMap = new Map(ret.map((r) => [r.d, r]));
+  const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : null);
+  const retention = dates.map((d) => {
+    const r = retMap.get(d);
+    const age = (new Date(`${today}T00:00:00Z`) - new Date(`${d}T00:00:00Z`)) / 86400000;
+    return { cohort: r ? r.cohort : 0, d1: r && age >= 1 ? pct(r.d1, r.cohort) : null, d7: r && age >= 7 ? pct(r.d7, r.cohort) : null };
+  });
+  const sum = (key, minAge) => ret.reduce((acc, r) => {
+    const age = (new Date(`${today}T00:00:00Z`) - new Date(`${r.d}T00:00:00Z`)) / 86400000;
+    if (age < minAge) return acc;
+    return { c: acc.c + r.cohort, x: acc.x + r[key] };
+  }, { c: 0, x: 0 });
+  const r1 = sum('d1', 1);
+  const r7 = sum('d7', 7);
+  const stars = await db.one('SELECT COALESCE(sum(stars), 0)::int AS stars, count(*)::int AS payments FROM star_payments WHERE created_at >= $1', [from]);
+  return { days: n, dates, dau, newUsers, retention, retentionAvg: { d1: pct(r1.x, r1.c), d7: pct(r7.x, r7.c) }, premium, plays, stars };
+}
+
+router.get('/stats/charts', wrap(async (req, res) => res.json(await chartStats(req.query.days))));
+
 module.exports = router;
+module.exports.chartStats = chartStats;

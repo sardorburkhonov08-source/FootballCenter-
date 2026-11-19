@@ -72,7 +72,7 @@
   // ---------- Bo'limlar
   const SECTIONS = [
     ['banners', '🎬 Bannerlar'], ['featured', '⭐ Asosiy ligalar'], ['games', '🎮 Mini Manager — o\'yinlar'], ['score', '🎯 Hisobni top'], ['prizes', '🏆 Sovrinlar'],
-    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['communities', '👥 Fan community'], ['stats', '📊 Statistika'],
+    ['quiz', '🧠 Quiz savollari'], ['tactics', '📐 Taktikalar'], ['fancards', '🪪 Muxlislik kartalari'], ['communities', '👥 Fan community'], ['stats', '📊 Statistika'], ['charts', '📈 Grafiklar'],
   ];
   let current = 'banners';
 
@@ -85,7 +85,7 @@
   async function show() {
     const v = $('view');
     v.replaceChildren(el('div', { class: 'skeleton' }));
-    try { await ({ banners, featured, games, score, prizes, quiz, tactics, fancards, communities, stats })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
+    try { await ({ banners, featured, games, score, prizes, quiz, tactics, fancards, communities, stats, charts })[current](v); } catch (e) { v.replaceChildren(el('div', { class: 'card center', text: '⚠️ Yuklab bo\'lmadi' })); fail(e); }
   }
 
   // 👥 Community darajalari: 2—7-darajalar uchun kerakli XP (a'zolar to'plagan jami points)
@@ -499,6 +499,127 @@
     v.replaceChildren(el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '📐 Mini Manager taktikalari' }),
       el('p', { class: 'small muted', text: 'Foydalanuvchilar har ikki jamoa uchun shu ro\'yxatdan taktika tanlaydi. Format: 4-3-3 (darvozabonsiz jami 10).' }),
       tags, el('div', { class: 'row', style: 'margin-top:10px' }, input, addBtn), el('div', { style: 'margin-top:10px' }, save)));
+  }
+
+
+  // ---------- 📈 SVG grafiklar (kutubxonasiz): chiziq va ustunli (stacked), hover tooltip bilan
+  const NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs) {
+    const n = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs || {})) if (v !== null && v !== undefined) n.setAttribute(k, v);
+    return n;
+  }
+  // Toifaviy ranglar — qat'iy tartib (ko'k ishlatilmaydi; qorong'i fon uchun tekshirilgan)
+  const SERIES = ['#d95926', '#199e70', '#c98500', '#d55181', '#9085e9', '#0ca30c'];
+  const niceMax = (v) => { if (v <= 5) return 5; const p = 10 ** Math.floor(Math.log10(v)); return Math.ceil(v / p) * p; };
+  let tipNode = null;
+  function tip(html, x, y) {
+    if (!tipNode) { tipNode = el('div', { class: 'chart-tip' }); document.body.append(tipNode); }
+    if (html === null) { tipNode.hidden = true; return; }
+    tipNode.hidden = false;
+    tipNode.replaceChildren(...html);
+    const w = tipNode.offsetWidth;
+    tipNode.style.left = `${Math.min(window.innerWidth - w - 8, Math.max(8, x + 12))}px`;
+    tipNode.style.top = `${y + 12}px`;
+  }
+  /**
+   * chart({ dates, series: [{ name, color, values }], type: 'line'|'bar', unit, height })
+   * bar — ustunlar ustma-ust (stacked). null qiymat — chiziqda uzilish.
+   */
+  function chart({ dates, series, type = 'line', unit = '', height = 180, compact = false }) {
+    // compact — kichik grafik (o'q yozuvlarisiz, faqat hover)
+    const W = compact ? 300 : 640; const H = height; const L = compact ? 4 : 34; const R = compact ? 4 : 8; const T = compact ? 6 : 10; const B = compact ? 6 : 22;
+    const n = dates.length;
+    const totals = dates.map((_, i) => (type === 'bar' ? series.reduce((a, s) => a + (s.values[i] || 0), 0) : Math.max(0, ...series.map((s) => s.values[i] || 0))));
+    const max = niceMax(Math.max(1, ...totals));
+    const step = (W - L - R) / n;
+    const X = (i) => L + step * i + step / 2;
+    const Y = (v) => T + (H - T - B) * (1 - v / max);
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart', role: 'img' });
+    for (const f of [0, 0.5, 1]) {
+      const y = Y(max * f);
+      svg.append(svgEl('line', { x1: L, x2: W - R, y1: y, y2: y, class: 'grid' }));
+      if (compact) continue;
+      const lbl = svgEl('text', { x: L - 6, y: y + 3, class: 'axis', 'text-anchor': 'end' }); lbl.textContent = `${Math.round(max * f)}${unit}`; svg.append(lbl);
+    }
+    const every = Math.ceil(n / 8);
+    dates.forEach((d, i) => {
+      if (compact || (i % every && i !== n - 1) || (i !== n - 1 && n - 1 - i < every)) return;
+      const lbl = svgEl('text', { x: X(i), y: H - 6, class: 'axis', 'text-anchor': 'middle' }); lbl.textContent = d.slice(5).replace('-', '.'); svg.append(lbl);
+    });
+    if (type === 'bar') {
+      const bw = Math.max(2, step - 2);
+      dates.forEach((_, i) => {
+        let acc = 0;
+        series.forEach((s, k) => {
+          const v = s.values[i] || 0;
+          if (!v) return;
+          const y0 = Y(acc); const y1 = Y(acc + v);
+          const top = !series.slice(k + 1).some((o) => o.values[i]);
+          svg.append(svgEl('rect', { x: X(i) - bw / 2, y: y1, width: bw, height: Math.max(1, y0 - y1 - (acc ? 2 : 0)), rx: top ? 3 : 0, fill: s.color }));
+          acc += v;
+        });
+      });
+    } else {
+      for (const s of series) {
+        let dpath = ''; let pen = false;
+        s.values.forEach((v, i) => {
+          if (v === null || v === undefined) { pen = false; return; }
+          dpath += `${pen ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`; pen = true;
+        });
+        svg.append(svgEl('path', { d: dpath, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      }
+    }
+    // Hover: vertikal chiziq + tooltip
+    const cross = svgEl('line', { y1: T, y2: H - B, class: 'cross', visibility: 'hidden' });
+    svg.append(cross);
+    const hit = svgEl('rect', { x: L, y: 0, width: W - L - R, height: H, fill: 'transparent' });
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const i = Math.max(0, Math.min(n - 1, Math.floor(((ev.clientX - r.left) * (W / r.width) - L) / step)));
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
+      tip([el('b', { text: dates[i] }), ...series.map((s) => el('div', { class: 'tip-row' }, el('i', { style: `background:${s.color}` }), el('span', { text: s.name }),
+        el('b', { text: s.values[i] === null || s.values[i] === undefined ? '—' : `${s.values[i]}${unit}` })))], ev.clientX, ev.clientY);
+    };
+    hit.addEventListener('mousemove', move);
+    hit.addEventListener('touchstart', (ev) => move(ev.touches[0]), { passive: true });
+    hit.addEventListener('mouseleave', () => { cross.setAttribute('visibility', 'hidden'); tip(null); });
+    svg.append(hit);
+    const legend = series.length > 1 ? el('div', { class: 'legend' }, series.map((s) => el('span', {}, el('i', { style: `background:${s.color}` }), s.name))) : null;
+    return el('div', {}, legend, svg);
+  }
+
+  const SOURCE_NAMES = { purchase: '💰 Balansdan', stars: '⭐ Stars', gift: '🎁 Sovg\'a', promo: '🎟 Promokod', referral_league: '👥 Referral League', welcome: '🎉 Yangi foydalanuvchi' };
+  const GAME_NAMES = { manager: '🎮 Mini Manager', quiz: '🧠 Quiz', score: '🎯 Hisobni top', duel: '⚔️ Duel', penalty: '🥅 Penalty', crossbar: '💥 Crossbar', keepy: '⚽ Keepy-uppy', quest: '✅ Vazifalar' };
+
+  async function charts(v, days = 30) {
+    const c = await api(`/stats/charts?days=${days}`);
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    const kpi = (val, label) => el('div', { class: 'kpi' }, el('b', { text: val }), el('span', { text: label }));
+    const card = (title, body) => el('div', { class: 'card', style: 'margin-top:10px' }, el('h3', { style: 'margin-top:0', text: title }), body);
+    const range = el('div', { class: 'row', style: 'gap:6px' }, [7, 30, 90].map((d) => el('button', { class: `mini${d === c.days ? ' ok' : ''}`, text: `${d} kun`, onclick: () => charts(v, d) })));
+    // Rang manbaga bog'langan (filtrlanganda o'zgarmaydi); noma'lum manbalar — "Boshqa"
+    const known = Object.keys(SOURCE_NAMES);
+    const other = c.dates.map((_, i) => Object.keys(c.premium).filter((k) => !known.includes(k)).reduce((a, k) => a + c.premium[k][i], 0));
+    const premiumSeries = known.map((k, i) => ({ k, name: SOURCE_NAMES[k], color: SERIES[i], values: c.premium[k] })).filter((x) => x.values)
+      .concat(other.some(Boolean) ? [{ name: 'Boshqa', color: '#8a8f8c', values: other }] : []);
+    const pct = (x) => (x === null ? '—' : `${x}%`);
+    v.replaceChildren(
+      el('h2', { class: 'row', style: 'justify-content:space-between' }, el('span', { text: '📈 Grafiklar' }), range),
+      el('div', { class: 'kpis' },
+        kpi(c.dau[c.dau.length - 1], '👤 Bugun faol (DAU)'), kpi(Math.round(sum(c.dau) / c.days), `👤 O'rtacha DAU (${c.days} kun)`),
+        kpi(sum(c.newUsers), `🆕 Yangi foydalanuvchilar (${c.days} kun)`), kpi(pct(c.retentionAvg.d1), '🔁 D1 retention'), kpi(pct(c.retentionAvg.d7), '🔁 D7 retention'),
+        kpi(`${c.stars.stars} ⭐`, `⭐ Stars to'lovlari (${c.stars.payments} ta)`)),
+      card('👤 Kunlik faol foydalanuvchilar (bot + Mini App)', chart({ dates: c.dates, series: [{ name: 'DAU', color: SERIES[0], values: c.dau }] })),
+      card('🆕 Yangi foydalanuvchilar', chart({ dates: c.dates, type: 'bar', series: [{ name: 'Yangi', color: SERIES[1], values: c.newUsers }] })),
+      card('🔁 Retention — shu kuni kelganlarning necha foizi qaytgan', chart({ dates: c.dates, unit: '%', series: [
+        { name: '1 kundan keyin (D1)', color: SERIES[0], values: c.retention.map((r) => r.d1) },
+        { name: '7 kundan keyin (D7)', color: SERIES[1], values: c.retention.map((r) => r.d7) }] })),
+      card('💎 Premium (manba bo\'yicha)', premiumSeries.length ? chart({ dates: c.dates, type: 'bar', series: premiumSeries }) : el('div', { class: 'muted small', text: 'Ma\'lumot yo\'q' })),
+      card('🎮 O\'yinlar — kunlik o\'ynashlar soni', el('div', { class: 'multiples' }, Object.entries(c.plays).map(([k, vals]) => el('div', {},
+        el('div', { class: 'row', style: 'justify-content:space-between' }, el('b', { class: 'small', text: GAME_NAMES[k] || k }), el('span', { class: 'small muted', text: `jami ${sum(vals)}` })),
+        chart({ dates: c.dates, type: 'bar', height: 70, compact: true, series: [{ name: GAME_NAMES[k] || k, color: SERIES[2], values: vals }] }))))),
+    );
   }
 
   // 📊 Statistika

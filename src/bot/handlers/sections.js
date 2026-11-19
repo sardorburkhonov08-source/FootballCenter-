@@ -115,6 +115,36 @@ function register(bot) {
     return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
   });
 
+  // ---- ⭐ Telegram Stars bilan Premium: hisob-faktura → pre_checkout tekshiruvi → successful_payment
+  bot.callbackQuery(/^tf:stars:(week|month)$/, async (ctx) => {
+    const plan = (await premium.starPlans())[ctx.match[1]];
+    if (!plan) return ctx.answerCallbackQuery({ text: t(ctx.lang, 'stars_unavailable'), show_alert: true });
+    await ctx.answerCallbackQuery();
+    return ctx.replyWithInvoice(
+      t(ctx.lang, 'stars_invoice_title', { days: plan.days }),
+      t(ctx.lang, 'stars_invoice_desc', { days: plan.days }),
+      premium.starPayload(plan.plan, ctx.user.id, plan.stars),
+      'XTR',
+      [{ label: t(ctx.lang, 'stars_invoice_title', { days: plan.days }), amount: plan.stars }],
+    );
+  });
+
+  bot.on('pre_checkout_query', async (ctx) => {
+    const q = ctx.preCheckoutQuery;
+    const plan = await premium.checkStarPayload(q.invoice_payload, ctx.user, { currency: q.currency, total: q.total_amount });
+    if (!plan) return ctx.answerPreCheckoutQuery(false, { error_message: t(ctx.lang, 'stars_price_changed') });
+    return ctx.answerPreCheckoutQuery(true);
+  });
+
+  bot.on('message:successful_payment', async (ctx) => {
+    const r = await premium.grantStars(ctx.user, ctx.message.successful_payment);
+    if (!r.ok) {
+      if (r.reason === 'bad') console.error('[stars] noma\'lum to\'lov', ctx.message.successful_payment);
+      return undefined;
+    }
+    return ctx.reply(t(ctx.lang, 'premium_stars_activated', { stars: r.stars, date: formatDate(r.user.premium_expires_at) }), { ...ui.HTML, reply_markup: ui.backKb(ctx.lang) });
+  });
+
   // ---- 🎁 Do'stga Premium sovg'a qilish: tarif → do'st (@username / ID) → tasdiqlash
   bot.callbackQuery('tf:gift', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -278,11 +308,13 @@ const states = {
 async function showPremiumInfo(ctx) {
   const lang = ctx.lang;
   const p = await premium.plans();
+  const stars = await premium.starPlans();
   const description = await editableText('premium_description', lang, 'premium_description_default');
   await ui.show(ctx, t(lang, 'premium_info', {
     week_days: p.week.days, week_price: money(p.week.price), days: p.month.days, price: money(p.month.price), description: raw(description),
   }), ui.kb([
     ...Object.values(p).map((x) => [ui.btn(t(lang, 'btn_buy_plan', { days: x.days, price: money(x.price) }), `tf:buy:${x.plan}`)]),
+    ...Object.values(stars).map((x) => [ui.btn(t(lang, 'btn_buy_stars', { days: x.days, stars: x.stars }), `tf:stars:${x.plan}`)]),
     [ui.btn(t(lang, 'btn_gift_premium'), 'tf:gift')],
     [ui.btn(t(lang, 'back'), 'm:tariff')],
   ]));
