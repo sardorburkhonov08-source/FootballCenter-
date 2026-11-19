@@ -18,32 +18,19 @@ const HTML = { parse_mode: 'HTML', link_preview_options: { is_disabled: true } }
 /**
  * Ekranni ko'rsatish: callback bo'lsa — mavjud xabarni tahrirlash, aks holda yangi xabar.
  */
-// 🧹 Chat toza tursin: har bir chatdagi oxirgi "ekran" (menyu) xabari. Yangi ekran yuborilganda eskisi o'chiriladi.
-const lastScreen = new Map();   // chatId -> message_id
-const SCREEN_MAP_MAX = 20000;
-
+// Chatdagi xabarlar o'chirilmaydi (egasi talabi): foydalanuvchi va bot xabarlari tarixda qoladi.
 async function show(ctx, text, markup) {
   const extra = { ...HTML, reply_markup: markup };
   const msg = ctx.callbackQuery && ctx.callbackQuery.message;
   if (msg && msg.text !== undefined) {
     try {
       await ctx.editMessageText(text, extra);
-      if (ctx.chat) lastScreen.set(ctx.chat.id, msg.message_id);
       return;
     } catch (e) {
       if (String(e.description || e.message).includes('message is not modified')) return;
     }
   }
-  const chatId = ctx.chat && ctx.chat.id;
-  const prev = chatId ? lastScreen.get(chatId) : null;
-  const sent = await ctx.reply(text, extra);
-  if (!chatId) return;
-  if (prev && (!sent || prev !== sent.message_id)) ctx.api.deleteMessage(chatId, prev).catch(() => {});
-  if (sent && sent.message_id) {
-    lastScreen.delete(chatId);
-    lastScreen.set(chatId, sent.message_id);
-    if (lastScreen.size > SCREEN_MAP_MAX) lastScreen.delete(lastScreen.keys().next().value);
-  }
+  await ctx.reply(text, extra);
 }
 
 /** Uzun matnni Telegram limitiga (4096) mos bo'laklarga bo'lib yuborish */
@@ -90,16 +77,10 @@ function mainMenuKb(lang, user) {
   return kb(rows);
 }
 
-/** Rasmli ekran (bosh menyu): yangi rasm yuboriladi, oldingi ekran va bosilgan xabar o'chiriladi */
+/** Rasmli ekran (bosh menyu): yangi rasm yuboriladi (oldingi xabarlar o'chirilmaydi) */
 async function showPhoto(ctx, png, caption, markup) {
   const { InputFile } = require('grammy');
-  const chatId = ctx.chat.id;
-  const prev = lastScreen.get(chatId);
-  const cbMsg = ctx.callbackQuery && ctx.callbackQuery.message;
-  const sent = await ctx.replyWithPhoto(new InputFile(png, 'menu.png'), { caption, parse_mode: 'HTML', reply_markup: markup });
-  const sentId = sent && sent.message_id;
-  for (const id of new Set([prev, cbMsg && cbMsg.message_id])) if (id && id !== sentId) ctx.api.deleteMessage(chatId, id).catch(() => {});
-  if (sentId) { lastScreen.delete(chatId); lastScreen.set(chatId, sentId); }
+  await ctx.replyWithPhoto(new InputFile(png, 'menu.png'), { caption, parse_mode: 'HTML', reply_markup: markup });
 }
 
 /** 🏠 Bosh menyu: shaxsiy karta-rasm bilan (settings.menu_image_enabled), xato bo'lsa — matn */

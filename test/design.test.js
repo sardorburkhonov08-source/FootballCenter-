@@ -36,7 +36,7 @@ test("Telegram profil rasmi saqlanadi (faqat https://t.me/) va reyting podiumida
   assert.deepStrictEqual([prof.overall.points, prof.overall.weekPlace, prof.overall.streak], [3, 1, 0]);
 });
 
-test("🖼 bosh menyu — shaxsiy karta-rasm (sendPhoto) va menyu tugmalari; oldingi ekran o'chiriladi", async () => {
+test("🖼 bosh menyu — shaxsiy karta-rasm (sendPhoto) va menyu tugmalari; chatdagi xabarlar o'chirilmaydi", async () => {
   await settings.set('menu_image_enabled', true);
   await h.text(7803, '/start');
   await h.click(7803, 'lang:uz');
@@ -46,7 +46,7 @@ test("🖼 bosh menyu — shaxsiy karta-rasm (sendPhoto) va menyu tugmalari; old
   assert.ok(photo, 'rasm yuborildi');
   assert.match(photo.payload.caption, /^🏠 Asosiy menyu/);
   assert.ok(photo.payload.reply_markup.inline_keyboard.length > 2);
-  assert.ok(h.calls.some((c) => c.method === 'deleteMessage'), 'bosilgan eski menyu o\'chiriladi');
+  assert.ok(!h.calls.some((c) => c.method === 'deleteMessage'), 'chatdagi xabarlar o\'chirilmaydi');
   const u = await db.one('SELECT * FROM users WHERE telegram_id = 7803');
   const png = await menuCard.renderPng(u);
   assert.strictEqual(png.subarray(1, 4).toString(), 'PNG');

@@ -72,8 +72,6 @@ async function sendArcadeInvite(ctx, code) {
 
 async function onStart(ctx) {
   await state.clear(ctx.from.id);
-  // 🧹 /start buyrug'ining o'zi o'chiriladi — chatda faqat menyu qoladi
-  if (ctx.message && ctx.chat && ctx.chat.type === 'private') ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
   const payload = (ctx.match || '').trim();
   if (ctx.userCreated && payload.startsWith('ref_')) {
     await referral.attach(ctx.user, payload.slice(4)).catch((e) => console.error('[referral]', e));
