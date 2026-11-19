@@ -138,7 +138,7 @@ test/                   avtomatik testlar
 ## 🏆 Umumiy reyting va g'oliblar (egasi talabi bilan)
 
 - Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
-- Mini App → Games tepasida "🏆 Umumiy reyting": **Bugun / Haftalik / Oylik** (`period` `daily|weekly|monthly`), 5 qator + "Hammasi"; Premiumsizga ham ko'rinadi.
+- Mini App → Games, o'yinlar ro'yxatidan **pastda** "🏆 Umumiy reyting": **Bugun / Haftalik / Oylik** (`period` `daily|weekly|monthly`), 5 qator + "Hammasi"; Premiumsizga ham ko'rinadi.
 - **Kunlik g'olib yo'q.** Haftalik va oylik g'oliblar **faqat umumiy reyting** bo'yicha aniqlanadi (`finalizePeriods`, `period_winners.kind = 'overall'`); har o'yin bo'yicha alohida g'olib aniqlanmaydi (SPEC 13.5 / 14 dagi bo'lim g'oliblari o'rniga). Sovrinlar — `prizes.kind = 'overall'` (021-migratsiya; web admin → "🏆 Sovrinlar"), Games'da umumiy reyting ustida ko'rsatiladi; Mini Manager va Quiz ichidagi sovrin bloklari olib tashlangan.
 
 ## Egasi talabi bilan SPEC'dan farqlar
