@@ -111,7 +111,7 @@ function register(bot) {
     const params = { amount: money(r.amount || 0), balance: money(r.balance || 0), mult };
     const text = !r.ok ? t(lang, 'bonus_wait', { time: ui.duration(lang, r.waitMs) })
       : t(lang, mult === 1 ? 'bonus_got' : goal ? 'bonus_got_goal' : 'bonus_got_miss', params);
-    if (mult > 1) return ctx.reply(text, { ...ui.HTML, reply_markup: ui.backKb(lang, 'm:balance') });
+    if (mult > 1) return goal && r.ok ? ui.replyFx(ctx, text, ui.backKb(lang, 'm:balance'), 'fire') : ctx.reply(text, { ...ui.HTML, reply_markup: ui.backKb(lang, 'm:balance') });
     return ui.show(ctx, text, ui.backKb(lang, 'm:balance'));
   });
 

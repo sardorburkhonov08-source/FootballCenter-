@@ -25,6 +25,9 @@ const DEFAULTS = {
   // 👥 Guruhlarda bot: kunlik guruh Quiz'i shu soatdan keyin (Toshkent), 0—23
   group_quiz_enabled: true,
   group_quiz_hour: 19,
+  // ⭐ Sevimli jamoa: gol va yakun haqida botda xabar; jonli o'yinni tekshirish oralig'i (soniya, API yuklamasi)
+  fav_team_notify: true,
+  fav_team_check_seconds: 120,
   // 🗳 "Kim yutadi?" ovoz berish (sinov rejimi): to'g'ri taxmin uchun points
   poll_enabled: true,
   poll_points: 2,

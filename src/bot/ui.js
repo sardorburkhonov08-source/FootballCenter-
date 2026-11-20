@@ -33,6 +33,12 @@ async function show(ctx, text, markup) {
   await ctx.reply(text, extra);
 }
 
+/** ✨ Effektli yangi xabar (Premium faollashdi, gol, g'alaba). Effekt rad etilsa — oddiy xabar */
+async function replyFx(ctx, text, markup, name = 'party') {
+  const notify = require('../services/notify');
+  return notify.sendWithEffect((x) => ctx.reply(text, x), { ...HTML, reply_markup: markup, ...notify.effect(name) });
+}
+
 /** Uzun matnni Telegram limitiga (4096) mos bo'laklarga bo'lib yuborish */
 async function replyLong(ctx, text, markup) {
   const LIMIT = 4000;
@@ -70,6 +76,7 @@ function mainMenuKb(lang, user) {
     [btn(L('btn_tariff'), 'm:tariff'), btn(L('btn_settings'), 'm:settings')],
     [btn(L('btn_help'), 'm:help'), btn(L('btn_ai'), 'm:ai')],
   ];
+  rows.push([btn(L('btn_top'), 'm:top')]);
   rows.push(config.webAppUrl
     ? [{ text: L('btn_webapp'), web_app: { url: `${config.webAppUrl}/` } }]
     : [btn(L('btn_webapp'), 'm:webapp_missing')]);
@@ -105,4 +112,4 @@ function duration(lang, ms) {
   return h ? t(lang, 'dur_hm', { h, m }) : t(lang, 'dur_m', { m });
 }
 
-module.exports = { btn, urlBtn, kb, grid, HTML, show, showPhoto, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, duration };
+module.exports = { btn, urlBtn, kb, grid, HTML, replyFx, show, showPhoto, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, duration };

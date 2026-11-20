@@ -138,7 +138,7 @@ async function finalizePeriods(now = new Date()) {
       const kindKey = `kind_${kind}`;
       await notify.toUser(winnerUser, 'leaderboard_winner_notify', {
         kind: t(winnerUser.language || 'uz', kindKey), period: t(winnerUser.language || 'uz', `period_${period}`),
-      });
+      }, { extra: notify.effect('party') });
       for (let i = 0; i < rows.length; i += 1) {
         const u = await users.byId(rows[i].id);
         const lang = u.language || 'uz';
@@ -187,6 +187,7 @@ const JOBS = [
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
   { name: 'api_cache_cleanup', every: 6 * 3600, fn: () => require('../services/football').cleanupCache() },
+  { name: 'fav_team', every: 30, fn: () => require('../services/favTeam').tick() },
   { name: 'poll_score', every: 300, fn: () => require('../services/poll').score() },
   { name: 'groups_quiz', every: 120, fn: () => require('../services/groups').postDaily(notify.getApi()) },
   { name: 'groups_week', every: 600, fn: () => require('../services/groups').finalizeWeeks(notify.getApi()) },

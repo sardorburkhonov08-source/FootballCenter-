@@ -434,3 +434,51 @@ input[type=search].input { margin-bottom: 4px; }
 .mascot { width: 84px; height: 84px; animation: bob 2.4s ease-in-out infinite; }
 .mascot svg { width: 100%; height: 100%; }
 @keyframes bob { 50% { transform: translateY(-6px) rotate(-4deg); } }
+
+/* ⭐ Sevimli jamoa */
+.fav-prompt { display: flex; align-items: center; gap: 10px; margin-top: 12px; position: relative; padding-right: 34px; }
+.fav-prompt .x { position: absolute; top: 6px; right: 8px; width: 24px; height: 24px; border-radius: 12px; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; }
+.fav-star { width: 38px; height: 38px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--grad); }
+.fav-star.sm { width: 32px; height: 32px; font-size: 16px; border-radius: 10px; }
+.fav-box { margin-top: 12px; padding: 10px; border-radius: var(--radius); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 85%); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.fav-box .match { margin-top: 8px; }
+.fav-head { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; color: inherit; font-weight: 800; font-size: 15px; padding: 2px 2px 0; text-align: left; }
+.fav-head .crest { width: 26px; height: 26px; }
+.fav-head .chev { color: var(--muted); font-size: 20px; }
+.fav-sub { margin: 8px 2px -2px; }
+.fav-row { width: 100%; gap: 12px; text-align: left; }
+.btn.sm { height: 34px; padding: 0 14px; font-size: 13px; }
+.crest.lg { width: 40px; height: 40px; }
+
+/* ✨ Dizayn: o'yin kartochkasi o'ng tomoni ixcham; profil tartibi; daraja belgisi bir qatorda */
+.match .side { flex-direction: row; align-items: center; gap: 8px; }
+.match .when { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+.match .when .time { font-size: 16px; }
+.match .date { font-size: 11px; color: var(--muted); font-weight: 600; }
+.match .ft { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.match .bell { width: 30px; height: 30px; font-size: 14px; }
+.match .bell:not(.on) { opacity: .55; }
+.today .lv-badge { display: block; white-space: nowrap; max-width: 52%; overflow: hidden; text-overflow: ellipsis; flex: none; }
+.today .hello { min-width: 0; }
+.prof-card { margin-top: 14px; }
+.view > div > .card + .card, .view > div > .card + button.card { margin-top: 10px; }
+
+/* Logotip o'rnida bosh harf */
+.crest-ph { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 13px; color: #fff; font-size: 12px; font-weight: 800; }
+.crest-ph.lg { width: 40px; height: 40px; border-radius: 20px; font-size: 17px; }
+/* 📊 O'yinlar statistikasi jadvali */
+.gstats .gs-row { display: grid; grid-template-columns: minmax(0, 1fr) 54px 54px 58px; align-items: center; gap: 6px; padding: 9px 0; border-top: 1px solid var(--border); width: 100%; background: transparent; color: inherit; text-align: left; }
+.gstats .gs-head { border-top: 0; padding: 2px 0 4px; font-size: 11px; color: var(--muted); font-weight: 700; }
+.gstats .gs-head span { text-align: center; }
+.gs-name { min-width: 0; }
+.gs-name b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-name span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.gs-num { text-align: center; line-height: 1.1; }
+.gs-num b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.gs-num span { display: block; font-size: 10.5px; color: var(--gold); font-weight: 700; margin-top: 2px; }
+.gs-row.locked { grid-template-columns: minmax(0, 1fr) auto; opacity: .6; }
+.gs-lock { font-size: 18px; padding-right: 6px; }
+/* 🏅 Yutuqlar: progress va "yana" tugmasi */
+.ach-bar { height: 6px; border-radius: 3px; background: var(--surface2); margin-top: 10px; overflow: hidden; }
+.ach-bar span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f7d774, #d9a520); }
+.more-btn { display: block; width: 100%; margin-top: 10px; height: 38px; border-radius: 10px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: 13px; }

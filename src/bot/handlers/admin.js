@@ -18,7 +18,7 @@ const { CARD_LABEL, formatCardNumber } = require('./balance');
 const { RULE_KEYS, tariffLabel } = require('./sections');
 
 // ---------- Sozlamalar muharriri (umumiy)
-const BOOL_KEYS = ['group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
+const BOOL_KEYS = ['fav_team_notify', 'group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
 const TEXT_KEYS = ['donation_channel_id'];
 const MIN1_KEYS = ['bonus_goal_multiplier', 'premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'alerts_repeat_minutes', 'alerts_db_slow_ms', 'fan_card_club_change_price', 'fan_card_first_fans'];
@@ -36,7 +36,7 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['menu_image_enabled', 'digest_hour', 'group_quiz_enabled', 'group_quiz_hour', 'poll_enabled', 'poll_points', 'quest_reward_points', 'quest_streak_bonus', 'quest_streak_max', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
+  games: { title: 'a_btn_games_settings', keys: ['menu_image_enabled', 'digest_hour', 'group_quiz_enabled', 'group_quiz_hour', 'poll_enabled', 'poll_points', 'fav_team_notify', 'fav_team_check_seconds', 'quest_reward_points', 'quest_streak_bonus', 'quest_streak_max', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
 };
 
 function fmtValue(lang, key, v) {
