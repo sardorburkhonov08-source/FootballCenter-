@@ -112,7 +112,13 @@ function register(bot) {
     await ctx.answerCallbackQuery();
     const r = await premium.buy(ctx.user, ctx.match[1] || 'month');
     if (!r.ok) return showNoMoney(ctx);
-    return ui.show(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
+    return ui.replyFx(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
+  });
+
+  // ---- 🏆 Reyting: TOP-3 shohsupa rasmi (profil rasmlari bilan) + 4—10-o'rinlar va o'z o'rningiz
+  bot.callbackQuery(/^m:top(?::(daily|weekly|monthly))?$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    return showTop(ctx, ctx.match[1] || 'weekly');
   });
 
   // ---- 🗳 "Kim yutadi?" (sinov): ovoz → foizlar
@@ -151,7 +157,7 @@ function register(bot) {
       if (r.reason === 'bad') console.error('[stars] noma\'lum to\'lov', ctx.message.successful_payment);
       return undefined;
     }
-    return ctx.reply(t(ctx.lang, 'premium_stars_activated', { stars: r.stars, date: formatDate(r.user.premium_expires_at) }), { ...ui.HTML, reply_markup: ui.backKb(ctx.lang) });
+    return ui.replyFx(ctx, t(ctx.lang, 'premium_stars_activated', { stars: r.stars, date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
   });
 
   // ---- 🎁 Do'stga Premium sovg'a qilish: tarif → do'st (@username / ID) → tasdiqlash
@@ -183,7 +189,7 @@ function register(bot) {
     }
     const date = formatDate(r.to.premium_expires_at);
     await ui.show(ctx, t(ctx.lang, 'gift_sent', { name: users.displayName(r.to), date, price: money(r.price) }), ui.backKb(ctx.lang));
-    await notify.toUser(r.to, 'gift_received', { name: users.displayName(r.from), days: r.days, date: date });
+    await notify.toUser(r.to, 'gift_received', { name: users.displayName(r.from), days: r.days, date: date }, { extra: notify.effect('heart') });
     return undefined;
   });
 
@@ -312,6 +318,40 @@ const states = {
     return ui.replyLong(ctx, out, after);
   },
 };
+
+/** 🏆 Reyting ekrani. Davr almashtirilsa — o'sha rasmli xabar tahrirlanadi */
+async function showTop(ctx, period) {
+  const lang = ctx.lang;
+  const topCard = require('../../services/topCard');
+  let png = null;
+  let v;
+  try { ({ png, view: v } = await topCard.renderPng(ctx.user, period)); } catch (e) {
+    console.error('[top image]', e.message);
+    v = await topCard.viewModel(ctx.user, period);
+  }
+  const list = v.top.slice(3).map((r) => t(lang, 'top_line', { place: r.place, name: r.name, points: money(r.points) })).join('\n');
+  const me = v.me ? t(lang, 'top_me', { place: v.me.place, points: money(v.me.points) }) : t(lang, 'top_me_none');
+  const caption = t(lang, 'top_caption', { period: t(lang, `top_p_${period}`), list: raw(list || (v.top.length ? '' : t(lang, 'top_empty'))), me: raw(me) })
+    .replace(/\n{3,}/g, '\n\n');
+  const config = require('../../config');
+  const markup = ui.kb([
+    topCard.PERIODS.map((p) => ui.btn(`${p === period ? '✅ ' : ''}${t(lang, `btn_top_${p}`)}`, `m:top:${p}`)),
+    config.webAppUrl ? [{ text: t(lang, 'btn_top_all'), web_app: { url: `${config.webAppUrl}/` } }] : null,
+    [ui.btn(t(lang, 'back'), 'm:menu')],
+  ]);
+  if (!png) return ui.show(ctx, caption, markup);
+  const { InputFile } = require('grammy');
+  const msg = ctx.callbackQuery && ctx.callbackQuery.message;
+  if (msg && msg.photo && /^m:top:/.test(ctx.callbackQuery.data)) {
+    try {
+      await ctx.editMessageMedia({ type: 'photo', media: new InputFile(png, 'top.png'), caption, parse_mode: 'HTML' }, { reply_markup: markup });
+      return undefined;
+    } catch (e) {
+      if (String(e.description || e.message).includes('not modified')) return undefined;
+    }
+  }
+  return ctx.replyWithPhoto(new InputFile(png, 'top.png'), { caption, parse_mode: 'HTML', reply_markup: markup });
+}
 
 /** 💎 Premium haqida va sotib olish tugmasi (Mini App'dan ?start=premium havolasi ham shu sahifani ochadi) */
 async function showPremiumInfo(ctx) {

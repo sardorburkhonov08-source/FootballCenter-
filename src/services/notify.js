@@ -40,10 +40,29 @@ async function toggle(user, key) {
   return db.one('UPDATE users SET notify = $2::jsonb WHERE id = $1 RETURNING *', [user.id, JSON.stringify(next)]);
 }
 
+// ✨ Telegram xabar effektlari (faqat shaxsiy chatda): xabar kelganda ekranda animatsiya
+const EFFECTS = {
+  party: '5046509860389126442',   // 🎉
+  fire: '5104841245755180586',    // 🔥
+  like: '5107584321108051014',    // 👍
+  heart: '5159385139981059251',   // ❤️
+};
+function effect(name) { return EFFECTS[name] ? { message_effect_id: EFFECTS[name] } : {}; }
+function isEffectError(e) { return /EFFECT/i.test(String((e && (e.description || e.message)) || '')); }
+
+/** Effekt rad etilsa (eski mijoz, noma'lum effekt) — xabar effektsiz qayta yuboriladi */
+async function sendWithEffect(send, extra) {
+  try { return await send(extra); } catch (e) {
+    if (!extra.message_effect_id || !isEffectError(e)) throw e;
+    const { message_effect_id: _drop, ...rest } = extra;
+    return send(rest);
+  }
+}
+
 async function sendRaw(chatId, text, extra = {}) {
   if (!api) return false;
   try {
-    await api.sendMessage(chatId, text, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...extra });
+    await sendWithEffect((x) => api.sendMessage(chatId, text, x), { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...extra });
     return true;
   } catch (e) {
     console.warn(`[notify] ${chatId}: ${e.description || e.message}`);
@@ -68,7 +87,8 @@ async function adminIds() {
 /** 🎉 Bayram animatsiyasi: Telegram bitta emojidan iborat xabarni katta animatsiya qilib ko'rsatadi (g'alaba, yutuq, daraja) */
 async function celebrate(user, emoji = '🎉') {
   if (!user || user.is_blocked || !api) return false;
-  try { await api.sendMessage(user.telegram_id, emoji); return true; } catch (e) { return false; }
+  const fx = effect(emoji === '🏆' ? 'fire' : 'party');
+  try { await sendWithEffect((x) => api.sendMessage(user.telegram_id, emoji, x), fx); return true; } catch (e) { return false; }
 }
 
-module.exports = { setApi, getApi, NOTIFICATIONS, isEnabled, toggle, sendRaw, toUser, adminIds, celebrate };
+module.exports = { setApi, getApi, NOTIFICATIONS, isEnabled, toggle, sendRaw, toUser, adminIds, celebrate, EFFECTS, effect, sendWithEffect };

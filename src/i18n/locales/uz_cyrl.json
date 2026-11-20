@@ -547,5 +547,22 @@
   "a_set_group_quiz_enabled": "👥 Гуруҳларда кунлик Quiz",
   "a_set_group_quiz_hour": "Гуруҳ Quiz'и соати (0—23, Тошкент)",
   "a_set_poll_enabled": "🗳 \"Ким ютади?\" овоз бериш (синов)",
-  "a_set_poll_points": "\"Ким ютади?\" тўғри тахмин учун points"
+  "a_set_poll_points": "\"Ким ютади?\" тўғри тахмин учун points",
+  "btn_top": "🏆 Рейтинг",
+  "top_caption": "🏆 <b>Умумий рейтинг — {period}</b>\n\n{list}\n\n{me}",
+  "top_line": "{place}. {name} — {points}",
+  "top_me": "👤 Сиз: <b>#{place}</b> · {points} points",
+  "top_me_none": "👤 Сиз бу даврда ҳали points тўпламагансиз — ўйнанг ва шоҳсупага чиқинг!",
+  "top_empty": "📭 Бу даврда ҳали ҳеч ким points тўпламаган. Биринчи бўлинг!",
+  "top_p_daily": "бугун",
+  "top_p_weekly": "бу ҳафта",
+  "top_p_monthly": "бу ой",
+  "btn_top_daily": "Бугун",
+  "btn_top_weekly": "Ҳафта",
+  "btn_top_monthly": "Ой",
+  "btn_top_all": "📱 Тўлиқ рейтинг",
+  "tc_title": "Умумий рейтинг",
+  "tc_daily": "Бугун",
+  "tc_weekly": "Бу ҳафта",
+  "tc_monthly": "Бу ой"
 }

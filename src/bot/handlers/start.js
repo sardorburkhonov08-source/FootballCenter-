@@ -131,7 +131,7 @@ function register(bot) {
     await ui.show(ctx, t(lang, 'lang_saved'), undefined);
     // 🎁 Birinchi marta til tanlaganda — sovg'a Premium haqida xabar
     if (firstTime && users.isPremium(ctx.user) && (await users.gotWelcomePremium(ctx.user.id))) {
-      await ctx.reply(t(lang, 'welcome_premium', { days: await settings.get('welcome_premium_days'), date: formatDate(ctx.user.premium_expires_at) }), ui.HTML);
+      await ui.replyFx(ctx, t(lang, 'welcome_premium', { days: await settings.get('welcome_premium_days'), date: formatDate(ctx.user.premium_expires_at) }));
     }
     await ctx.reply(t(lang, 'menu_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.mainMenuKb(lang, ctx.user) });
   });

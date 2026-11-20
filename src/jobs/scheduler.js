@@ -138,7 +138,7 @@ async function finalizePeriods(now = new Date()) {
       const kindKey = `kind_${kind}`;
       await notify.toUser(winnerUser, 'leaderboard_winner_notify', {
         kind: t(winnerUser.language || 'uz', kindKey), period: t(winnerUser.language || 'uz', `period_${period}`),
-      });
+      }, { extra: notify.effect('party') });
       for (let i = 0; i < rows.length; i += 1) {
         const u = await users.byId(rows[i].id);
         const lang = u.language || 'uz';
