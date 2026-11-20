@@ -51,6 +51,7 @@ function publicUser(u) {
   return {
     id: u.telegram_id, firstName: u.first_name, lastName: u.last_name, username: u.username, language: u.language || 'uz',
     premium: users.isPremium(u), premiumExpiresAt: u.premium_expires_at, isAdmin: users.isAdmin(u), coachName: u.coach_name, photoUrl: u.photo_url || null,
+    favoriteTeam: u.favorite_team || null,
   };
 }
 
@@ -103,6 +104,20 @@ router.get('/matches', footballRoute(async (req) => {
   const subs = await db.many('SELECT api_match_id FROM match_subscriptions WHERE user_id = $1', [req.user.id]);
   const subSet = new Set(subs.map((s) => Number(s.api_match_id)));
   return { date, matches: list.map((m) => ({ ...m, subscribed: subSet.has(m.id) })) };
+}));
+
+// ⭐ Sevimli jamoa: { teamId } — tanlash, { teamId: null } — olib tashlash
+router.post('/favorite-team', express.json(), footballRoute(async (req, res) => {
+  const id = req.body && req.body.teamId;
+  if (id === null || id === undefined || id === '') {
+    await db.query('UPDATE users SET favorite_team = NULL WHERE id = $1', [req.user.id]);
+    return { favoriteTeam: null };
+  }
+  if (!/^\d{1,9}$/.test(String(id))) { res.status(400); return { error: 'bad_team' }; }
+  const tm = await football.teamInfo(Number(id));
+  const fav = { id: tm.id, name: tm.name, logo: tm.logo };
+  await db.query('UPDATE users SET favorite_team = $2::jsonb WHERE id = $1', [req.user.id, JSON.stringify(fav)]);
+  return { favoriteTeam: fav };
 }));
 
 // 🔍 Jamoa qidirish (ligalar va kunlik o'yinlar Mini App ichida, so'rovsiz qidiriladi)
@@ -404,7 +419,7 @@ async function clubTheme(u) {
   for (let i = 0; i < 6 && luminance(dark) < 0.32; i += 1) dark = lighten(dark, 0.18);
   let light = col.primary;
   for (let i = 0; i < 6 && luminance(light) > 0.42; i += 1) light = lighten(light, -0.18);
-  return { team: card.team_name, primary: col.primary, secondary: col.secondary, dark, light, inkDark: textOn(dark), inkLight: textOn(light) };
+  return { id: card.team_id, name: card.team_name, logo: card.team_logo || null, team: card.team_name, primary: col.primary, secondary: col.secondary, dark, light, inkDark: textOn(dark), inkLight: textOn(light) };
 }
 
 // ---------- ✅ Bugun: daraja va kunlik vazifalar (Home va Games sahifalari tepasida)

@@ -562,5 +562,13 @@
   "tc_title": "Общий рейтинг",
   "tc_daily": "Сегодня",
   "tc_weekly": "Эта неделя",
-  "tc_monthly": "Этот месяц"
+  "tc_monthly": "Этот месяц",
+  "fav_goal_for": "⚽ <b>ГОООЛ! {team}!</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_goal_against": "😬 <b>{team} забивает</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_ft_win": "🏆 <b>{team} победила!</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_draw": "🤝 <b>Ничья</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_loss": "😔 <b>{team} проиграла</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "notif_fav_team": "⭐ Любимая команда: голы и итог",
+  "a_set_fav_team_notify": "⭐ Уведомления о голах любимой команды",
+  "a_set_fav_team_check_seconds": "Интервал проверки live-матча (сек, мин. 30)"
 }

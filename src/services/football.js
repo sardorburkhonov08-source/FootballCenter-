@@ -393,6 +393,14 @@ async function matchesByDate(ymd, opts = {}) {
   return sortMatches(data.map(normMatch));
 }
 
+/** Kundagi o'yinlar faqat keshdan (API so'rovisiz; eskirgan bo'lsa ham). Kesh yo'q bo'lsa — null */
+async function cachedMatchesByDate(ymd) {
+  const key = `/fixtures?${new URLSearchParams({ date: ymd, timezone: TZ }).toString()}`;
+  const c = await readCache(key);
+  if (!c || !Array.isArray(c.data)) return null;
+  return sortMatches(c.data.map(normMatch));
+}
+
 async function matchDetail(id) {
   return normMatchDetail(await rawMatch(id));
 }
@@ -570,7 +578,7 @@ async function matchesRange(fromYmd, toYmd) {
 
 module.exports = {
   FootballUnavailable, setFetch, clearCache, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
-  matchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
+  matchesByDate, cachedMatchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
   standings, competitionMatches, scorers, squad, matchesRange, normMatch, matchState, positionGroup,
   searchTeams, teamMatches, normalizeQuery, teamInfo,
 };

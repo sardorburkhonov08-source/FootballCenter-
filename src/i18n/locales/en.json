@@ -562,5 +562,13 @@
   "tc_title": "Overall leaderboard",
   "tc_daily": "Today",
   "tc_weekly": "This week",
-  "tc_monthly": "This month"
+  "tc_monthly": "This month",
+  "fav_goal_for": "⚽ <b>GOOOAL! {team}!</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_goal_against": "😬 <b>{team} score</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_ft_win": "🏆 <b>{team} win!</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_draw": "🤝 <b>Draw</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_loss": "😔 <b>{team} lost</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "notif_fav_team": "⭐ Favourite team: goals and result",
+  "a_set_fav_team_notify": "⭐ Favourite team goal/result alerts",
+  "a_set_fav_team_check_seconds": "Live match check interval (sec, min 30)"
 }

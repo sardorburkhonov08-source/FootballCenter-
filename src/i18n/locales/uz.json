@@ -564,5 +564,13 @@
   "tc_title": "Umumiy reyting",
   "tc_daily": "Bugun",
   "tc_weekly": "Bu hafta",
-  "tc_monthly": "Bu oy"
+  "tc_monthly": "Bu oy",
+  "fav_goal_for": "⚽ <b>GOOOL! {team}!</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_goal_against": "😬 <b>{team} gol urdi</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_ft_win": "🏆 <b>{team} g'alaba qozondi!</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_draw": "🤝 <b>Durang</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_loss": "😔 <b>{team} yutqazdi</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "notif_fav_team": "⭐ Sevimli jamoa: gol va natija",
+  "a_set_fav_team_notify": "⭐ Sevimli jamoa gol/natija xabarlari",
+  "a_set_fav_team_check_seconds": "Jonli o'yinni tekshirish oralig'i (soniya, kamida 30)"
 }

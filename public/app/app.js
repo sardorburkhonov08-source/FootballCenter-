@@ -609,7 +609,7 @@
   }
 
   function statusBadge(m) {
-    if (m.state === 'live') return el('span', { class: 'badge live', text: t('status_live') });
+    if (m.state === 'live') return el('span', { class: 'badge live', text: m.minute ? `${m.minute}'` : t('status_live') });
     if (m.state === 'finished') return el('span', { class: 'badge', text: `✅ ${t('status_finished')}` });
     if (m.state === 'cancelled') return el('span', { class: 'badge', text: `⛔ ${t('status_cancelled')}` });
     return el('span', { class: 'badge', text: `⏳ ${t('status_scheduled')}` });
@@ -643,11 +643,13 @@
     if (started) S.scores[m.id] = scoreKey;
     const card = el('div', { class: `match${m.state === 'live' ? ' live' : ''}${flash ? ' flash' : ''}`, role: 'button' },
       el('div', { class: 'teams' }, teamLine(m.home, m.score.home), teamLine(m.away, m.score.away),
-        m.state === 'live' ? el('div', { class: 'live-bar' }, el('span', { style: `width:${Math.min(100, Math.round(((m.minute || 0) / 90) * 100))}%` }), el('em', { text: m.minute ? `${m.minute}'` : '' })) : null),
+        m.state === 'live' ? el('div', { class: 'live-bar' }, el('span', { style: `width:${Math.min(100, Math.round(((m.minute || 0) / 90) * 100))}%` })) : null),
+      // O'ng tomon: boshlanmagan — vaqt (+ qo'ng'iroqcha), jonli — daqiqa, tugagan — "Tugadi"
       el('div', { class: 'side' },
-        m.state === 'scheduled' ? el('span', { class: 'time', text: showDate ? `${ddmm(m.utcDate)} ${hhmm(m.utcDate)}` : hhmm(m.utcDate) }) : statusBadge(m),
-        showDate && m.state !== 'scheduled' ? el('span', { class: 'small muted', text: ddmm(m.utcDate) }) : null,
-        m.state === 'scheduled' ? statusBadge(m) : null,
+        m.state === 'scheduled'
+          ? el('div', { class: 'when' }, showDate ? el('span', { class: 'date', text: ddmm(m.utcDate) }) : null, el('span', { class: 'time', text: hhmm(m.utcDate) }))
+          : m.state === 'live' ? statusBadge(m) : el('span', { class: 'ft', text: m.state === 'finished' ? t('status_finished') : t('status_cancelled') }),
+        showDate && m.state !== 'scheduled' ? el('span', { class: 'date', text: ddmm(m.utcDate) }) : null,
         premium ? null : el('span', { class: 'lock-badge', text: '🔒' }),
         bellBtn));
     card.addEventListener('click', () => {
@@ -682,6 +684,7 @@
     try {
       const data = await api(`/matches?date=${S.date}`);
       list.replaceChildren();
+      favBlock(list, data.matches);
       if (!data.matches.length) { list.append(el('div', { class: 'card center muted', style: 'margin-top:12px', text: t('no_matches') })); return; }
       // Ligalar bo'yicha guruhlash (server tartibini saqlagan holda)
       const groups = [];
@@ -737,6 +740,70 @@
     } catch (err) {
       list.replaceChildren(errorBox(err, () => render()));
     }
+  }
+
+  // ================= ⭐ SEVIMLI JAMOA
+  function hasTeam(m, id) { return [m.home && m.home.id, m.away && m.away.id].map(Number).includes(Number(id)); }
+  function favPromptHidden() { try { return localStorage.getItem('fc_fav_prompt') === '0'; } catch (e) { return false; } }
+
+  /** Home tepasi: tanlangan jamoaning bugungi o'yini, bo'lmasa keyingi/oxirgi o'yini; tanlanmagan bo'lsa — taklif */
+  function favBlock(list, matches) {
+    const fav = S.me.favoriteTeam;
+    const today = S.date === tashkentYmd();
+    if (!fav) {
+      if (!today || favPromptHidden()) return;
+      const card = el('div', { class: 'card fav-prompt' },
+        el('div', { class: 'fav-star', text: '⭐' }),
+        el('div', { class: 'grow small', text: t('fav_prompt') }),
+        el('button', { class: 'btn sm', text: t('fav_choose'), onclick: () => push({ render: renderFavPicker }) }),
+        el('button', { class: 'x', 'aria-label': 'close', text: '×', onclick: () => { try { localStorage.setItem('fc_fav_prompt', '0'); } catch (e) { /* */ } card.remove(); } }));
+      list.append(card);
+      return;
+    }
+    const mine = matches.filter((m) => hasTeam(m, fav.id));
+    const head = el('button', { class: 'fav-head', type: 'button', onclick: () => push({ render: (v) => renderTeam(v, fav) }) },
+      crest(fav.logo), el('span', { class: 'grow ellipsis', text: fav.name }), el('span', { class: 'muted small', text: t('fav_your_team') }), el('span', { class: 'chev', text: '›' }));
+    const box = el('div', { class: 'fav-box' }, head);
+    list.append(box);
+    if (mine.length) { mine.forEach((m) => box.append(matchCard(m, { bell: true }))); return; }
+    if (!today) { box.remove(); return; }
+    const slot = el('div', null, el('div', { class: 'skeleton' }));
+    box.append(slot);
+    api(`/teams/${fav.id}/matches`).then((d) => {
+      const next = d.next && d.next[0];
+      const last = d.last && d.last[0];
+      const m = next || last;
+      if (!m) { slot.remove(); return; }
+      slot.replaceChildren(el('div', { class: 'small muted fav-sub', text: next ? t('fav_next') : t('fav_last') }), matchCard(m, { bell: true, showDate: true }));
+    }).catch(() => slot.remove());
+  }
+
+  function renderFavPicker(view) {
+    view.append(backBar(t('fav_title')));
+    const fav = S.me.favoriteTeam;
+    const save = async (teamId) => {
+      try {
+        const r = await api('/favorite-team', { method: 'POST', body: { teamId } });
+        S.me.favoriteTeam = r.favoriteTeam;
+        haptic('success');
+        toast(teamId ? t('fav_saved') : t('fav_removed'));
+        goBack();
+      } catch (err) { toast(t('error_generic')); }
+    };
+    view.append(el('p', { class: 'muted small', text: t('fav_pick_hint') }));
+    if (fav) {
+      view.append(el('div', { class: 'card row', style: 'gap:12px' }, crest(fav.logo, 'crest lg'), el('b', { class: 'grow ellipsis', text: fav.name }),
+        el('button', { class: 'btn ghost sm', text: t('fav_remove'), onclick: () => save(null) })));
+    }
+    // Muxlislik kartasidagi klub — bir bosishda
+    let club = null;
+    try { club = JSON.parse(localStorage.getItem('fc_club') || 'null'); } catch (e) { /* */ }
+    if (club && club.id && (!fav || Number(fav.id) !== Number(club.id))) {
+      view.append(el('button', { class: 'card row', style: 'width:100%;gap:12px', type: 'button', onclick: () => save(club.id) },
+        crest(club.logo), el('span', { class: 'grow ellipsis', text: club.name }), el('span', { class: 'muted small', text: t('fav_from_card') })));
+    }
+    view.append(el('h2', { text: t('fav_search_title') }), clubSearch((tm) => save(tm.id)),
+      el('p', { class: 'muted small', style: 'margin-top:12px', text: t('fav_notify_hint') }));
   }
 
   const STAT_LABELS = {
@@ -2497,10 +2564,9 @@
   }
 
   async function renderProfile(view) {
-    const cardBox = el('div');
-    view.append(cardBox);
+    const cardBox = el('div', { class: 'prof-card' });
     fanCardSection(cardBox);
-    const box = el('div', { style: 'margin-top:14px' }, skeleton(4));
+    const box = el('div', null, skeleton(4));
     view.append(box);
     let d;
     try { d = await api('/profile'); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
@@ -2524,12 +2590,17 @@
           el('div', { class: 'stat' }, el('b', { text: d.overall.points }), el('span', { text: 'Points' })),
           el('div', { class: 'stat' }, el('b', { text: d.overall.weekPlace ? `#${d.overall.weekPlace}` : '—' }), el('span', { text: t('prof_week_place') })),
           el('div', { class: 'stat' }, el('b', { text: `🔥 ${d.overall.streak}` }), el('span', { text: t('prof_streak') }))) : null),
-      soundCard(),
+      el('button', { class: 'card row fav-row', type: 'button', onclick: () => push({ render: renderFavPicker }) },
+        S.me.favoriteTeam ? crest(S.me.favoriteTeam.logo) : el('span', { class: 'fav-star sm', text: '⭐' }),
+        el('span', { class: 'grow' }, el('span', { class: 'small muted', style: 'display:block', text: t('fav_title') }),
+          el('b', { class: 'ellipsis', text: S.me.favoriteTeam ? S.me.favoriteTeam.name : t('fav_none') })),
+        el('span', { class: 'muted small', text: `${S.me.favoriteTeam ? t('fav_change') : t('fav_choose')} ›` })),
       el('div', { class: 'card' },
         el('div', { class: 'kv' }, el('span', { text: t('prof_balance') }), el('b', { text: `${money(d.balance)} ${t('som')}` })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_registered') }), el('b', { text: ddmmyyyy(d.registeredAt) })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_refs') }), el('b', { text: d.referrals }))),
+      cardBox,
       d.manager
         ? statBlock('🎮 Mini Manager', d.manager, el('div', { class: 'kv' }, el('span', { text: t('prof_predictions') }), el('b', { text: d.manager.predictions })))
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: '🎮 Mini Manager' }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
@@ -2544,6 +2615,7 @@
         : el('button', { class: 'card row between locked', style: 'width:100%;opacity:.55', onclick: premiumModal }, el('b', { text: `🎯 ${t('sp_title')}` }), el('span', { class: 'muted', text: t('prof_quiz_locked') })),
       achievementsBlock(d.achievements),
       shareBlock(),
+      soundCard(),
       ...(u.isAdmin ? [el('button', { class: 'btn ghost block', style: 'margin-top:10px', text: t('admin_panel'), onclick: () => { window.location.href = '/admin/'; } })] : []),
     );
   }

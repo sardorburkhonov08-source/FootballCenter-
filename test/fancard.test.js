@@ -92,7 +92,7 @@ test('logotipdan klub ranglari; Code 128 shtrix-kodi', () => {
 });
 
 test("eski (004) karta ustunlari users jadvalidan olib tashlangan", async () => {
-  const cols = await db.many("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND (column_name LIKE 'fav_%' OR column_name LIKE 'fan_%')");
+  const cols = await db.many("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND (column_name LIKE 'fav\\_%' OR column_name LIKE 'fan\\_%')");
   assert.deepStrictEqual(cols, []);
 });
 

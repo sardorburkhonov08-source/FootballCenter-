@@ -22,6 +22,7 @@ const NOTIFICATIONS = [
   { key: 'quiz_new', mode: 'premium' },
   { key: 'payment', mode: 'always' },
   { key: 'bonus_ready', mode: 'premium' },
+  { key: 'fav_team', mode: 'optional' },   // ⭐ sevimli jamoa: gol va yakun — hamma uchun, o'chirish mumkin
 ];
 
 function isEnabled(user, key) {
@@ -31,6 +32,7 @@ function isEnabled(user, key) {
   const premium = users.isPremium(user);
   const pref = (user.notify || {})[key];
   if (def.mode === 'freeAlways') return premium ? pref !== false : true;
+  if (def.mode === 'optional') return pref !== false;
   return premium ? pref !== false : false;
 }
 

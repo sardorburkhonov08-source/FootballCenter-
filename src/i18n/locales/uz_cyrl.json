@@ -564,5 +564,13 @@
   "tc_title": "Умумий рейтинг",
   "tc_daily": "Бугун",
   "tc_weekly": "Бу ҳафта",
-  "tc_monthly": "Бу ой"
+  "tc_monthly": "Бу ой",
+  "fav_goal_for": "⚽ <b>ГОООЛ! {team}!</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_goal_against": "😬 <b>{team} гол урди</b>{minute}\n\n{home} <b>{h}–{a}</b> {away}",
+  "fav_ft_win": "🏆 <b>{team} ғалаба қозонди!</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_draw": "🤝 <b>Дуранг</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "fav_ft_loss": "😔 <b>{team} ютқазди</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
+  "notif_fav_team": "⭐ Севимли жамоа: гол ва натижа",
+  "a_set_fav_team_notify": "⭐ Севимли жамоа гол/natija хабарлари",
+  "a_set_fav_team_check_seconds": "Жонли ўйинни текшириш оралиғи (сония, камида 30)"
 }
