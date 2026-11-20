@@ -462,3 +462,23 @@ input[type=search].input { margin-bottom: 4px; }
 .today .hello { min-width: 0; }
 .prof-card { margin-top: 14px; }
 .view > div > .card + .card, .view > div > .card + button.card { margin-top: 10px; }
+
+/* Logotip o'rnida bosh harf */
+.crest-ph { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 13px; color: #fff; font-size: 12px; font-weight: 800; }
+.crest-ph.lg { width: 40px; height: 40px; border-radius: 20px; font-size: 17px; }
+/* 📊 O'yinlar statistikasi jadvali */
+.gstats .gs-row { display: grid; grid-template-columns: minmax(0, 1fr) 54px 54px 58px; align-items: center; gap: 6px; padding: 9px 0; border-top: 1px solid var(--border); width: 100%; background: transparent; color: inherit; text-align: left; }
+.gstats .gs-head { border-top: 0; padding: 2px 0 4px; font-size: 11px; color: var(--muted); font-weight: 700; }
+.gstats .gs-head span { text-align: center; }
+.gs-name { min-width: 0; }
+.gs-name b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-name span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.gs-num { text-align: center; line-height: 1.1; }
+.gs-num b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.gs-num span { display: block; font-size: 10.5px; color: var(--gold); font-weight: 700; margin-top: 2px; }
+.gs-row.locked { grid-template-columns: minmax(0, 1fr) auto; opacity: .6; }
+.gs-lock { font-size: 18px; padding-right: 6px; }
+/* 🏅 Yutuqlar: progress va "yana" tugmasi */
+.ach-bar { height: 6px; border-radius: 3px; background: var(--surface2); margin-top: 10px; overflow: hidden; }
+.ach-bar span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f7d774, #d9a520); }
+.more-btn { display: block; width: 100%; margin-top: 10px; height: 38px; border-radius: 10px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: 13px; }
