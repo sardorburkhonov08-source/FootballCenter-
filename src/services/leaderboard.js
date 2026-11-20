@@ -8,7 +8,7 @@ function range(period, date = new Date()) {
 
 // 🏆 Umumiy reyting (egasi talabi bilan): hamma o'yinlar points'i yig'indisi — faqat foydalanuvchining o'zi to'plagani
 // (community bunga kirmaydi). Haftalik va oylik g'oliblar shu reyting bo'yicha aniqlanadi.
-const GAME_KINDS = ['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest'];
+const GAME_KINDS = ['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest', 'poll'];
 
 // Reyting hisoblash og'ir (barcha javoblarni yig'adi). Natija 30 soniya umumiy keshda saqlanadi:
 // minglab foydalanuvchi bir vaqtda ochsa ham bazada bitta hisob-kitob bajariladi.
@@ -64,6 +64,16 @@ async function computeRanking(kind, r) {
        WHERE q.claimed_at >= $1 AND q.claimed_at < $2 AND NOT u.is_blocked
        GROUP BY u.id HAVING sum(q.reward) > 0
        ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end],
+    );
+  }
+  if (kind === 'poll') {   // 🗳 "Kim yutadi?" (sinov)
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(v.points)::int AS points, max(v.scored_at) AS last_at
+       FROM poll_votes v JOIN users u ON u.id = v.user_id
+       WHERE v.points > 0 AND v.scored_at >= $1 AND v.scored_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id ORDER BY points DESC, last_at ASC`,
       [r.start, r.end],
     );
   }

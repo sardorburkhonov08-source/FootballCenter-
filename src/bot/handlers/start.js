@@ -70,6 +70,26 @@ async function sendArcadeInvite(ctx, code) {
   });
 }
 
+/** 🔎 Inline chaqiruv: t.me/<bot>?start=dch_<userId> — chaqiruvchi nomidan Quiz duel taklifi ochiladi */
+async function sendChallenge(ctx, creatorId) {
+  const creator = await users.byId(Number(creatorId));
+  if (!creator || creator.id === ctx.user.id) return;
+  if (ctx.userCreated && creator.ref_code) await referral.attach(ctx.user, creator.ref_code).catch(() => {});
+  const lang = ctx.lang || 'uz';
+  if (!users.isPremium(creator)) return;
+  const duels = require('../../services/duels');
+  // Chaqiruvchining hali hech kim qabul qilmagan taklifi bo'lsa — o'sha (har bosishda yangi duel ochilmasin)
+  let d = await require('../../db/pool').one(
+    `SELECT * FROM duels WHERE creator_id = $1 AND kind = 'quiz' AND mode = 'invite' AND status = 'waiting' AND opponent_id IS NULL
+       AND expires_at > now() ORDER BY created_at DESC LIMIT 1`, [creator.id],
+  );
+  if (!d) try { d = await duels.create(creator, 'quiz', 'invite'); } catch (e) {
+    if (e instanceof duels.DuelError) { await ctx.reply(t(lang, 'inl_duel_unavailable')); return; }
+    throw e;
+  }
+  await sendDuelInvite(ctx, d.code);
+}
+
 async function onStart(ctx) {
   await state.clear(ctx.from.id);
   const payload = (ctx.match || '').trim();
@@ -84,6 +104,7 @@ async function onStart(ctx) {
   // ⚔️ Do'stning duel taklifi: t.me/<bot>?start=duel_<kod> — Mini App'da duel ochiladi
   if (payload.startsWith('duel_')) await sendDuelInvite(ctx, payload.slice(5));
   if (payload.startsWith('ag_')) await sendArcadeInvite(ctx, payload.slice(3));
+  if (/^dch_\d+$/.test(payload)) await sendChallenge(ctx, payload.slice(4));
   return undefined;
 }
 

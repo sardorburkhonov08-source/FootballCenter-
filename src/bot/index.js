@@ -14,6 +14,7 @@ const modules = [
   require('./handlers/donate'),
   require('./handlers/sections'),
   require('./handlers/admin'),
+  require('./handlers/inline'),
 ];
 
 const STATES = Object.assign({}, ...modules.map((m) => m.states || {}));
@@ -39,8 +40,10 @@ function createBot(token = config.botToken, botConfig = {}) {
     try { await next(); } catch (error) { await onError({ error, ctx }); }
   });
 
-  // Faqat shaxsiy chatlar (kanal/guruh yangilanishlari e'tiborsiz)
+  // 👥 Guruh yangilanishlari — alohida handler (kunlik guruh Quiz'i, reyting); kanal yangilanishlari e'tiborsiz
+  const groupHandler = require('./handlers/groups');
   bot.use(async (ctx, next) => {
+    if (groupHandler.isGroup(ctx.chat)) return groupHandler.handle(ctx);
     if (!ctx.from || (ctx.chat && ctx.chat.type !== 'private')) return undefined;
     return next();
   });
@@ -113,6 +116,15 @@ async function setupCommands(bot) {
   await bot.api.setMyCommands([{ command: 'start', description: descriptions.uz }]).catch(() => {});
   for (const lc of ['ru', 'en']) {
     await bot.api.setMyCommands([{ command: 'start', description: descriptions[lc] }], { language_code: lc }).catch(() => {});
+  }
+  const groupCmds = {
+    uz: [['quiz', 'Bugungi Quiz savoli'], ['top', 'Guruh reytingi'], ['lang', 'Guruh tili']],
+    ru: [['quiz', 'Квиз дня'], ['top', 'Рейтинг группы'], ['lang', 'Язык группы']],
+    en: [['quiz', "Today's quiz"], ['top', 'Group leaderboard'], ['lang', 'Group language']],
+  };
+  for (const [lc, list] of Object.entries(groupCmds)) {
+    await bot.api.setMyCommands(list.map(([command, description]) => ({ command, description })),
+      { scope: { type: 'all_group_chats' }, ...(lc === 'uz' ? {} : { language_code: lc }) }).catch(() => {});
   }
   if (config.webAppUrl) {
     await bot.api.setChatMenuButton({ menu_button: { type: 'web_app', text: 'FootballCenter', web_app: { url: `${config.webAppUrl}/` } } }).catch((e) => console.warn('[menu button]', e.description || e.message));

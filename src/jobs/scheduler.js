@@ -76,12 +76,17 @@ async function dailyDigest(now = new Date()) {
   if (!mark) return false;
   const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked AND language IS NOT NULL');
   const webApp = require('../config').webAppUrl;
+  const pollGame = await require('../services/poll').todayGame(now);   // 🗳 "Kim yutadi?" (sinov)
   for (const u of rows) {
     if (!notify.isEnabled(u, 'quiz_new')) continue;
     try {
       const text = await digestText(u, now);
       const lang = u.language || 'uz';
       await notify.sendRaw(u.telegram_id, text, webApp ? { reply_markup: { inline_keyboard: [[{ text: t(lang, 'btn_digest_play'), web_app: { url: `${webApp}/` } }]] } } : {});
+      if (pollGame) {
+        const m = await require('../services/poll').message(pollGame, lang);
+        await notify.sendRaw(u.telegram_id, m.text, { reply_markup: m.reply_markup });
+      }
     } catch (e) { console.error('[digest]', e.message); }
     await new Promise((r) => setTimeout(r, 40));
   }
@@ -182,6 +187,9 @@ const JOBS = [
   { name: 'bonus_ready', every: 300, fn: bonusReady },
   { name: 'periods', every: 300, fn: () => finalizePeriods() },
   { name: 'api_cache_cleanup', every: 6 * 3600, fn: () => require('../services/football').cleanupCache() },
+  { name: 'poll_score', every: 300, fn: () => require('../services/poll').score() },
+  { name: 'groups_quiz', every: 120, fn: () => require('../services/groups').postDaily(notify.getApi()) },
+  { name: 'groups_week', every: 600, fn: () => require('../services/groups').finalizeWeeks(notify.getApi()) },
   { name: 'db_health', every: 300, fn: () => require('../services/alerts').checkDb() },
   { name: 'popularity_cleanup', every: 24 * 3600, fn: () => require('../services/popularity').cleanup() },
 ];

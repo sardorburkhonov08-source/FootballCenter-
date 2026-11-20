@@ -77,7 +77,7 @@ test/                   avtomatik testlar
 - Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi.
 - Foydalanuvchi aniq hisobni (0—20) o'yin boshlanguncha kiritadi/o'zgartiradi; boshlangach qulflanadi.
 - Ball: aniq hisob — `settings.score_exact_points` (5), faqat natija (g'alaba/durang/mag'lubiyat) — `score_outcome_points` (2); web admin'da o'zgaradi.
-- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
+- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy + Vazifalar + "Kim yutadi?" (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
 - API yuklamasi: natijalar kun bo'yicha **bitta** `/fixtures?date=` so'rovida olinadi (kesh); kun ro'yxatida bo'lmagan yoki qoldirilgan o'yin alohida tekshiriladi va boshqa kunga ko'chirilgan bo'lsa qayta ochiladi.
 
 ## ⚔️ Duel o'yinlari (SPEC'dan tashqari, egasi talabi bilan)
@@ -144,9 +144,16 @@ test/                   avtomatik testlar
 
 ## 🏆 Umumiy reyting va g'oliblar (egasi talabi bilan)
 
-- Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
+- Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest, poll). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
 - Mini App → Games, o'yinlar ro'yxatidan **pastda** "🏆 Umumiy reyting": **Bugun / Haftalik / Oylik** (`period` `daily|weekly|monthly`), 5 qator + "Hammasi"; Premiumsizga ham ko'rinadi.
 - **Kunlik g'olib yo'q.** Haftalik va oylik g'oliblar **faqat umumiy reyting** bo'yicha aniqlanadi (`finalizePeriods`, `period_winners.kind = 'overall'`); har o'yin bo'yicha alohida g'olib aniqlanmaydi (SPEC 13.5 / 14 dagi bo'lim g'oliblari o'rniga). Sovrinlar — `prizes.kind = 'overall'` (021-migratsiya; web admin → "🏆 Sovrinlar"), Games'da umumiy reyting ustida ko'rsatiladi; Mini Manager va Quiz ichidagi sovrin bloklari olib tashlangan.
+
+## 👥 Guruhlar, 🔎 inline rejim, 🗳 "Kim yutadi?" (egasi talabi bilan)
+
+- **Guruhlarda bot** (`src/services/groups.js`, `src/bot/handlers/groups.js`, 024-migratsiya `group_chats`, `group_quiz`, `group_quiz_answers`, `group_weekly_winners`). Guruh yangilanishlari shaxsiy handlerlarga tushmaydi — faqat `groups.handle`. Bot qo'shilganda salom; har kuni `group_quiz_hour` (19, Toshkent) dan keyin bank savoli (4 tugma, tartib aralash; `groups_quiz` vazifasi), birinchi javob hisoblanadi, 24 soat amal qiladi. `/quiz`, `/top` (hafta reytingi: to'g'ri javoblar, teng — tezroq), `/lang` (faqat guruh adminlari). Hafta tugagach (`groups_week`) har guruhda 👑 chempion e'loni, bir marta. Guruh ballari **umumiy points'ga qo'shilmaydi**. Faqat guruhda javob bergan odam — `users.group_only` (sovg'a Premium va referral botga birinchi kirganda beriladi, xabar tarqatishga kirmaydi). Sozlamalar: `group_quiz_enabled`, `group_quiz_hour` (bot admin → 🎮 O'yinlar sozlamalari).
+- **🔎 Inline rejim** (`src/bot/handlers/inline.js`; BotFather → /setinline yoqilishi kerak): ⚔️ Quiz duelga chaqiruv (faqat Premium; havola `?start=dch_<userId>` — chaqiruvchining ochiq taklifi yoki yangi invite duel, yangi foydalanuvchi referral bo'ladi), 🎮 botga taklif (`ref_invite` matni), bugungi o'yinlar hisobi (bitta `/fixtures?date=` kesh so'rovi, 4 s kutadi; jonli → asosiy ligalar; qidiruv — jamoa/liga nomi).
+- **🗳 "Kim yutadi?" — SINOV** (`src/services/poll.js`, `poll_votes`, `users.points_poll`; `poll_enabled`, `poll_points` (2)): kunning o'yini — "🎯 Hisobni top" ga belgilangan bugungi eng kechki o'yin; kunlik dayjestdan keyin alohida xabar (3 tugma), ovoz bir marta, keyin foizlar; o'yin tugagach (`poll_score`) to'g'ri taxminga points (umumiy points, `leaderboard` kind `poll`). Olib tashlash kerak bo'lsa: poll.js, `pl:` handler (sections.js), scheduler (`poll_score`, dayjest), `POINT_COLUMNS`/`GAME_KINDS`/community ro'yxatidagi `poll`.
+- Webhook `allowed_updates`: `message`, `callback_query`, `inline_query`, `pre_checkout_query`, `my_chat_member` (`src/index.js`).
 
 ## Egasi talabi bilan SPEC'dan farqlar
 

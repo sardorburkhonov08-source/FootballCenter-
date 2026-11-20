@@ -22,6 +22,12 @@ const DEFAULTS = {
   premium_week_stars: 0,
   premium_month_stars: 0,
   // 🚨 Adminlarga xato xabarlari: server xatolari, API limiti, sekin baza (bir xil xato — alerts_repeat_minutes da bir marta)
+  // 👥 Guruhlarda bot: kunlik guruh Quiz'i shu soatdan keyin (Toshkent), 0—23
+  group_quiz_enabled: true,
+  group_quiz_hour: 19,
+  // 🗳 "Kim yutadi?" ovoz berish (sinov rejimi): to'g'ri taxmin uchun points
+  poll_enabled: true,
+  poll_points: 2,
   alerts_enabled: true,
   alerts_repeat_minutes: 30,
   alerts_db_slow_ms: 2000,

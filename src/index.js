@@ -3,6 +3,9 @@ const { migrate } = require('./db/migrate');
 const { createApp } = require('./web/server');
 const notify = require('./services/notify');
 
+// Telegram yuboradigan yangilanish turlari: inline rejim, ⭐ Stars to'lovi (pre_checkout_query), bot guruhga qo'shilishi (my_chat_member)
+const ALLOWED_UPDATES = ['message', 'callback_query', 'inline_query', 'pre_checkout_query', 'my_chat_member'];
+
 /** Telegram'ga ulanish; xato bo'lsa (tarmoq, noto'g'ri token) 30 soniyadan keyin qayta urinadi */
 async function startBot(bot) {
   const { setupCommands } = require('./bot');
@@ -25,14 +28,14 @@ async function startBot(bot) {
     // Webhook har ishga tushishda avtomatik o'rnatiladi (WEBHOOK_URL + /telegram/webhook)
     await bot.api.setWebhook(`${config.publicUrl}${config.webhookPath}`, {
       secret_token: config.webhookSecret || undefined,
-      allowed_updates: ['message', 'callback_query'],
+      allowed_updates: ALLOWED_UPDATES,
       // Telegram bir vaqtda shuncha so'rovni parallel yuboradi — bot ularni bir paytda qayta ishlaydi
       max_connections: 40,
     });
     console.log(`🤖 Bot webhook rejimida: @${bot.botInfo.username}`);
   } else {
     await bot.api.deleteWebhook().catch(() => {});
-    bot.start({ onStart: (me) => console.log(`🤖 Bot ishga tushdi: @${me.username} (long polling)`) });
+    bot.start({ allowed_updates: ALLOWED_UPDATES, onStart: (me) => console.log(`🤖 Bot ishga tushdi: @${me.username} (long polling)`) });
   }
 }
 

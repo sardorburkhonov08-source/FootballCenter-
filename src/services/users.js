@@ -14,9 +14,21 @@ function photoOf(from) {
   return typeof u === 'string' && /^https:\/\/t\.me\/[^\s"'<>]{1,400}$/.test(u) ? u : null;
 }
 
-async function upsertFromTelegram(from) {
+/**
+ * opts.groupOnly — guruhdan (botni ochmagan) foydalanuvchi: sovg'a Premium berilmaydi, group_only = true.
+ * Bunday foydalanuvchi botga birinchi kirganda created = true qaytadi (sovg'a Premium, referral).
+ */
+async function upsertFromTelegram(from, opts = {}) {
   const existing = await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]);
   const photo = photoOf(from);
+  if (existing && existing.group_only && !opts.groupOnly) {
+    const user = await db.one(
+      `UPDATE users SET group_only = false, username = $2, first_name = $3, last_name = $4, photo_url = COALESCE($5, photo_url),
+         last_seen_at = now(), registered_at = now() WHERE id = $1 AND group_only RETURNING *`,
+      [existing.id, from.username || null, from.first_name || null, from.last_name || null, photo],
+    );
+    if (user) return { user: await welcomePremium(user), created: true };
+  }
   if (existing) {
     // Bazaga keraksiz yozuv yubormaslik: ism o'zgarmagan va oxirgi faollik 5 daqiqadan yangi bo'lsa — yozmaymiz
     const same = existing.username === (from.username || null) && existing.first_name === (from.first_name || null)
@@ -34,12 +46,12 @@ async function upsertFromTelegram(from) {
   for (let i = 0; i < 5; i += 1) {
     try {
       const user = await db.one(
-        `INSERT INTO users (telegram_id, username, first_name, last_name, ref_code, is_admin, photo_url, last_seen_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+        `INSERT INTO users (telegram_id, username, first_name, last_name, ref_code, is_admin, photo_url, last_seen_at, group_only)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8)
          ON CONFLICT (telegram_id) DO NOTHING RETURNING *`,
-        [from.id, from.username || null, from.first_name || null, from.last_name || null, newRefCode(), isOwner, photo],
+        [from.id, from.username || null, from.first_name || null, from.last_name || null, newRefCode(), isOwner, photo, !!opts.groupOnly],
       );
-      if (user) return { user: await welcomePremium(user), created: true };
+      if (user) return { user: opts.groupOnly ? user : await welcomePremium(user), created: !opts.groupOnly };
       return { user: await db.one('SELECT * FROM users WHERE telegram_id = $1', [from.id]), created: false };
     } catch (e) {
       if (e.code !== '23505') throw e; // ref_code to'qnashuvi — qayta urinish
@@ -79,7 +91,7 @@ async function find(query) {
 }
 
 /** Umumiy points: Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy. Yangi o'yin ustuni shu ro'yxatga qo'shiladi. */
-const POINT_COLUMNS = ['points_manager', 'points_quiz', 'points_score', 'points_duel', 'points_penalty', 'points_arcade', 'points_quest'];
+const POINT_COLUMNS = ['points_manager', 'points_quiz', 'points_score', 'points_duel', 'points_penalty', 'points_arcade', 'points_quest', 'points_poll'];
 function totalPoints(u) { return POINT_COLUMNS.reduce((sum, k) => sum + (Number(u[k]) || 0), 0); }
 /** SQL ifoda: (u.points_manager + ...); prefix — jadval taxallusi */
 function totalPointsSql(prefix = '') { return `(${POINT_COLUMNS.map((c) => `${prefix}${c}`).join(' + ')})`; }
