@@ -496,13 +496,38 @@
 
   // ================= ✅ BUGUN: salom, daraja va kunlik vazifalar (Home va Games tepasida)
   const QUEST_GAME = { quiz: 'quiz', quiz3: 'quiz', duel: 'duel', penalty: 'penalty', crossbar: 'crossbar', keepy: 'keepy', score: 'score' };
+  // ================= 🎨 SVG belgilar (yangi dizayn)
+  function svgNode(markup, cls) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.innerHTML = markup;   // faqat koddagi o'zgarmas SVG (foydalanuvchi matni emas)
+    return span;
+  }
+  /** FootballCenter belgisi: qiya "F" va to'p */
+  function logoMark() {
+    return svgNode(`<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lgF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b8f5c8"/></linearGradient></defs>
+<path d="M14 18h7M9 26h8M6 34h7" stroke="#7CFC00" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M24 52 32 12h26l-3 9H40l-2 8h14l-3 9H36l-3 14z" fill="url(#lgF)"/>
+<circle cx="49" cy="47" r="9" fill="#fff"/><path d="M49 42l4 3-1.5 4.6h-5L45 45z" fill="#0c1712"/><path d="M49 38v4M57.5 44.5 53 45M54 55l-2.5-5.4M44 55l2.5-5.4M40.5 44.5 45 45" stroke="#0c1712" stroke-width="1.4"/></svg>`, 'logo-mark');
+  }
+  /** Kartadagi katta to'p (fon bezagi) */
+  function ballArt() {
+    return svgNode(`<svg viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="ballG" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#3ddc84" stop-opacity=".55"/><stop offset=".6" stop-color="#145c32" stop-opacity=".55"/><stop offset="1" stop-color="#062012" stop-opacity=".6"/></radialGradient></defs>
+<circle cx="100" cy="100" r="96" fill="url(#ballG)" stroke="#0a2a17" stroke-opacity=".5" stroke-width="2"/>
+<g fill="#06210f" fill-opacity=".55"><path d="M100 62l30 22-11 36H81L70 84z"/><path d="M100 4l22 14-6 22H84l-6-22z"/><path d="M168 52l26 10 2 28-20 12-18-14z"/><path d="M178 132l-8 26-26 14-12-20 16-20z"/><path d="M60 176l-26-10-12-24 18-14 20 18z"/><path d="M6 96l6-30 24-10 10 24-18 20z"/></g>
+<g stroke="#0a2a17" stroke-opacity=".6" stroke-width="2" fill="none"><path d="M100 62V40M130 84l28-6M119 120l25 18M81 120l-21 18M70 84l-34-4"/></g></svg>`, 'ball-art');
+  }
+  const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+
   function greeting() {
     const h = new Date().getHours();
     return t(h < 5 ? 'today_night' : h < 12 ? 'today_morning' : h < 18 ? 'today_day' : h < 23 ? 'today_evening' : 'today_night', { name: S.me.firstName || '' });
   }
 
   function todayCard(container, compact) {
-    const box = el('div', { class: 'card today', style: 'margin-bottom:12px' }, el('div', { class: 'hello', text: greeting() }), el('div', { class: 'sub', text: '…' }));
+    const box = el('div', { class: 'card today', style: 'margin-bottom:14px' }, el('div', { class: 'hello', text: greeting() }), el('div', { class: 'sub', text: '…' }));
     container.append(box);
     const draw = async () => {
       let d;
@@ -519,16 +544,24 @@
       const bar = el('div', { class: 'lv-bar' }, el('span', { style: 'width:0%' }));
       setTimeout(() => { bar.firstChild.style.width = `${Math.max(3, pct)}%`; }, 60);
       const parts = [
-        el('div', { class: 'row between' }, el('div', { class: 'hello', text: greeting() }), el('span', { class: 'lv-badge', text: `Lv ${lv.level} · ${lv.name}` })),
+        ballArt(),
+        el('div', { class: 'td-head' },
+          logoMark(),
+          el('span', { class: 'td-sep' }),
+          el('div', { class: 'td-hello' }, el('div', { class: 'td-hi', text: t('td_welcome') }),
+            el('div', { class: 'td-row' }, el('div', { class: 'td-name', text: `${S.me.firstName || ''}!` }),
+              el('span', { class: 'lv-badge' }, el('span', { class: 'lv-star', text: '★' }), `Lv ${lv.level} • ${lv.name}`)))),
         bar,
-        el('div', { class: 'row between sub' }, el('span', null, el('b', { class: 'count-up', text: money(d.points) }), ` points`),
-          el('span', { text: lv.next ? t('lv_next', { left: money(lv.next - lv.xp), n: lv.level + 1 }) : t('lv_max') })),
+        el('div', { class: 'td-stats' },
+          el('span', null, el('span', { class: 'td-ico', text: '⭐' }), el('b', { class: 'count-up', text: money(d.points) }), ` ${t('td_pts')}`),
+          el('span', null, el('span', { class: 'td-ico', text: '🏆' }), lv.next ? t('td_next', { left: money(lv.next - lv.xp), n: lv.level + 1 }) : t('lv_max'))),
       ];
       const q = d.quests;
       if (q && compact) {
         parts.push(el('button', { type: 'button', class: 'q-mini', onclick: () => { S.tab = 'games'; S.stacks.games = []; render(); } },
-          el('span', { text: q.claimed ? t('q_claimed', { n: q.reward }) : `${t('q_title')}: ${q.done}/${q.total}` }),
-          q.streak ? el('span', { class: 'streak', text: t('q_streak', { n: q.streak }) }) : null, el('span', { text: '›' })));
+          svgNode(ICON_CHECK, `q-check${q.allDone || q.claimed ? ' done' : ''}`),
+          el('span', { text: q.claimed ? t('q_claimed', { n: q.reward }) : `${t('q_title_plain')}: ${q.done}/${q.total}` }),
+          q.streak ? el('span', { class: 'streak', text: t('q_streak', { n: q.streak }) }) : null, el('span', { class: 'q-chev', text: '›' })));
       } else if (q) {
         const qbox = el('div', { class: 'card quests', style: 'color:var(--text)' },
           el('div', { class: 'row between' }, el('b', { text: t('q_title') }),
@@ -566,11 +599,11 @@
     todayCard(view, true);
     const subs = [['matches', 'home_matches'], ['competitions', 'home_competitions']];
     if (S.features && S.features.news) subs.push(['news', 'home_news']);
-    view.append(el('div', { class: 'seg' }, subs.map(([k, label]) => el('button', {
+    view.append(el('div', { class: 'seg home-seg' }, subs.map(([k, label]) => el('button', {
       class: S.homeSub === k ? 'on' : '', text: t(label), onclick: () => { S.homeSub = k; haptic(); render(); },
     }))));
     view.append(el('button', { class: 'search-bar', type: 'button', onclick: () => push({ render: renderSearch }) },
-      el('span', { text: '🔍' }), el('span', { class: 'muted', text: t('search_placeholder') })));
+      svgNode(ICON_SEARCH, 'sb-ico'), el('span', { class: 'muted', text: t('search_placeholder') })));
     const body = el('div');
     view.append(body);
     if (S.homeSub === 'competitions') return renderCompetitions(body);
@@ -667,21 +700,48 @@
     return el('span', { class: 'badge', text: `⏳ ${t('status_scheduled')}` });
   }
 
-  function matchCard(m, { bell, showDate } = {}) {
+  /** O'yin kuni: Bugun / Ertaga / Kecha yoki DD.MM */
+  function dayLabel(iso) {
+    const d = tashkentYmd(new Date(iso));
+    const today = tashkentYmd();
+    if (d === today) return t('date_today');
+    if (d === addDays(today, 1)) return t('date_tomorrow');
+    if (d === addDays(today, -1)) return t('date_yesterday');
+    return ddmm(iso);
+  }
+
+  /** Uzun so'zli jamoa nomi — kichikroq shrift (tor ustunga sig'sin, so'z bo'linmasin) */
+  function nameSize(team) {
+    const longest = Math.max(0, ...String((team && team.name) || '').split(/\s+/).map((w) => [...w].length));
+    return longest > 11 ? ' xs' : longest > 8 ? ' sm' : '';
+  }
+
+  function matchCard(m, { bell } = {}) {
     const premium = S.me.premium;
     const started = m.state === 'live' || m.state === 'finished';
-    const teamLine = (team, sc) => el('div', { class: 'team-line' }, crest(team && team.crest, null, team && team.name), el('span', { class: 'name', text: team ? team.name : '—' }),
-      started ? el('span', { class: 'sc', text: sc === null || sc === undefined ? '-' : sc }) : null);
+    const side = (team, right) => el('div', { class: `mr-team${right ? ' r' : ''}` },
+      right ? null : crest(team && team.crest, 'mr-crest', team && team.name),
+      el('span', { class: `mr-name${nameSize(team)}`, text: team ? team.name : '—' }),
+      right ? crest(team && team.crest, 'mr-crest', team && team.name) : null);
+    // ⚽ Gol bo'lsa hisob bir lahza yonadi (oldingi ko'rilgan hisob bilan solishtiriladi)
+    const scoreKey = `${m.score.home}:${m.score.away}`;
+    const flash = m.state === 'live' && S.scores[m.id] && S.scores[m.id] !== scoreKey;
+    if (started) S.scores[m.id] = scoreKey;
+    const sc = (v) => (v === null || v === undefined ? '-' : v);
+    const mid = el('div', { class: `mr-mid ${m.state}` },
+      el('b', { class: `mr-main${flash ? ' sc-flash' : ''}`, text: started ? `${sc(m.score.home)} : ${sc(m.score.away)}` : m.state === 'cancelled' ? '—' : hhmm(m.utcDate) }),
+      el('span', { class: 'mr-sub' }, m.state === 'live' ? [el('i', { class: 'live-dot' }), m.minute ? `${m.minute}'` : t('status_live')]
+        : m.state === 'finished' ? t('status_finished') : m.state === 'cancelled' ? t('status_cancelled') : dayLabel(m.utcDate)));
     let bellBtn = null;
     if (bell && m.state === 'scheduled') {
-      bellBtn = el('button', { class: `bell${m.subscribed ? ' on' : ''}${premium ? '' : ' locked'}`, 'aria-label': 'bell', text: m.subscribed ? '🔔' : '🔕' });
+      bellBtn = el('button', { class: `bell${m.subscribed ? ' on' : ''}${premium ? '' : ' locked'}`, 'aria-label': 'bell' });
+      bellBtn.innerHTML = ICON_BELL;
       bellBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!premium) return premiumModal();
         try {
           const r = await api(`/matches/${m.id}/subscribe`, { method: 'POST' });
           m.subscribed = r.subscribed;
-          bellBtn.textContent = r.subscribed ? '🔔' : '🔕';
           bellBtn.classList.toggle('on', r.subscribed);
           haptic('success');
           toast(r.subscribed ? `${t('bell_on')}\n${t('bell_need_bot')}` : t('bell_off'));
@@ -689,21 +749,10 @@
         return undefined;
       });
     }
-    // ⚽ Gol bo'lsa hisob bir lahza yonadi (oldingi ko'rilgan hisob bilan solishtiriladi)
-    const scoreKey = `${m.score.home}:${m.score.away}`;
-    const flash = m.state === 'live' && S.scores[m.id] && S.scores[m.id] !== scoreKey;
-    if (started) S.scores[m.id] = scoreKey;
-    const card = el('div', { class: `match${m.state === 'live' ? ' live' : ''}${flash ? ' flash' : ''}`, role: 'button' },
-      el('div', { class: 'teams' }, teamLine(m.home, m.score.home), teamLine(m.away, m.score.away),
-        m.state === 'live' ? el('div', { class: 'live-bar' }, el('span', { style: `width:${Math.min(100, Math.round(((m.minute || 0) / 90) * 100))}%` })) : null),
-      // O'ng tomon: boshlanmagan — vaqt (+ qo'ng'iroqcha), jonli — daqiqa, tugagan — "Tugadi"
-      el('div', { class: 'side' },
-        m.state === 'scheduled'
-          ? el('div', { class: 'when' }, showDate ? el('span', { class: 'date', text: ddmm(m.utcDate) }) : null, el('span', { class: 'time', text: hhmm(m.utcDate) }))
-          : m.state === 'live' ? statusBadge(m) : el('span', { class: 'ft', text: m.state === 'finished' ? t('status_finished') : t('status_cancelled') }),
-        showDate && m.state !== 'scheduled' ? el('span', { class: 'date', text: ddmm(m.utcDate) }) : null,
-        premium ? null : el('span', { class: 'lock-badge', text: '🔒' }),
-        bellBtn));
+    const card = el('div', { class: `match mrow${m.state === 'live' ? ' live' : ''}${flash ? ' flash' : ''}`, role: 'button' },
+      side(m.home, false), mid, side(m.away, true),
+      bellBtn || (premium ? el('span', { class: 'mr-gap' }) : el('span', { class: 'lock-badge', text: '🔒' })),
+      m.state === 'live' ? el('div', { class: 'live-bar' }, el('span', { style: `width:${Math.min(100, Math.round(((m.minute || 0) / 90) * 100))}%` })) : null);
     card.addEventListener('click', () => {
       if (!premium) return premiumModal();
       return push({ render: (v) => renderMatchDetail(v, m.id) });
@@ -716,9 +765,8 @@
     const strip = el('div', { class: 'dates' });
     for (let n = -30; n <= 30; n += 1) {
       const ymd = addDays(today, n);
-      const label = n === -1 ? t('date_yesterday') : n === 0 ? t('date_today') : n === 1 ? t('date_tomorrow') : fmtShortDate(ymd);
-      const b = el('button', { class: `date${ymd === S.date ? ' on' : ''}`, onclick: () => { S.date = ymd; haptic(); render(); } },
-        el('b', { text: label }), el('span', { text: Math.abs(n) <= 1 ? fmtShortDate(ymd) : fmtWeekday(ymd) }));
+      const b = el('button', { class: `date${ymd === S.date ? ' on' : ''}${n === 0 ? ' today' : ''}`, onclick: () => { S.date = ymd; haptic(); render(); } },
+        el('b', { text: fmtShortDate(ymd) }), el('span', { text: fmtWeekday(ymd) }));
       strip.append(b);
     }
     requestAnimationFrame(() => {
@@ -746,39 +794,38 @@
         if (!g || g.id !== id) { g = { id, featured: !!m.featured, popular: !!m.popular, competition: m.competition, area: m.area, matches: [] }; groups.push(g); }
         g.matches.push(m);
       }
+      // Liga kartochkasi: sarlavha (logotip, nom, "Barcha o'yinlar ›") va ichida o'yinlar
+      const leagueCard = (g, bodyNode, extra) => {
+        const name = g.competition ? g.competition.name : '';
+        return el('div', { class: 'lcard' },
+          el('div', { class: 'lcard-head' },
+            g.competition && g.competition.emblem ? crest(g.competition.emblem, 'lcard-emb', name) : null,
+            el('b', { class: 'grow ellipsis', text: [g.featured || g.popular ? null : g.area && g.area.name, name].filter(Boolean).join(' · ') }),
+            g.popular ? el('span', { class: 'hot', text: '🔥' }) : null,
+            extra || (g.id ? el('button', { class: 'lcard-all', type: 'button', onclick: () => push({ render: (v) => renderCompetition(v, g.id, name) }) }, t('all_matches'), el('span', { class: 'chev', text: '›' })) : null)),
+          bodyNode);
+      };
       const featured = groups.filter((g) => g.featured);
       const popular = groups.filter((g) => g.popular);
       const others = groups.filter((g) => !g.featured && !g.popular);
       // O'yinlar ko'p bo'lsa — boshqa ligalar yig'ilgan holda (bosilganda ochiladi)
       const collapse = data.matches.length > 20;
-      const head = (g) => el('span', { class: 'grow ellipsis', text: [g.featured ? null : g.area && g.area.name, g.competition ? g.competition.name : ''].filter(Boolean).join(' · ') });
-      if (featured.length) {
-        list.append(el('h2', { text: t('featured_matches') }));
-        for (const g of featured) {
-          list.append(el('div', { class: 'league-head' }, g.competition && g.competition.emblem ? crest(g.competition.emblem) : null, head(g)));
-          g.matches.forEach((m) => list.append(matchCard(m, { bell: true })));
-        }
-      }
-      if (popular.length) {
-        list.append(el('h2', { text: t('popular_leagues') }));
-        for (const g of popular) {
-          list.append(el('div', { class: 'league-head' }, g.competition && g.competition.emblem ? crest(g.competition.emblem) : null, head(g)));
-          g.matches.forEach((m) => list.append(matchCard(m, { bell: true })));
-        }
+      for (const g of [...featured, ...popular]) {
+        list.append(leagueCard(g, el('div', { class: 'lcard-body' }, g.matches.map((m) => matchCard(m, { bell: true })))));
       }
       if (others.length) {
         if (featured.length || popular.length) list.append(el('h2', { text: t('other_leagues') }));
         for (const g of others) {
-          const body = el('div');
+          const body = el('div', { class: 'lcard-body' });
           const open = !collapse || S.expanded.has(g.id);
           const fill = () => { body.replaceChildren(...g.matches.map((m) => matchCard(m, { bell: true }))); };
           if (open) fill();
           const chev = el('span', { class: 'chev', text: open ? '▾' : '▸' });
-          const header = el('button', { class: 'league-head league-toggle', type: 'button' },
-            g.competition && g.competition.emblem ? crest(g.competition.emblem) : null, head(g),
-            el('span', { class: 'badge', text: g.matches.length }), collapse ? chev : null);
+          const toggle = collapse ? el('button', { class: 'lcard-all', type: 'button' }, el('span', { class: 'badge', text: g.matches.length }), chev) : null;
+          const card = leagueCard(g, body, toggle);
           if (collapse) {
-            header.addEventListener('click', () => {
+            card.firstChild.classList.add('tappable');
+            card.firstChild.addEventListener('click', () => {
               haptic();
               if (S.expanded.has(g.id)) { S.expanded.delete(g.id); body.replaceChildren(); chev.textContent = '▸'; } else {
                 S.expanded.add(g.id); fill(); chev.textContent = '▾';
@@ -786,7 +833,7 @@
               }
             });
           }
-          list.append(header, body);
+          list.append(card);
         }
       }
     } catch (err) {
