@@ -13,6 +13,7 @@ const ui = require('../ui');
 const RULE_KEYS = ['general', 'user', 'premium', 'bonus', 'ai', 'privacy', 'block', 'copyright'];
 
 function tariffLabel(lang, user) {
+  if (users.premiumFree()) return t(lang, 'tariff_all_free');   // Premium o'chiq — hammasi bepul
   return users.isPremium(user) ? t(lang, 'tariff_premium_left', { days: users.premiumDaysLeft(user) }) : t(lang, 'tariff_free');
 }
 
@@ -87,6 +88,7 @@ function register(bot) {
   bot.callbackQuery('m:tariff', async (ctx) => {
     await ctx.answerCallbackQuery();
     const lang = ctx.lang;
+    if (!(await premium.enabled())) return showPremiumOff(ctx);
     const u = await users.byId(ctx.user.id);
     await ui.show(ctx, t(lang, 'tariff_title', { tariff: users.isPremium(u) ? t(lang, 'tariff_premium') : t(lang, 'tariff_free') }), ui.kb([
       [ui.btn(t(lang, 'btn_tariff_free'), 'tf:free')],
@@ -111,7 +113,7 @@ function register(bot) {
   bot.callbackQuery(/^tf:buy(?::(week|month))?$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const r = await premium.buy(ctx.user, ctx.match[1] || 'month');
-    if (!r.ok) return showNoMoney(ctx);
+    if (!r.ok) return r.reason === 'off' ? showPremiumOff(ctx) : showNoMoney(ctx);
     return ui.replyFx(ctx, t(ctx.lang, 'premium_activated', { price: money(r.price), date: formatDate(r.user.premium_expires_at) }), ui.backKb(ctx.lang));
   });
 
@@ -164,6 +166,7 @@ function register(bot) {
   bot.callbackQuery('tf:gift', async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.clear(ctx.from.id);
+    if (!(await premium.enabled())) return showPremiumOff(ctx);
     const p = await premium.plans();
     await ui.show(ctx, t(ctx.lang, 'gift_choose_plan'), ui.kb([
       ...Object.values(p).map((x) => [ui.btn(t(ctx.lang, 'btn_buy_plan', { days: x.days, price: money(x.price) }), `tf:gift:${x.plan}`)]),
@@ -184,6 +187,7 @@ function register(bot) {
     await state.clear(ctx.from.id);
     const r = await premium.gift(ctx.user, s.data.to, s.data.plan);
     if (!r.ok) {
+      if (r.reason === 'off') return showPremiumOff(ctx);
       if (r.reason === 'no_money') return showNoMoney(ctx);
       return showPremiumInfo(ctx);
     }
@@ -354,8 +358,14 @@ async function showTop(ctx, period) {
 }
 
 /** 💎 Premium haqida va sotib olish tugmasi (Mini App'dan ?start=premium havolasi ham shu sahifani ochadi) */
+/** 💎 Premium o'chiq (admin): hamma funksiyalar bepul, sotuv yo'q */
+function showPremiumOff(ctx) {
+  return ui.show(ctx, t(ctx.lang, 'premium_off_info'), ui.backKb(ctx.lang));
+}
+
 async function showPremiumInfo(ctx) {
   const lang = ctx.lang;
+  if (!(await premium.enabled())) return showPremiumOff(ctx);
   const p = await premium.plans();
   const stars = await premium.starPlans();
   const description = await editableText('premium_description', lang, 'premium_description_default');

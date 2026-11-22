@@ -27,9 +27,9 @@ async function viewModel(u, now = new Date()) {
   const v = {
     lang, greet: greetKey(now), name: u.first_name || users.displayName(u), level: lv, points: users.totalPoints(u),
     place: week.me ? week.me.place : null, quests: q ? { done: q.done, total: q.total, claimed: q.claimed } : null,
-    streak: q ? q.streak : 0, premium, until: premium ? formatDate(u.premium_expires_at) : null,
+    streak: q ? q.streak : 0, premium, allFree: users.premiumFree(), until: premium && !users.premiumFree() ? formatDate(u.premium_expires_at) : null,
   };
-  v.key = [DESIGN, lang, v.greet, v.name, lv.level, lv.xp, v.place, v.quests && `${v.quests.done}/${v.quests.total}/${v.quests.claimed}`, v.streak, v.until].join(':');
+  v.key = [DESIGN, lang, v.greet, v.name, lv.level, lv.xp, v.place, v.quests && `${v.quests.done}/${v.quests.total}/${v.quests.claimed}`, v.streak, v.until, v.allFree].join(':');
   return v;
 }
 
@@ -45,7 +45,7 @@ function svg(v) {
     ? `<circle cx="${520 + i * 44}" cy="548" r="15" fill="#f2c94c"/>`
     : `<circle cx="${520 + i * 44}" cy="548" r="14" fill="none" stroke="#5f7d69" stroke-width="4"/>`)).join('') : '';
   const qText = q ? (q.claimed ? L('mc_quests_done') : L('mc_quests', { done: q.done, total: q.total })) : L('mc_quests_locked');
-  const tariff = v.premium ? L('mc_premium', { date: v.until }) : L('mc_free');
+  const tariff = v.allFree ? L('mc_all_free') : v.premium ? L('mc_premium', { date: v.until }) : L('mc_free');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
 <defs>
   <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b5e3a"/><stop offset=".55" stop-color="#0f2f20"/><stop offset="1" stop-color="#0c1712"/></linearGradient>

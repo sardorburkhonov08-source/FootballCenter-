@@ -52,6 +52,7 @@ function publicUser(u) {
     id: u.telegram_id, firstName: u.first_name, lastName: u.last_name, username: u.username, language: u.language || 'uz',
     premium: users.isPremium(u), premiumExpiresAt: u.premium_expires_at, isAdmin: users.isAdmin(u), coachName: u.coach_name, photoUrl: u.photo_url || null,
     favoriteTeam: u.favorite_team || null,
+    premiumFree: users.premiumFree(),   // Premium o'chiq — hammasi bepul
   };
 }
 

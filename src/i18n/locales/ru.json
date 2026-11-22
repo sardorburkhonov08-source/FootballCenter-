@@ -570,5 +570,10 @@
   "fav_ft_loss": "😔 <b>{team} проиграла</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
   "notif_fav_team": "⭐ Любимая команда: голы и итог",
   "a_set_fav_team_notify": "⭐ Уведомления о голах любимой команды",
-  "a_set_fav_team_check_seconds": "Интервал проверки live-матча (сек, мин. 30)"
+  "a_set_fav_team_check_seconds": "Интервал проверки live-матча (сек, мин. 30)",
+  "tariff_all_free": "🎉 Всё бесплатно",
+  "premium_off_info": "🎉 <b>Сейчас все функции бесплатны!</b>\n\nТариф Premium временно отключён — игры, карта болельщика, community и остальное открыты для всех. Покупать Premium не нужно.",
+  "promo_premium_off": "ℹ️ Сейчас всё бесплатно — Premium-промокоды временно не действуют.",
+  "a_set_premium_enabled": "💎 Тариф Premium (выкл. — всё бесплатно)",
+  "mc_all_free": "Всё бесплатно"
 }

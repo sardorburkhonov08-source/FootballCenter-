@@ -2636,7 +2636,7 @@
         el('span', { class: 'muted small', text: `${S.me.favoriteTeam ? t('fav_change') : t('fav_choose')} ›` })),
       el('div', { class: 'card' },
         el('div', { class: 'kv' }, el('span', { text: t('prof_balance') }), el('b', { text: `${money(d.balance)} ${t('som')}` })),
-        el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
+        el('div', { class: 'kv' }, el('span', { text: t('prof_tariff') }), el('b', { class: u.premium ? 'gold' : '', text: u.premiumFree ? t('prof_all_free') : u.premium ? t('prof_premium_until', { date: ddmmyyyy(u.premiumExpiresAt) }) : t('prof_free') })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_registered') }), el('b', { text: ddmmyyyy(d.registeredAt) })),
         el('div', { class: 'kv' }, el('span', { text: t('prof_refs') }), el('b', { text: d.referrals }))),
       cardBox,

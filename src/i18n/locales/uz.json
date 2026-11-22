@@ -572,5 +572,10 @@
   "fav_ft_loss": "😔 <b>{team} yutqazdi</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
   "notif_fav_team": "⭐ Sevimli jamoa: gol va natija",
   "a_set_fav_team_notify": "⭐ Sevimli jamoa gol/natija xabarlari",
-  "a_set_fav_team_check_seconds": "Jonli o'yinni tekshirish oralig'i (soniya, kamida 30)"
+  "a_set_fav_team_check_seconds": "Jonli o'yinni tekshirish oralig'i (soniya, kamida 30)",
+  "tariff_all_free": "🎉 Hammasi bepul",
+  "premium_off_info": "🎉 <b>Hozir barcha funksiyalar bepul!</b>\n\nPremium tarifi vaqtincha o'chirilgan — o'yinlar, muxlislik kartasi, community va boshqa imkoniyatlar hammaga ochiq. Premium sotib olish shart emas.",
+  "promo_premium_off": "ℹ️ Hozir barcha funksiyalar bepul — Premium promokodlar vaqtincha ishlamaydi.",
+  "a_set_premium_enabled": "💎 Premium tarifi (o'chirilsa — hammasi bepul)",
+  "mc_all_free": "Hammasi bepul"
 }

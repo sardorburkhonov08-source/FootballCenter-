@@ -13,7 +13,8 @@ const DEFAULTS = {
   cards_topup: {},
   cards_donation: {},                // bo'sh bo'lsa cards_topup ishlatiladi
 
-  // Tarif
+  // Tarif. premium_enabled = false — Premium o'chiq: barcha funksiyalar hammaga bepul, sotuv va bepul Premium berish to'xtaydi
+  premium_enabled: true,
   premium_price: 30000,
   premium_days: 30,
   premium_week_price: 10000,
@@ -186,6 +187,9 @@ async function set(key, value) {
 
 function invalidate() { cacheAt = 0; }
 
+/** Sinxron o'qish (oxirgi yuklangan qiymat yoki standart) — har so'rovda bazaga bormaslik kerak bo'lgan joylar uchun */
+function peek(key) { return cache.has(key) ? cache.get(key) : DEFAULTS[key]; }
+
 async function getCard(purpose, type) {
   const own = (await get(purpose === 'donation' ? 'cards_donation' : 'cards_topup')) || {};
   if (own[type] && own[type].number) return own[type];
@@ -196,4 +200,4 @@ async function getCard(purpose, type) {
   return null;
 }
 
-module.exports = { DEFAULTS, CARD_TYPES, get, getMany, set, invalidate, getCard };
+module.exports = { DEFAULTS, CARD_TYPES, get, getMany, set, invalidate, getCard, peek };
