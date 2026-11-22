@@ -189,16 +189,34 @@
     const box = $('banner');
     box.hidden = false;
     let muted = true;
-    const slides = banners.map((b) => {
+    // 📐 Banner media'ning o'z nisbatida ko'rinadi (qirqilmaydi). Juda tik bo'lsa — ekranning 70% idan oshmaydi,
+    // qolgan joy rasmning xira nusxasi bilan to'ldiriladi.
+    const ratios = banners.map((b) => (b.width && b.height ? b.width / b.height : null));
+    let i = -1;
+    const fitHeight = () => {
+      if (i < 0) return;
+      const r = ratios[i] || 16 / 7;
+      const h = Math.min(box.clientWidth / r, window.innerHeight * 0.7);
+      box.style.height = `${Math.round(h)}px`;
+    };
+    const slides = banners.map((b, k) => {
       let media;
-      if (b.type === 'video') media = el('video', { src: b.url, muted: true, loop: true, playsinline: true, preload: 'metadata' });
-      else if (b.type === 'lottie') {
+      const learn = (w, h) => { if (!ratios[k] && w && h) { ratios[k] = w / h; if (k === i) fitHeight(); } };
+      if (b.type === 'video') {
+        media = el('video', { src: b.url, muted: true, loop: true, playsinline: true, preload: 'metadata' });
+        media.addEventListener('loadedmetadata', () => learn(media.videoWidth, media.videoHeight), { once: true });
+      } else if (b.type === 'lottie') {
         media = el('div', { class: 'lottie' });
         loadLottie().then((lottie) => lottie.loadAnimation({ container: media, renderer: 'svg', loop: true, autoplay: true, path: b.url })).catch(() => {});
-      } else media = el('img', { src: b.url, alt: '' });
+      } else {
+        media = el('img', { src: b.url, alt: '' });
+        media.addEventListener('load', () => learn(media.naturalWidth, media.naturalHeight), { once: true });
+      }
       if (media.tagName === 'VIDEO') media.muted = true;
-      return el('div', { class: 'banner-slide', onclick: () => openLink(b.link) }, media);
+      const backdrop = b.type === 'image' || b.type === 'animation' ? el('img', { class: 'banner-bd', src: b.url, alt: '', 'aria-hidden': 'true' }) : null;
+      return el('div', { class: 'banner-slide', onclick: () => openLink(b.link) }, backdrop, media);
     });
+    window.addEventListener('resize', fitHeight);
     const sound = el('button', { class: 'banner-sound', 'aria-label': 'sound', text: '🔇', hidden: true });
     sound.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -208,10 +226,10 @@
     });
     const dots = el('div', { class: 'banner-dots' }, banners.length > 1 ? banners.map(() => el('span')) : []);
     box.replaceChildren(...slides, sound, dots);
-    let i = -1;
     let timer = null;
     const show = (n) => {
       i = n % banners.length;
+      fitHeight();
       slides.forEach((s, k) => {
         s.classList.toggle('active', k === i);
         const v = s.querySelector('video');

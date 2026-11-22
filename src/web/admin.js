@@ -24,11 +24,28 @@ const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).cat
 
 fs.mkdirSync(config.uploadDir, { recursive: true });
 
+// Serverda saqlanadigan formatlar. Brauzer ko'rsata olmaydigan rasmlar (HEIC, TIFF, BMP, SVG...) web admin'da
+// yuklashdan oldin JPEG/WebP ga aylantiriladi (public/admin/admin.js → prepareMedia), shuning uchun bu yerga kelmaydi.
 const MEDIA = {
-  'image/jpeg': ['image', '.jpg'], 'image/png': ['image', '.png'], 'image/webp': ['image', '.webp'],
-  'image/gif': ['animation', '.gif'], 'video/mp4': ['video', '.mp4'], 'video/webm': ['video', '.webm'],
+  'image/jpeg': ['image', '.jpg'], 'image/png': ['image', '.png'], 'image/webp': ['image', '.webp'], 'image/avif': ['image', '.avif'],
+  'image/gif': ['animation', '.gif'], 'image/apng': ['animation', '.png'],
+  'video/mp4': ['video', '.mp4'], 'video/webm': ['video', '.webm'], 'video/quicktime': ['video', '.mov'], 'video/x-m4v': ['video', '.m4v'], 'video/ogg': ['video', '.ogv'],
   'application/json': ['lottie', '.json'],
 };
+
+/** Media o'lchami: brauzer yuborgan width/height yoki Lottie JSON dagi w/h */
+function mediaSize(req) {
+  const ok = (n) => Number.isInteger(n) && n > 0 && n <= 20000;
+  let w = Number(req.body.width);
+  let h = Number(req.body.height);
+  if ((!ok(w) || !ok(h)) && req.file && MEDIA[req.file.mimetype][0] === 'lottie') {
+    try {
+      const j = JSON.parse(fs.readFileSync(req.file.path, 'utf8'));
+      w = Number(j.w); h = Number(j.h);
+    } catch (e) { /* noto'g'ri JSON — o'lchamsiz */ }
+  }
+  return ok(w) && ok(h) ? { width: w, height: h } : { width: null, height: null };
+}
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -84,9 +101,11 @@ router.post('/banners', upload.single('media'), wrap(async (req, res) => {
   const duration = Math.min(120, Math.max(2, Number(req.body.duration) || 8));
   const link = String(req.body.link || '').trim();
   if (link && !/^https?:\/\/|^tg:\/\//.test(link)) { removeUpload(req.file.filename); return res.status(400).json({ error: 'bad_link' }); }
+  const size = mediaSize(req);
   const row = await db.one(
-    'INSERT INTO banners (media_path, media_type, link, duration_seconds, sort_order) VALUES ($1, $2, $3, $4, (SELECT COALESCE(max(sort_order),0)+1 FROM banners)) RETURNING *',
-    [req.file.filename, MEDIA[req.file.mimetype][0], link || null, duration],
+    `INSERT INTO banners (media_path, media_type, link, duration_seconds, width, height, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(max(sort_order),0)+1 FROM banners)) RETURNING *`,
+    [req.file.filename, MEDIA[req.file.mimetype][0], link || null, duration, size.width, size.height],
   );
   return res.json(row);
 }));

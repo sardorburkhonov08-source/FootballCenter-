@@ -62,6 +62,91 @@
     toast(ERRORS[e.message] || `⚠️ Xatolik: ${e.message}`);
   }
 
+  // ---------- 📎 Media tayyorlash: istalgan formatni qabul qilish
+  // Brauzer ko'rsata oladigan formatlar o'zgarishsiz yuklanadi; qolgan rasmlar (HEIC, TIFF, BMP, SVG, ICO...) shu yerda
+  // canvas orqali WebP/JPEG ga aylantiriladi. O'lcham (width/height) ham shu yerda o'lchanib serverga yuboriladi.
+  const MEDIA_ACCEPT = 'image/*,video/*,.heic,.heif,.json,application/json';
+  const KEEP_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif', 'image/apng'];
+  const VIDEOS = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v', 'video/ogg'];
+  const EXT_TYPES = { heic: 'image/heic', heif: 'image/heif', mov: 'video/quicktime', m4v: 'video/x-m4v', json: 'application/json', avif: 'image/avif' };
+  function loadImage(url) {
+    return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = url; });
+  }
+  function videoSize(url) {
+    return new Promise((resolve) => {
+      const v = document.createElement('video');
+      const done = (r) => { clearTimeout(timer); resolve(r); };
+      const timer = setTimeout(() => done(null), 8000);
+      v.preload = 'metadata'; v.muted = true;
+      v.onloadedmetadata = () => done(v.videoWidth && v.videoHeight ? { width: v.videoWidth, height: v.videoHeight } : null);
+      v.onerror = () => done(null);
+      v.src = url;
+    });
+  }
+  function canvasBlob(canvas, type, q) { return new Promise((resolve) => canvas.toBlob(resolve, type, q)); }
+  /** → { file, width, height, converted } yoki Error (o'zbekcha xabar bilan) */
+  async function prepareMedia(f) {
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    const type = f.type || EXT_TYPES[ext] || '';
+    if (type === 'application/json' || ext === 'json') return { file: new File([f], f.name, { type: 'application/json' }) };
+    const url = URL.createObjectURL(f);
+    try {
+      if (type.startsWith('video/')) {
+        if (!VIDEOS.includes(type)) throw new Error('⚠️ Bu video formatini Telegram ko\'rsata olmaydi — MP4 yoki WEBM yuklang');
+        const size = await videoSize(url);
+        return { file: f, ...(size || {}) };
+      }
+      let img;
+      try { img = await loadImage(url); } catch (e) { throw new Error('⚠️ Bu faylni rasm sifatida o\'qib bo\'lmadi. JPEG, PNG yoki boshqa rasm formatida yuklang'); }
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+      if (!w || !h) { w = 1200; h = 675; }   // o'lchamsiz SVG
+      if (KEEP_IMAGES.includes(type)) return { file: f, width: w, height: h };
+      const scale = Math.min(1, 2560 / Math.max(w, h));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      let blob = await canvasBlob(canvas, 'image/webp', 0.9);
+      if (!blob || blob.type !== 'image/webp') blob = await canvasBlob(canvas, 'image/jpeg', 0.9);
+      if (!blob) throw new Error('⚠️ Rasmni aylantirib bo\'lmadi');
+      const name = `${f.name.replace(/\.[^.]+$/, '') || 'media'}.${blob.type === 'image/webp' ? 'webp' : 'jpg'}`;
+      return { file: new File([blob], name, { type: blob.type }), width: canvas.width, height: canvas.height, converted: true };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  function ratioLabel(w, h) {
+    if (!w || !h) return '';
+    const g = (a, b) => (b ? g(b, a % b) : a);
+    const d = g(w, h);
+    const r = `${w / d}:${h / d}`;
+    return `${w}×${h}${r.length <= 7 ? ` · ${r}` : ''}`;
+  }
+  /** Fayl tanlanganda o'lcham va aylantirish haqida ma'lumot */
+  function mediaInput(info) {
+    const input = el('input', { class: 'input', type: 'file', accept: MEDIA_ACCEPT });
+    input.addEventListener('change', async () => {
+      info.textContent = '';
+      input.prepared = null;
+      const f = input.files[0];
+      if (!f) return;
+      info.textContent = '⏳ Tekshirilmoqda...';
+      try {
+        input.prepared = await prepareMedia(f);
+        const p = input.prepared;
+        info.textContent = [p.width ? `📐 ${ratioLabel(p.width, p.height)}` : null, p.converted ? `🔄 ${p.file.type.split('/')[1].toUpperCase()} ga aylantirildi` : null].filter(Boolean).join(' · ') || '✅ Tayyor';
+      } catch (e) { info.textContent = e.message; }
+    });
+    return input;
+  }
+  /** FormData ga tayyorlangan media + o'lcham */
+  async function appendMedia(fd, input) {
+    const f = input.files[0];
+    if (!f) return false;
+    const p = input.prepared || await prepareMedia(f);
+    fd.append('media', p.file, p.file.name);
+    if (p.width && p.height) { fd.append('width', String(p.width)); fd.append('height', String(p.height)); }
+    return true;
+  }
+
   function mediaThumb(url, type) {
     if (!url) return el('div', { class: 'thumb' }, '🏆');
     if (type === 'video') { const v = el('video', { src: url, muted: true, playsinline: true }); v.muted = true; return el('div', { class: 'thumb' }, v); }
@@ -234,23 +319,25 @@
   // 🎬 Bannerlar
   async function banners(v) {
     const list = await api('/banners');
-    const file = el('input', { class: 'input', type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/json' });
+    const info = el('div', { class: 'small muted', style: 'margin-top:4px' });
+    const file = mediaInput(info);
     const link = el('input', { class: 'input', placeholder: 'Havola (ixtiyoriy, yashirin)' });
     const dur = el('input', { class: 'input', type: 'number', min: '2', max: '120', value: '8' });
     const add = el('button', { class: 'btn', text: '➕ Yuklash' });
     add.addEventListener('click', async () => {
       if (!file.files[0]) return toast('⚠️ Faylni tanlang');
       const fd = new FormData();
-      fd.append('media', file.files[0]); fd.append('link', link.value); fd.append('duration', dur.value);
       add.disabled = true;
+      try { await appendMedia(fd, file); } catch (e) { toast(e.message); add.disabled = false; return undefined; }
+      fd.append('link', link.value); fd.append('duration', dur.value);
       try { await api('/banners', { method: 'POST', body: fd }); toast('✅ Banner qo\'shildi'); show(); } catch (e) { fail(e); add.disabled = false; }
       return undefined;
     });
     v.replaceChildren(
       el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '➕ Yangi banner' }),
-        el('p', { class: 'small muted', text: 'Rasm, GIF, video (MP4/WEBM) yoki Lottie JSON. Bir nechta faol banner karusel bo\'lib almashadi; video standart holatda ovozsiz.' }),
+        el('p', { class: 'small muted', text: 'Istalgan rasm (JPEG, PNG, WEBP, HEIC, GIF ...), video (MP4, WEBM, MOV) yoki Lottie JSON. Banner rasmning o\'z o\'lchamida ko\'rinadi — qirqilmaydi (juda tik bo\'lsa, ekranning 70% idan oshmaydi). Bir nechta faol banner karusel bo\'lib almashadi; video standart holatda ovozsiz.' }),
         el('div', { class: 'form-grid' },
-          el('div', null, el('label', { class: 'field-label', text: 'Media' }), file),
+          el('div', null, el('label', { class: 'field-label', text: 'Media' }), file, info),
           el('div', null, el('label', { class: 'field-label', text: 'Havola' }), link),
           el('div', null, el('label', { class: 'field-label', text: 'Ko\'rinish davomiyligi (soniya)' }), dur),
           add)),
@@ -261,7 +348,7 @@
         return el('div', { class: 'card row', style: 'flex-wrap:wrap' },
           mediaThumb(`/uploads/${b.media_path}`, b.media_type),
           el('div', { class: 'grow', style: 'min-width:180px' }, el('div', { class: 'row' }, linkIn, durIn),
-            el('div', { class: 'small muted', style: 'margin-top:4px', text: `${b.media_type} · ${b.is_active ? '🟢 faol' : '⚪️ o\'chirilgan'}` })),
+            el('div', { class: 'small muted', style: 'margin-top:4px', text: [b.media_type, ratioLabel(b.width, b.height) || null, b.is_active ? '🟢 faol' : '⚪️ o\'chirilgan'].filter(Boolean).join(' · ') })),
           el('div', { class: 'row' },
             el('button', { class: 'mini ok', text: '💾', title: 'Saqlash', onclick: async () => { try { await api(`/banners/${b.id}`, { method: 'PATCH', body: { link: linkIn.value, duration: Number(durIn.value) } }); toast('✅ Saqlandi'); } catch (e) { fail(e); } } }),
             el('button', { class: 'mini', text: b.is_active ? '⏸ O\'chirish' : '▶️ Yoqish', onclick: async () => { try { await api(`/banners/${b.id}`, { method: 'PATCH', body: { isActive: !b.is_active } }); show(); } catch (e) { fail(e); } } }),
@@ -427,20 +514,22 @@
     const kind = el('select', { class: 'input' }, el('option', { value: 'overall', text: '🏆 Umumiy reyting (hamma o\'yinlar)' }));
     const period = el('select', { class: 'input' }, el('option', { value: 'weekly', text: 'Haftalik' }), el('option', { value: 'monthly', text: 'Oylik' }));
     const text = el('textarea', { class: 'input', placeholder: 'Sovrin matni', maxlength: '1000' });
-    const file = el('input', { class: 'input', type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm' });
+    const info = el('div', { class: 'small muted', style: 'margin-top:4px' });
+    const file = mediaInput(info);
     const add = el('button', { class: 'btn', text: '➕ Qo\'shish' });
     add.addEventListener('click', async () => {
       const fd = new FormData();
       fd.append('kind', kind.value); fd.append('period', period.value); fd.append('text', text.value);
-      if (file.files[0]) fd.append('media', file.files[0]);
       add.disabled = true;
+      try { await appendMedia(fd, file); } catch (e) { toast(e.message); add.disabled = false; return undefined; }
       try { await api('/prizes', { method: 'POST', body: fd }); toast('✅ Sovrin qo\'shildi'); show(); } catch (e) { fail(e); add.disabled = false; }
+      return undefined;
     });
     v.replaceChildren(
       el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '➕ Yangi sovrin' }),
         el('p', { class: 'small muted', text: 'Faqat TOP 1 sovrin oladi (haftalik va oylik alohida). Bir nechta faol sovrin Web App\'da 15 soniyada almashadi.' }),
         el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Bo\'lim' }), kind), el('div', null, el('label', { class: 'field-label', text: 'Davr' }), period),
-          el('div', null, el('label', { class: 'field-label', text: 'Media (ixtiyoriy)' }), file)),
+          el('div', null, el('label', { class: 'field-label', text: 'Media (ixtiyoriy)' }), file, info)),
         el('label', { class: 'field-label', text: 'Matn' }), text, el('div', { style: 'margin-top:10px' }, add)),
       el('h2', { text: `Sovrinlar (${list.length})` }),
       list.length ? el('div', { class: 'list' }, list.map((p) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
