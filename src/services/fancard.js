@@ -27,7 +27,7 @@ const MIN_AGE = 5;
 const MAX_AGE = 100;
 const PHOTO_DIR = 'fancards';
 const DEFAULT_COLOR = '#1f8a4c';
-const DESIGN = 3; // karta dizayni o'zgarsa oshiriladi — eski rasmlar keshdan chiqadi // logotip rangi aniqlanmasa — FootballCenter yashili
+const DESIGN = 4; // karta dizayni o'zgarsa oshiriladi — eski rasmlar keshdan chiqadi // logotip rangi aniqlanmasa — FootballCenter yashili
 
 class CardError extends Error {}
 
@@ -493,11 +493,12 @@ ${outers.map((o) => `<polygon points="${str(o)}" fill="${dark}"/>`).join('')}
 }
 
 /** 🥇🥈🥉 (emoji shrifti rasm chizuvchida yo'q — medal chiziladi) */
-function medal(x, y, place) {
+function medal(x, y, place, ribbon = 40) {
   const col = ['#f2c94c', '#c9ced6', '#d08a4c'][place - 1];
   const dk = ['#a87b12', '#8a9099', '#8f5526'][place - 1];
-  return `<path d="M${x - 14},${y - 40} L${x - 2},${y - 12} L${x + 6},${y - 16} L${x - 4},${y - 40} Z" fill="#2f6fd6"/>
-<path d="M${x + 14},${y - 40} L${x + 2},${y - 12} L${x - 6},${y - 16} L${x + 4},${y - 40} Z" fill="#d6342f"/>
+  const r = ribbon;
+  return `<path d="M${x - 14},${y - r} L${x - 2},${y - 12} L${x + 6},${y - 16} L${x - 4},${y - r} Z" fill="#2f6fd6"/>
+<path d="M${x + 14},${y - r} L${x + 2},${y - 12} L${x - 6},${y - 16} L${x + 4},${y - r} Z" fill="#d6342f"/>
 <circle cx="${x}" cy="${y}" r="17" fill="${col}" stroke="${dk}" stroke-width="3"/>
 <text x="${x}" y="${y + 7}" ${D} font-size="20" text-anchor="middle" fill="${dk}">${place}</text>`;
 }
@@ -536,8 +537,8 @@ ${inner}</g></g>`;
 function frontGroup(v, L, idp = 'f') {
   const clubLine = up(L('card_header_club', { club: v.club }));
   const pill = v.first
-    ? `<rect x="48" y="630" width="300" height="44" rx="22" fill="${v.pal.accent}"/>
-<text x="198" y="660" ${I} font-size="${fit(L('card_first', { n: v.firstLimit }), 17, 270, 0.62)}" letter-spacing="1.5" text-anchor="middle" fill="#fff">${esc(up(`★ ${L('card_first', { n: v.firstLimit })} ★`))}</text>`
+    ? `<rect x="48" y="634" width="300" height="44" rx="22" fill="${v.pal.accent}"/>
+<text x="198" y="664" ${I} font-size="${fit(L('card_first', { n: v.firstLimit }), 17, 270, 0.62)}" letter-spacing="1.5" text-anchor="middle" fill="#fff">${esc(up(`★ ${L('card_first', { n: v.firstLimit })} ★`))}</text>`
     : '';
   return shell(v, `
 <rect width="${W}" height="190" fill="${v.pal.band}"/><rect y="190" width="${W}" height="8" fill="${v.pal.stripe}"/>
@@ -547,36 +548,37 @@ ${logoBox(v, 50, 38, 120)}
 <text x="204" y="136" ${D} font-size="34" fill="${v.pal.bandText}">${esc(up(L('card_header_title')))}</text>
 <text x="204" y="166" ${I} font-size="16" letter-spacing="3" fill="${v.pal.bandMuted}" fill-opacity="0.75">FOOTBALLCENTER</text>
 ${trophy(1088, 30, `${idp}t`)}
-${photoBox(v, 48, 222, 300, 390, `${idp}p`)}
+${photoBox(v, 48, 226, 300, 390, `${idp}p`)}
 ${pill}
-${field(392, 214, L('card_l_surname'), v.lastName, { maxWidth: 760 })}
-${field(392, 300, L('card_l_name'), v.firstName, { maxWidth: 760 })}
-${field(392, 386, L('card_l_goat'), v.goat, { maxWidth: 760 })}
-${field(392, 472, L('card_l_age'), String(v.age))}${field(800, 472, L('card_l_gender'), L(`card_gender_${v.gender}`), { maxWidth: 360 })}
-${field(392, 558, L('card_l_player'), v.player)}${field(800, 558, L('card_l_since'), String(v.since), { maxWidth: 360 })}
-${field(392, 644, L('card_l_club'), v.club)}${field(800, 644, L('card_l_number'), `№ ${String(v.fanNumber).padStart(6, '0')}`, { size: 44, color: v.pal.accent, maxWidth: 360 })}
+${field(392, 240, L('card_l_surname'), v.lastName, { maxWidth: 760 })}
+${field(392, 320, L('card_l_name'), v.firstName, { maxWidth: 760 })}
+${field(392, 400, L('card_l_goat'), v.goat, { maxWidth: 760 })}
+${field(392, 480, L('card_l_age'), String(v.age), { maxWidth: 150 })}${field(580, 480, L('card_l_gender'), L(`card_gender_${v.gender}`), { maxWidth: 190 })}${field(800, 480, L('card_l_since'), String(v.since), { maxWidth: 350 })}
+${field(392, 560, L('card_l_player'), v.player, { maxWidth: 760 })}
+${field(392, 640, L('card_l_club'), v.club, { maxWidth: 440 })}${field(860, 640, L('card_l_number'), `№ ${String(v.fanNumber).padStart(6, '0')}`, { size: 44, color: v.pal.accent, maxWidth: 290 })}
 `, idp);
 }
 
-/** Orqa tomon */
+/** Orqa tomon: chapda — hujjat ma'lumotlari, o'rtada — statistika, o'ngda — xira rasm va Premium belgisi */
 function backGroup(v, L, idp = 'b') {
-  const rankOf = v.rank ? L('card_rank_of', { club: v.club, total: num(v.rank.total) }) : '';
   const rank = v.rank && v.rank.place
-    ? `<text x="500" y="280" ${I} font-size="16" letter-spacing="1.5" fill="${MUTED}">${esc(up(L('card_l_rank')))}</text>
-${v.rank.place <= 3 ? medal(522, 334, v.rank.place) : ''}
-<text x="${v.rank.place <= 3 ? 552 : 500}" y="346" ${D} font-size="44" fill="${INK}">${esc(up(L('card_rank_value', { place: v.rank.place })))}</text>
-<text x="500" y="386" ${I} font-size="${fit(rankOf, 17, 430, 0.56, 11)}" fill="${MUTED}">${esc(rankOf)}</text>`
+    ? `<text x="500" y="268" ${I} font-size="16" letter-spacing="1.5" fill="${MUTED}">${esc(up(L('card_l_rank')))}</text>
+${v.rank.place <= 3 ? medal(520, 302, v.rank.place, 24) : ''}
+<text x="${v.rank.place <= 3 ? 550 : 500}" y="312" ${D} font-size="44" fill="${INK}">${esc(up(L('card_rank_value', { place: v.rank.place })))}</text>
+<text x="500" y="344" ${I} font-size="18" fill="${MUTED}">${esc(L('card_rank_of', { club: v.club, total: num(v.rank.total) }))}</text>`
     : '';
   const link = v.botUsername ? `t.me/${v.botUsername}` : 'FootballCenter';
   return shell(v, `
 <rect width="${W}" height="22" fill="${v.pal.band}"/><rect y="22" width="${W}" height="6" fill="${v.pal.stripe}"/>
-${field(48, 60, L('card_l_region'), v.region, { size: 44, maxWidth: 420 })}${field(500, 60, L('card_l_points'), num(v.points), { size: 44, color: v.pal.accent, maxWidth: 360 })}
-${field(48, 170, L('card_l_fan_number'), String(v.fanNumber).padStart(6, '0'), { size: 44, color: v.pal.accent, maxWidth: 420 })}${field(500, 170, L('card_l_activated'), v.activated, { size: 44, maxWidth: 360 })}
-${field(48, 280, L('card_l_issued'), 'FootballCenter', { size: 44, maxWidth: 420 })}
-${v.achievements ? field(48, 380, L('card_l_achievements'), `${v.achievements.earned} / ${v.achievements.total}`, { size: 40, color: v.pal.accent, maxWidth: 420 }) : ''}
+${field(48, 76, L('card_l_region'), v.region, { size: 40, maxWidth: 400 })}
+${field(48, 172, L('card_l_fan_number'), `№ ${String(v.fanNumber).padStart(6, '0')}`, { size: 44, color: v.pal.accent, maxWidth: 400 })}
+${field(48, 268, L('card_l_activated'), v.activated, { size: 40, maxWidth: 400 })}
+${field(48, 364, L('card_l_issued'), 'FootballCenter', { size: 40, maxWidth: 400 })}
+${field(500, 76, L('card_l_points'), num(v.points), { size: 44, color: v.pal.accent, maxWidth: 400 })}
 ${rank}
-${trophy(1088, 30, `${idp}t`)}
-${photoBox(v, 960, 170, 170, 220, `${idp}p`, 0.35)}
+${v.achievements ? field(500, 172, L('card_l_achievements'), `${v.achievements.earned} / ${v.achievements.total}`, { size: 40, color: v.pal.accent, maxWidth: 400 }) : ''}
+${photoBox(v, 960, 60, 170, 220, `${idp}p`, 0.35)}
+${trophy(1045, 300, `${idp}t`)}
 <rect x="0" y="470" width="${W}" height="286" fill="#ffffff" opacity="0.88"/>
 ${barcode.svgBars(v.botUsername ? `https://t.me/${v.botUsername}` : 'https://t.me', 200, 510, 800, 150, INK)}
 <text x="600" y="702" ${I} font-size="22" letter-spacing="2" text-anchor="middle" fill="${INK}">${esc(link)}</text>

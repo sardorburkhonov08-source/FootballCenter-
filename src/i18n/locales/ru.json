@@ -334,7 +334,7 @@
   "card_l_issued": "Место выдачи",
   "card_l_rank": "Рейтинг в клубе",
   "card_rank_value": "{place}-е место",
-  "card_rank_of": "среди {total} болельщиков клуба {club}",
+  "card_rank_of": "среди {total} болельщиков клуба",
   "card_first": "Первые {n} болельщиков",
   "card_gender_male": "Мужской",
   "card_gender_female": "Женский",

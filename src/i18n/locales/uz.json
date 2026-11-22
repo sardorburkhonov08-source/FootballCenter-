@@ -336,7 +336,7 @@
   "card_l_issued": "Berilgan joyi",
   "card_l_rank": "Klub reytingi",
   "card_rank_value": "{place}-o'rin",
-  "card_rank_of": "{club} klubining {total} nafar muxlisi orasida",
+  "card_rank_of": "{total} nafar muxlis orasida",
   "card_first": "Birinchi {n} muxlis",
   "card_gender_male": "Erkak",
   "card_gender_female": "Ayol",

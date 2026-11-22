@@ -336,7 +336,7 @@
   "card_l_issued": "Берилган жойи",
   "card_l_rank": "Клуб рейтинги",
   "card_rank_value": "{place}-ўрин",
-  "card_rank_of": "{club} клубининг {total} нафар мухлиси орасида",
+  "card_rank_of": "{total} нафар мухлис орасида",
   "card_first": "Биринчи {n} мухлис",
   "card_gender_male": "Эркак",
   "card_gender_female": "Аёл",

@@ -65,8 +65,11 @@ router.get('/me', wrap(async (req, res) => {
 }));
 
 router.get('/banners', wrap(async (req, res) => {
-  const rows = await db.many('SELECT id, media_path, media_type, link, duration_seconds FROM banners WHERE is_active ORDER BY sort_order, id');
-  res.json(rows.map((b) => ({ id: b.id, url: `/uploads/${b.media_path}`, type: b.media_type, link: b.link || null, duration: b.duration_seconds })));
+  const rows = await db.many('SELECT id, media_path, media_type, link, duration_seconds, width, height FROM banners WHERE is_active ORDER BY sort_order, id');
+  res.json(rows.map((b) => ({
+    id: b.id, url: `/uploads/${b.media_path}`, type: b.media_type, link: b.link || null, duration: b.duration_seconds,
+    width: b.width || null, height: b.height || null,
+  })));
 }));
 
 router.get('/prizes', wrap(async (req, res) => {

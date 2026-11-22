@@ -334,7 +334,7 @@
   "card_l_issued": "Issued by",
   "card_l_rank": "Club ranking",
   "card_rank_value": "#{place}",
-  "card_rank_of": "among {total} {club} fans",
+  "card_rank_of": "among {total} club fans",
   "card_first": "First {n} fans",
   "card_gender_male": "Male",
   "card_gender_female": "Female",
