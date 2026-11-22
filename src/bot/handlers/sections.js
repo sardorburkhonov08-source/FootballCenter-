@@ -62,7 +62,7 @@ function register(bot) {
       name: users.displayName(u), username: u.username ? `@${u.username}` : t(lang, 'none'), id: u.telegram_id,
       lang: LANG_NAMES[u.language] || t(lang, 'none'), balance: money(u.balance), points: users.totalPoints(u), // umumiy: Mini Manager + Quiz + Hisobni top + Duel
       tariff: tariffLabel(lang, u), date: formatDate(u.registered_at), refs: await users.activeReferralCount(u.id),
-    }), ui.backKb(lang));
+    }), ui.kb([[ui.btn(t(lang, 'btn_top'), 'm:top')], [ui.btn(t(lang, 'back'), 'm:menu')]]));   // 🏆 Reyting — Profil ichida (egasi talabi)
   });
 
   // ---- 📜 Qoidalar
@@ -337,7 +337,7 @@ async function showTop(ctx, period) {
   const markup = ui.kb([
     topCard.PERIODS.map((p) => ui.btn(`${p === period ? '✅ ' : ''}${t(lang, `btn_top_${p}`)}`, `m:top:${p}`)),
     config.webAppUrl ? [{ text: t(lang, 'btn_top_all'), web_app: { url: `${config.webAppUrl}/` } }] : null,
-    [ui.btn(t(lang, 'back'), 'm:menu')],
+    [ui.btn(t(lang, 'back'), 'm:profile')],
   ]);
   if (!png) return ui.show(ctx, caption, markup);
   const { InputFile } = require('grammy');
