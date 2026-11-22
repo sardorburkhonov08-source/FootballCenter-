@@ -76,7 +76,6 @@ function mainMenuKb(lang, user) {
     [btn(L('btn_tariff'), 'm:tariff'), btn(L('btn_settings'), 'm:settings')],
     [btn(L('btn_help'), 'm:help'), btn(L('btn_ai'), 'm:ai')],
   ];
-  rows.push([btn(L('btn_top'), 'm:top')]);
   rows.push(config.webAppUrl
     ? [{ text: L('btn_webapp'), web_app: { url: `${config.webAppUrl}/` } }]
     : [btn(L('btn_webapp'), 'm:webapp_missing')]);

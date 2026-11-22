@@ -27,10 +27,13 @@ test.before(async () => {
 });
 test.after(async () => { await db.pool.end(); });
 
-test('🏆 bosh menyuda Reyting: shohsupa rasmi, 4—10-o\'rinlar va o\'z o\'rningiz; davr almashsa — rasm tahrirlanadi', async () => {
+test('🏆 Profil ichida Reyting: shohsupa rasmi, 4—10-o\'rinlar va o\'z o\'rningiz; davr almashsa — rasm tahrirlanadi', async () => {
   h.clear();
   await h.text(8104, '/menu');
-  assert.ok(h.buttons().some((b) => b.callback_data === 'm:top'));
+  assert.ok(!h.buttons().some((b) => b.callback_data === 'm:top'), 'bosh menyuda Reyting yo\'q');
+  h.clear();
+  await h.click(8104, 'm:profile');
+  assert.ok(h.buttons().some((b) => b.callback_data === 'm:top'), 'Profil ichida Reyting tugmasi');
   h.clear();
   await h.click(8104, 'm:top');
   const photo = h.calls.find((c) => c.method === 'sendPhoto');
@@ -41,6 +44,7 @@ test('🏆 bosh menyuda Reyting: shohsupa rasmi, 4—10-o\'rinlar va o\'z o\'rni
   assert.ok(cap.includes('👤 Siz: <b>#4</b> · 1 points'));
   const kb = photo.payload.reply_markup.inline_keyboard;
   assert.deepStrictEqual(kb[0].map((b) => b.text), ['Bugun', '✅ Hafta', 'Oy']);
+  assert.strictEqual(kb[kb.length - 1][0].callback_data, 'm:profile', 'orqaga — Profilga');
 
   // Avatar bir marta olinadi va keshlanadi
   const v = await topCard.viewModel(await db.one('SELECT * FROM users WHERE telegram_id = 8101'), 'weekly');
