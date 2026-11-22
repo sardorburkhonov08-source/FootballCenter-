@@ -110,6 +110,37 @@ router.get('/matches', footballRoute(async (req) => {
   return { date, matches: list.map((m) => ({ ...m, subscribed: subSet.has(m.id) })) };
 }));
 
+// ---- 👥 Do'stlar ligasi (sinov)
+const leagues = require('../services/leagues');
+function leagueRoute(fn) {
+  return wrap(async (req, res) => {
+    try {
+      return res.json(await fn(req));
+    } catch (e) {
+      if (e instanceof leagues.LeagueError) return res.status(e.message === 'not_found' ? 404 : 409).json({ error: e.message });
+      throw e;
+    }
+  });
+}
+router.get('/leagues', leagueRoute(async (req) => ({ enabled: !!(await settings.get('leagues_enabled')), leagues: await leagues.list(req.user) })));
+router.post('/leagues', express.json(), leagueRoute(async (req) => {
+  const lg = await leagues.create(req.user, req.body && req.body.name);
+  return { id: Number(lg.id) };
+}));
+router.get('/leagues/invite/:code', leagueRoute((req) => leagues.preview(req.user, req.params.code)));
+router.post('/leagues/join', express.json(), leagueRoute(async (req) => ({ id: Number((await leagues.join(req.user, req.body && req.body.code)).id) })));
+router.get('/leagues/:id', leagueRoute((req) => leagues.detail(req.user, Number(req.params.id), req.query.period)));
+router.post('/leagues/:id/leave', leagueRoute((req) => leagues.leave(req.user, Number(req.params.id))));
+router.post('/leagues/:id/kick', express.json(), leagueRoute((req) => leagues.kick(req.user, Number(req.params.id), req.body && req.body.tgId)));
+
+// 🏁 Natija ekrani uchun: umumiy haftalik o'rin va points (reyting keshi 3 soniyadan eski bo'lsa yangilanadi)
+router.get('/me/place', wrap(async (req, res) => {
+  const r = leaderboard.range('weekly');
+  const rows = await leaderboard.ranking('overall', r, req.query.fresh ? 3000 : undefined);
+  const idx = rows.findIndex((x) => Number(x.id) === Number(req.user.id));
+  res.json({ place: idx === -1 ? null : idx + 1, points: idx === -1 ? 0 : Number(rows[idx].points) || 0, total: rows.length });
+}));
+
 // ⭐ Sevimli jamoa: { teamId } — tanlash, { teamId: null } — olib tashlash
 router.post('/favorite-team', express.json(), footballRoute(async (req, res) => {
   const id = req.body && req.body.teamId;

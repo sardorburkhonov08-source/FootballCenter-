@@ -18,10 +18,10 @@ const rankingCache = new Map();   // key -> { at, promise }
 function clearRankingCache() { rankingCache.clear(); }
 
 /** Davr bo'yicha reyting (keshlangan): kind = manager | quiz | score | duel */
-async function ranking(kind, r) {
+async function ranking(kind, r, maxAgeMs = RANKING_TTL_MS) {
   const key = `${kind}:${new Date(r.start).getTime()}:${new Date(r.end).getTime()}`;
   const hit = rankingCache.get(key);
-  if (hit && Date.now() - hit.at < RANKING_TTL_MS) return hit.promise;
+  if (hit && Date.now() - hit.at < Math.min(maxAgeMs, RANKING_TTL_MS)) return hit.promise;
   const promise = computeRanking(kind, r);
   rankingCache.set(key, { at: Date.now(), promise });
   promise.catch(() => rankingCache.delete(key));

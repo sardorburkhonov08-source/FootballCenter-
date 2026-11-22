@@ -52,7 +52,23 @@
     img.addEventListener('error', () => img.replaceWith(crestPh(name, cls)), { once: true });
     return img;
   }
-  function haptic(type) { try { if (tg && tg.HapticFeedback) { if (type) tg.HapticFeedback.notificationOccurred(type); else tg.HapticFeedback.selectionChanged(); } } catch (e) { /* */ } }
+  // 📳 Tebranish (sinov): success|error|warning — natija; light|medium|heavy|rigid|soft — zarba; bo'sh — tanlash.
+  // Profil → 📳 dan o'chiriladi (localStorage fc_haptic). Ketma-ket ikki marta titramasin — 60 ms oraliq.
+  let lastHaptic = 0;
+  function hapticOn() { try { return localStorage.getItem('fc_haptic') !== 'off'; } catch (e) { return true; } }
+  function haptic(type) {
+    if (!hapticOn() || !tg || !tg.HapticFeedback) return;
+    const now = Date.now();
+    if (now - lastHaptic < 60 && !['success', 'error', 'warning'].includes(type)) return;
+    lastHaptic = now;
+    try {
+      if (['success', 'error', 'warning'].includes(type)) tg.HapticFeedback.notificationOccurred(type);
+      else if (['light', 'medium', 'heavy', 'rigid', 'soft'].includes(type)) tg.HapticFeedback.impactOccurred(type);
+      else tg.HapticFeedback.selectionChanged();
+    } catch (e) { /* */ }
+  }
+  // Har qanday tugma bosilganda — yengil zarba
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('button, [role="button"], .item')) haptic('light'); }, true);
 
   function toast(msg) {
     const box = $('toast');
@@ -354,7 +370,13 @@
     return {
       on,
       set(v) { try { localStorage.setItem('fc_sound', v ? 'on' : 'off'); } catch (e) { /* */ } },
-      play(name) { if (!on()) return; try { play[name] && play[name](); } catch (e) { /* */ } },
+      play(name) {
+        // 📳 Ovoz bilan birga tebranish (ovoz o'chiq bo'lsa ham)
+        const hp = { kick: 'medium', goal: 'success', save: 'warning', win: 'success', lose: 'error', whistle: 'rigid' }[name];
+        if (hp) haptic(hp);
+        if (!on()) return;
+        try { play[name] && play[name](); } catch (e) { /* */ }
+      },
     };
   })();
 
@@ -857,21 +879,25 @@
       box.replaceChildren(errorBox(err, () => render()));
       return;
     }
+    // ⚽ Jonli o'yin: har 30 soniyada yangilanadi (sahifa ochiq va ko'rinib turgan paytda); gol bo'lsa — animatsiya, ovoz, tebranish
+    let cur = null;
+    const paint = () => {
     const started = m.state !== 'scheduled';
     const hc = (m.colors && m.colors.home) || '#1e8f4e';
     const ac = (m.colors && m.colors.away) || '#0f2f20';
     const head = el('div', { class: 'card match-hero', style: `background:linear-gradient(115deg, ${hc} 0%, ${hc}cc 30%, #0c1712 50%, ${ac}cc 70%, ${ac} 100%)` },
       el('div', { class: 'row between small', style: 'margin-bottom:10px;opacity:.9' }, el('span', { class: 'ellipsis', text: m.competition ? m.competition.name : '' }), statusBadge(m)),
       el('div', { class: 'scoreboard' },
-        el('div', null, crest(m.home.crest), el('div', { style: 'font-weight:700', text: m.home.name })),
+        el('div', null, crest(m.home.crest, null, m.home.name), el('div', { style: 'font-weight:700', text: m.home.name })),
         el('div', null, el('div', { class: 'big', text: started ? `${m.score.home ?? '-'} : ${m.score.away ?? '-'}` : hhmm(m.utcDate) }),
           el('div', { class: 'small muted', text: ddmmyyyy(m.utcDate) }),
           m.halfTime && m.halfTime.home !== null && started ? el('div', { class: 'small muted', text: `(${m.halfTime.home}:${m.halfTime.away})` }) : null),
-        el('div', null, crest(m.away.crest), el('div', { style: 'font-weight:700', text: m.away.name }))));
+        el('div', null, crest(m.away.crest, null, m.away.name), el('div', { style: 'font-weight:700', text: m.away.name }))));
     const keys = ['statistics', 'lineups', 'events'].filter((k) => m.tabs && m.tabs[k]);
     box.replaceChildren(head);
+    if (m.state === 'live') head.append(el('div', { class: 'live-auto small', text: t('live_auto') }));
     if (!keys.length) { box.append(el('div', { class: 'card center muted', style: 'margin-top:10px', text: t('no_details') })); return; }
-    let cur = keys[0];
+    if (!keys.includes(cur)) cur = keys[0];
     const tabs = el('div', { class: 'tabs', style: 'margin-top:12px' });
     const content = el('div', { style: 'margin-top:10px' });
     const draw = () => {
@@ -905,6 +931,34 @@
     };
     draw();
     box.append(tabs, content);
+    };
+    paint();
+    const soon = m.state === 'scheduled' && new Date(m.utcDate).getTime() - Date.now() < 15 * 60000;
+    if (m.state === 'live' || soon) {
+      let busy = false;
+      const timer = setInterval(async () => {
+        if (busy || document.hidden || !box.isConnected) return;
+        busy = true;
+        try {
+          const n = await api(`/matches/${id}`, { fresh: true });
+          const goalHome = (n.score.home ?? 0) > (m.score.home ?? 0);
+          const goalAway = (n.score.away ?? 0) > (m.score.away ?? 0);
+          const ended = m.state !== 'finished' && n.state === 'finished';
+          const kicked = m.state === 'scheduled' && n.state === 'live';
+          m = n;
+          paint();
+          const hero = box.querySelector('.match-hero');
+          if (goalHome || goalAway) {
+            if (hero) hero.classList.add('goal');
+            SFX.play('goal');
+            toast(t('live_goal', { team: (goalHome ? m.home : m.away).name, score: `${m.score.home}:${m.score.away}` }));
+            confetti();
+          } else if (kicked || ended) SFX.play('whistle');
+          if (m.state === 'finished') clearInterval(timer);
+        } catch (e) { /* tarmoq xatosi — keyingi safar */ } finally { busy = false; }
+      }, 30000);
+      cleanups.push(() => clearInterval(timer));
+    }
   }
 
   async function renderCompetitions(body) {
@@ -1072,7 +1126,95 @@
       open: () => push({ render: (v) => { v.append(backBar(`⚽ ${t('ku_title')}`)); return renderArcade(v, 'keepy'); } }) },
     { key: 'score', grad: 'linear-gradient(135deg,#c084fc,#7c3aed)', icon: '🎯', title: () => t('sp_title'), desc: () => t('games_sp_desc'), premium: true,
       open: () => push({ render: (v) => { v.append(backBar(`🎯 ${t('sp_title')}`)); return renderScorePredict(v); } }) },
+    { key: 'leagues', grad: 'linear-gradient(135deg,#5eead4,#0f766e)', icon: '👥', title: () => t('lg_title'), desc: () => t('games_lg_desc'), premium: false,
+      open: () => push({ render: (v) => { v.append(backBar(`👥 ${t('lg_title')}`)); return renderLeagues(v); } }) },
   ];
+
+  // ================= 👥 DO'STLAR LIGASI (sinov)
+  function lgError(err) {
+    const code = err && err.body && err.body.error;
+    haptic('error');
+    toast(t(`lg_err_${code}`) !== `lg_err_${code}` ? t(`lg_err_${code}`) : t('error_generic'));
+  }
+  async function renderLeagues(view) {
+    const box = el('div', null, skeleton(2));
+    view.append(el('p', { class: 'muted small', text: t('lg_hint') }), box);
+    let d;
+    try { d = await api('/leagues', { fresh: true }); } catch (err) { box.replaceChildren(errorBox(err, () => render())); return; }
+    if (!d.enabled) { box.replaceChildren(el('div', { class: 'card center muted', text: t('lg_disabled') })); return; }
+    const name = el('input', { class: 'input', placeholder: t('lg_name_ph'), maxlength: '30' });
+    const create = el('button', { class: 'btn block', style: 'margin-top:8px', text: t('lg_create') });
+    create.addEventListener('click', async () => {
+      create.disabled = true;
+      try {
+        const r = await api('/leagues', { method: 'POST', body: { name: name.value } });
+        haptic('success');
+        push({ render: (v) => renderLeague(v, r.id, true) });
+      } catch (err) { lgError(err); create.disabled = false; }
+    });
+    box.replaceChildren(
+      d.leagues.length ? el('div', { class: 'list' }, d.leagues.map((l) => el('button', { class: 'item', type: 'button', onclick: () => push({ render: (v) => renderLeague(v, l.id) }) },
+        el('span', { class: 'game-ico', style: '--g:linear-gradient(135deg,#5eead4,#0f766e)', text: '👥' }),
+        el('span', { class: 'grow' }, el('b', { text: l.name }),
+          el('div', { class: 'small muted', text: t('lg_row', { n: l.members, leader: l.leader || '—' }) })),
+        el('span', { class: 'badge gold', text: l.place ? `#${l.place}` : '—' }))))
+        : (() => { const n = el('div', { class: 'card center muted', text: t('lg_none') }); emptyState(n); return n; })(),
+      el('div', { class: 'card', style: 'margin-top:12px' }, el('h3', { style: 'margin-top:0', text: t('lg_create_title') }), name, create));
+  }
+
+  async function renderLeague(view, id, justCreated) {
+    view.append(backBar(t('lg_title')));
+    const box = el('div', null, skeleton(3));
+    view.append(box);
+    let period = 'weekly';
+    const draw = async () => {
+      let d;
+      try { d = await api(`/leagues/${id}?period=${period}`, { fresh: true }); } catch (err) { box.replaceChildren(errorBox(err, () => draw())); return; }
+      const seg = el('div', { class: 'seg' }, ['weekly', 'monthly', 'all'].map((p) => el('button', {
+        class: p === period ? 'on' : '', text: t(`lg_p_${p}`), onclick: () => { period = p; draw(); },
+      })));
+      const invite = el('button', { class: 'btn block', text: t('lg_invite_btn'), onclick: () => { if (d.link) shareLink(d.link, t('lg_share_text', { league: d.name })); } });
+      const rows = d.standings.map((x) => el('div', { class: `lb-row${x.me ? ' me' : ''}` },
+        el('span', { class: 'pl', text: x.place <= 3 ? ['🥇', '🥈', '🥉'][x.place - 1] : x.place }),
+        avatar(x.photo, x.name, 'sm'),
+        el('span', { class: 'grow ellipsis' }, el('b', { text: x.name }), x.owner ? el('span', { class: 'small muted', text: ` · ${t('lg_owner')}` }) : null),
+        el('span', { class: 'pts', text: x.points }),
+        d.owner && !x.me ? el('button', { class: 'mini', text: '✕', title: t('lg_kick'), onclick: async () => {
+          if (!window.confirm(t('lg_kick_confirm', { name: x.name }))) return;
+          try { await api(`/leagues/${id}/kick`, { method: 'POST', body: { tgId: x.tgId } }); draw(); } catch (err) { lgError(err); }
+        } }) : null));
+      const leave = el('button', { class: 'btn ghost block', style: 'margin-top:10px', text: t('lg_leave'), onclick: async () => {
+        if (!window.confirm(t('lg_leave_confirm', { name: d.name }))) return;
+        try { await api(`/leagues/${id}/leave`, { method: 'POST' }); goBack(); } catch (err) { lgError(err); }
+      } });
+      put(box,
+        el('div', { class: 'card lg-head' }, el('div', { class: 'lg-ico', text: '👥' }), el('h2', { style: 'margin:6px 0 2px', text: d.name }),
+          el('div', { class: 'small muted', text: t('lg_members', { n: d.standings.length, max: d.maxMembers }) })),
+        justCreated && d.standings.length === 1 ? el('div', { class: 'card small', style: 'margin-top:10px', text: t('lg_created_hint') }) : null,
+        el('div', { style: 'margin-top:10px' }, invite),
+        el('div', { style: 'margin-top:12px' }, seg),
+        el('div', { class: 'card', style: 'margin-top:10px' }, rows),
+        leave);
+    };
+    draw();
+  }
+
+  async function renderLeagueInvite(view, code) {
+    view.append(backBar(t('lg_title')));
+    const box = el('div', null, skeleton(2));
+    view.append(box);
+    let d;
+    try { d = await api(`/leagues/invite/${encodeURIComponent(code)}`); } catch (err) { box.replaceChildren(el('div', { class: 'card center muted', text: t('lg_err_not_found') })); return; }
+    if (d.mine) { box.replaceChildren(); push({ render: (v) => renderLeague(v, d.id) }); return; }
+    const join = el('button', { class: 'btn block', style: 'margin-top:12px', text: t('lg_join') });
+    join.addEventListener('click', async () => {
+      join.disabled = true;
+      try { const r = await api('/leagues/join', { method: 'POST', body: { code } }); haptic('success'); confetti(); push({ render: (v) => renderLeague(v, r.id) }); } catch (err) { lgError(err); join.disabled = false; }
+    });
+    box.replaceChildren(el('div', { class: 'card center' }, el('div', { class: 'lg-ico', text: '👥' }),
+      el('h2', { style: 'margin:6px 0', text: d.name }),
+      el('p', { class: 'muted', text: t('lg_invited', { name: d.owner, n: d.members }) }), join));
+  }
 
   // ================= 👥 COMMUNITY — klub fan community'lari va haftalik fan reytingi
   function cmError(err) {
@@ -1357,6 +1499,50 @@
     toast(I.DICTS.uz[`du_err_${code}`] ? t(`du_err_${code}`) : I.DICTS.uz[`ar_err_${code}`] ? t(`ar_err_${code}`) : t('error_generic'));
   }
 
+  // ================= 🏁 NATIJA EKRANI (sinov): o'yin tugaganda — katta points, haftalik o'rin o'zgarishi, yana o'ynash, do'stni chaqirish
+  /** O'yin ekrani ochilganda haftalik o'rinni eslab qolish (natijada o'zgarishni ko'rsatish uchun) */
+  function capturePlace() {
+    api('/me/place', { fresh: true }).then((p) => { S.placeBefore = p; }).catch(() => {});
+  }
+  let refLinkCache = null;
+  async function inviteFriend() {
+    try {
+      if (!refLinkCache) refLinkCache = (await api('/share')).refLink;
+      if (refLinkCache) shareLink(refLinkCache, t('rs_invite_text'));
+    } catch (e) { toast(t('error_generic')); }
+  }
+  function resultSheet({ result, score, points, again }) {
+    const close = () => { wrap.classList.remove('on'); setTimeout(() => wrap.remove(), 250); };
+    const place = el('div', { class: 'rs-place muted small', text: '…' });
+    const pts = el('b', { class: 'rs-pts', text: '0' });
+    const wrap = el('div', { class: 'rs-wrap', onclick: (e) => { if (e.target === wrap) close(); } },
+      el('div', { class: `rs ${result || ''}` },
+        el('div', { class: 'rs-emoji', text: result === 'win' ? '🏆' : result === 'draw' ? '🤝' : '💪' }),
+        el('div', { class: 'rs-title', text: [result ? t(`du_res_${result}`) : null, score].filter(Boolean).join(' · ') }),
+        el('div', { class: 'rs-points' }, el('span', { text: points ? '+' : '' }), pts, el('span', { class: 'rs-unit', text: ' points' })),
+        place,
+        el('div', { class: 'rs-actions' },
+          again ? el('button', { class: 'btn block', text: t('pk_again'), onclick: () => { close(); again(); } }) : null,
+          el('button', { class: 'btn ghost block', text: t('rs_invite'), onclick: inviteFriend }),
+          el('button', { class: 'rs-close', type: 'button', text: t('rs_close'), onclick: close }))));
+    document.body.append(wrap);
+    requestAnimationFrame(() => wrap.classList.add('on'));
+    // Points sanab chiqadi
+    const target = Number(points) || 0;
+    const t0 = performance.now();
+    const step = (now) => { const k = Math.min(1, (now - t0) / 700); pts.textContent = String(Math.round(target * k)); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+    if (result === 'win') { confetti(); SFX.play('win'); } else if (result === 'loss') SFX.play('lose');
+    const before = S.placeBefore;
+    api('/me/place', { fresh: true }).then((p) => {
+      S.placeBefore = p;
+      if (!p.place) { place.textContent = t('rs_no_place'); return; }
+      const up = before && before.place ? before.place - p.place : 0;
+      place.textContent = up > 0 ? t('rs_place_up', { from: before.place, to: p.place, n: up }) : t('rs_place', { place: p.place });
+      if (up > 0) place.className = 'rs-place gold';
+    }).catch(() => { place.textContent = ''; });
+  }
+
   function shareLink(link, text) {
     const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
     try { if (tg && tg.openTelegramLink) { tg.openTelegramLink(url); return; } } catch (e) { /* */ }
@@ -1364,6 +1550,7 @@
   }
 
   async function renderArcade(view, kind) {
+    capturePlace();
     if (!S.me.premium) { lockedSection(view, AR[kind].icon); return; }
     const box = el('div', null, skeleton(3));
     view.append(box, leaderboardBlock(kind));
@@ -1424,6 +1611,7 @@
     if (g.result === 'win') confetti();
     const left = st.left - (st.game ? 0 : 1);
     wait.replaceWith(arcadeResultCard(g.result, g.score, g.botScore, g.points, left > 0 ? () => render() : null));
+    resultSheet({ result: g.result, score: `${g.score}:${g.botScore}`, points: g.points, again: left > 0 ? () => render() : null });
   }
 
   function arcadeResultCard(result, my, their, points, again) {
@@ -1664,6 +1852,7 @@
   const PK_POS = { left: 24, center: 50, right: 76 };
 
   async function renderPenalty(view) {
+    capturePlace();
     if (!S.me.premium) { lockedSection(view, '🥅'); return; }
     const box = el('div', null, skeleton(3));
     view.append(box, leaderboardBlock('penalty'));
@@ -1747,7 +1936,13 @@
         flash.className = `pk-flash on ${good ? 'good' : 'bad'}`;
         haptic(good ? 'success' : 'error');
       }, 380);
-      setTimeout(() => { g = r.game; reset(); draw(); busy = false; if (g.status === 'finished' && g.result === 'win') confetti(); }, 1400);
+      setTimeout(() => {
+        g = r.game; reset(); draw(); busy = false;
+        if (g.status === 'finished') {
+          const left = st.left - (st.game ? 0 : 1);
+          resultSheet({ result: g.result, score: `${g.userGoals}:${g.botGoals}`, points: g.points, again: left > 0 ? () => render() : null });
+        }
+      }, 1400);
     }
     reset();
     draw();
@@ -1774,6 +1969,7 @@
   }
 
   async function renderDuels(view) {
+    capturePlace();
     if (!S.me.premium) { lockedSection(view, '⚔️'); return; }
     const box = el('div', null, skeleton(3));
     view.append(box, leaderboardBlock('duel'));
@@ -1921,7 +2117,10 @@
         SFX.play(res.correct ? 'goal' : 'save');
         resultLine.textContent = res.correct ? t('du_correct', { s: (res.timeMs / 1000).toFixed(1) }) : t('du_wrong');
         if (res.correct) resultLine.className = 'gold';
-        if (res.duel && res.duel.result && res.duel.result.result === 'win') confetti();
+        if (res.duel && res.duel.result) {
+          const dr = res.duel.result;
+          setTimeout(() => resultSheet({ result: dr.result, score: dr.my !== undefined ? `${dr.my}:${dr.their}` : null, points: dr.points, again: null }), 900);
+        }
         resultLine.style.cssText = 'margin-top:12px;font-weight:800;text-align:center';
         finish(res);
       } catch (err) { duelError(err); finish(null); }
@@ -2625,7 +2824,16 @@
   function soundCard() {
     const sw = el('button', { class: `switch${SFX.on() ? ' on' : ''}`, type: 'button', 'aria-label': 'sound' });
     sw.addEventListener('click', () => { const v = !SFX.on(); SFX.set(v); sw.classList.toggle('on', v); if (v) SFX.play('whistle'); haptic(); });
-    return el('div', { class: 'card row between' }, el('span', { text: t('prof_sound') }), sw);
+    const hw = el('button', { class: `switch${hapticOn() ? ' on' : ''}`, type: 'button', 'aria-label': 'haptic' });
+    hw.addEventListener('click', () => {
+      const v = !hapticOn();
+      try { localStorage.setItem('fc_haptic', v ? 'on' : 'off'); } catch (e) { /* */ }
+      hw.classList.toggle('on', v);
+      if (v) haptic('heavy');
+    });
+    return el('div', { class: 'card' },
+      el('div', { class: 'row between' }, el('span', { text: t('prof_sound') }), sw),
+      el('div', { class: 'row between', style: 'margin-top:10px' }, el('span', { text: t('prof_haptic') }), hw));
   }
 
   async function renderProfile(view) {
@@ -2724,6 +2932,9 @@
     // 💥/⚽ Crossbar / Keepy-uppy taklifi: /app/?ag=<kod> yoki startapp=ag_<kod>
     const agCode = new URLSearchParams(window.location.search).get('ag') || (startParam.startsWith('ag_') ? startParam.slice(3) : '');
     if (agCode) { S.tab = 'games'; S.stacks.games = [{ render: (v) => renderArcadeInvite(v, agCode) }]; }
+    // 👥 Do'stlar ligasi taklifi: /app/?lg=<kod> yoki startapp=lg_<kod>
+    const lgCode = new URLSearchParams(window.location.search).get('lg') || (startParam.startsWith('lg_') ? startParam.slice(3) : '');
+    if (lgCode) { S.tab = 'games'; S.stacks.games = [{ render: (v) => renderLeagueInvite(v, lgCode) }]; }
     render();
     return undefined;
   }

@@ -70,6 +70,19 @@ async function sendArcadeInvite(ctx, code) {
   });
 }
 
+/** 👥 Do'stlar ligasi taklifi: t.me/<bot>?start=lg_<kod> → Mini App'da liga ochiladi (/app/?lg=<kod>) */
+async function sendLeagueInvite(ctx, code) {
+  const lg = await require('../../services/leagues').byCode(code);
+  if (!lg) return;
+  const owner = await users.byId(lg.owner_id);
+  if (ctx.userCreated && owner && owner.ref_code) await referral.attach(ctx.user, owner.ref_code).catch(() => {});
+  const lang = ctx.lang || 'uz';
+  const url = config.webAppUrl ? `${config.webAppUrl}/?lg=${encodeURIComponent(code)}` : null;
+  await ctx.reply(t(lang, 'lg_invite_msg', { name: users.displayName(owner), league: lg.name }), {
+    ...ui.HTML, reply_markup: url ? { inline_keyboard: [[{ text: t(lang, 'btn_lg_open'), web_app: { url } }]] } : undefined,
+  });
+}
+
 /** 🔎 Inline chaqiruv: t.me/<bot>?start=dch_<userId> — chaqiruvchi nomidan Quiz duel taklifi ochiladi */
 async function sendChallenge(ctx, creatorId) {
   const creator = await users.byId(Number(creatorId));
@@ -90,6 +103,20 @@ async function sendChallenge(ctx, creatorId) {
   await sendDuelInvite(ctx, d.code);
 }
 
+/** 👋 Tanishtiruv: 3 qadam (nima bor → o'yinlar va points → Premium/karta/community), "Keyingi" tugmasi bilan */
+async function showOnboarding(ctx, step) {
+  const lang = ctx.lang;
+  const text = `${t(lang, `ob_${step}`, { name: ctx.from.first_name || '' })}\n\n${'●'.repeat(step)}${'○'.repeat(3 - step)}  ${step}/3`;
+  const rows = step < 3
+    ? [[ui.btn(t(lang, 'ob_next'), `ob:${step + 1}`)], [ui.btn(t(lang, 'ob_skip'), 'ob:done')]]
+    : [
+      config.webAppUrl ? [{ text: t(lang, 'ob_open_games'), web_app: { url: `${config.webAppUrl}/` } }] : null,
+      [ui.btn(t(lang, 'ob_start'), 'ob:done')],
+    ];
+  if (ctx.callbackQuery && /^ob:/.test(ctx.callbackQuery.data)) return ui.show(ctx, text, ui.kb(rows));
+  return ctx.reply(text, { ...ui.HTML, reply_markup: ui.kb(rows) });
+}
+
 async function onStart(ctx) {
   await state.clear(ctx.from.id);
   const payload = (ctx.match || '').trim();
@@ -105,6 +132,7 @@ async function onStart(ctx) {
   if (payload.startsWith('duel_')) await sendDuelInvite(ctx, payload.slice(5));
   if (payload.startsWith('ag_')) await sendArcadeInvite(ctx, payload.slice(3));
   if (/^dch_\d+$/.test(payload)) await sendChallenge(ctx, payload.slice(4));
+  if (payload.startsWith('lg_')) await sendLeagueInvite(ctx, payload.slice(3));
   return undefined;
 }
 
@@ -133,7 +161,18 @@ function register(bot) {
     if (firstTime && users.isPremium(ctx.user) && (await users.gotWelcomePremium(ctx.user.id))) {
       await ui.replyFx(ctx, t(lang, 'welcome_premium', { days: await settings.get('welcome_premium_days'), date: formatDate(ctx.user.premium_expires_at) }));
     }
-    await ctx.reply(t(lang, 'menu_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.mainMenuKb(lang, ctx.user) });
+    // 👋 Birinchi marta — 3 qadamli tanishtiruv (sinov, settings.onboarding_enabled)
+    if (firstTime && (await settings.get('onboarding_enabled'))) return showOnboarding(ctx, 1);
+    return ctx.reply(t(lang, 'menu_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.mainMenuKb(lang, ctx.user) });
+  });
+
+  bot.callbackQuery(/^ob:([1-3])$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    return showOnboarding(ctx, Number(ctx.match[1]));
+  });
+  bot.callbackQuery('ob:done', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    return ui.showMenu(ctx);
   });
 
   bot.callbackQuery('m:menu', async (ctx) => {
