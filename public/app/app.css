@@ -484,3 +484,28 @@ input[type=search].input { margin-bottom: 4px; }
 .ach-bar { height: 6px; border-radius: 3px; background: var(--surface2); margin-top: 10px; overflow: hidden; }
 .ach-bar span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f7d774, #d9a520); }
 .more-btn { display: block; width: 100%; margin-top: 10px; height: 38px; border-radius: 10px; background: var(--surface2); color: var(--muted); font-weight: 700; font-size: 13px; }
+
+/* ⚽ Jonli o'yin: gol animatsiyasi */
+.match-hero.goal { animation: hero-goal 1.4s ease-out 2; }
+@keyframes hero-goal { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(242, 201, 76, .55); } }
+.live-auto { margin-top: 8px; text-align: center; opacity: .75; }
+/* 🏁 Natija ekrani */
+.rs-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0); transition: background .25s; }
+.rs-wrap.on { background: rgba(0, 0, 0, .55); }
+.rs { width: 100%; max-width: 520px; background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); text-align: center; transform: translateY(100%); transition: transform .3s cubic-bezier(.2,.8,.2,1); border-top: 3px solid var(--accent); }
+.rs-wrap.on .rs { transform: none; }
+.rs.win { border-top-color: var(--gold); }
+.rs-emoji { font-size: 54px; line-height: 1; animation: bob 1.6s ease-in-out infinite; }
+.rs-title { font-weight: 800; font-size: 20px; margin-top: 8px; }
+.rs-points { margin-top: 6px; color: var(--gold); font-weight: 800; font-size: 22px; }
+.rs-pts { font-size: 54px; font-variant-numeric: tabular-nums; }
+.rs-unit { font-size: 18px; }
+.rs-place { margin-top: 4px; min-height: 20px; font-weight: 700; }
+.rs-actions { display: grid; gap: 8px; margin-top: 16px; }
+.rs-close { background: transparent; color: var(--muted); height: 36px; font-weight: 700; }
+/* 👥 Do'stlar ligasi */
+.lg-head { text-align: center; }
+.lg-ico { font-size: 40px; width: 72px; height: 72px; margin: 0 auto; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5eead4, #0f766e); }
+.lb-row.me { background: color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 10px; }
+.ava.sm { width: 30px; height: 30px; font-size: 13px; }
+.match-hero .scoreboard .crest-ph { width: 60px; height: 60px; border-radius: 30px; font-size: 24px; margin: 0 auto; box-shadow: 0 0 0 3px rgba(255,255,255,.85); }

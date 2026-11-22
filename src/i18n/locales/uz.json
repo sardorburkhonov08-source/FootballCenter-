@@ -626,5 +626,10 @@
   "ob_next": "Keyingi ▶️",
   "ob_skip": "⏭ O'tkazib yuborish",
   "ob_start": "🚀 Boshlash",
-  "ob_open_games": "🎮 O'yinlarni ochish"
+  "ob_open_games": "🎮 O'yinlarni ochish",
+  "lg_invite_msg": "👥 <b>{name}</b> sizni «{league}» do'stlar ligasiga chaqiryapti!\n\n⚽ Kim ko'proq points to'plar ekan? Qo'shilish uchun tugmani bosing 👇",
+  "btn_lg_open": "👥 Ligani ochish",
+  "a_set_leagues_enabled": "👥 Do'stlar ligasi (sinov)",
+  "a_set_leagues_max_members": "Ligada ko'pi bilan a'zo",
+  "a_set_leagues_max_per_user": "Bir kishi ko'pi bilan nechta ligada"
 }

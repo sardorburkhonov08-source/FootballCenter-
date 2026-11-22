@@ -624,5 +624,10 @@
   "ob_next": "Next ▶️",
   "ob_skip": "⏭ Skip",
   "ob_start": "🚀 Start",
-  "ob_open_games": "🎮 Open games"
+  "ob_open_games": "🎮 Open games",
+  "lg_invite_msg": "👥 <b>{name}</b> invites you to the friends league «{league}»!\n\n⚽ Who'll earn more points? Tap the button to join 👇",
+  "btn_lg_open": "👥 Open league",
+  "a_set_leagues_enabled": "👥 Friends league (test)",
+  "a_set_leagues_max_members": "Max members per league",
+  "a_set_leagues_max_per_user": "Max leagues per person"
 }

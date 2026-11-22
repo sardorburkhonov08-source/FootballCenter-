@@ -70,6 +70,19 @@ async function sendArcadeInvite(ctx, code) {
   });
 }
 
+/** 👥 Do'stlar ligasi taklifi: t.me/<bot>?start=lg_<kod> → Mini App'da liga ochiladi (/app/?lg=<kod>) */
+async function sendLeagueInvite(ctx, code) {
+  const lg = await require('../../services/leagues').byCode(code);
+  if (!lg) return;
+  const owner = await users.byId(lg.owner_id);
+  if (ctx.userCreated && owner && owner.ref_code) await referral.attach(ctx.user, owner.ref_code).catch(() => {});
+  const lang = ctx.lang || 'uz';
+  const url = config.webAppUrl ? `${config.webAppUrl}/?lg=${encodeURIComponent(code)}` : null;
+  await ctx.reply(t(lang, 'lg_invite_msg', { name: users.displayName(owner), league: lg.name }), {
+    ...ui.HTML, reply_markup: url ? { inline_keyboard: [[{ text: t(lang, 'btn_lg_open'), web_app: { url } }]] } : undefined,
+  });
+}
+
 /** 🔎 Inline chaqiruv: t.me/<bot>?start=dch_<userId> — chaqiruvchi nomidan Quiz duel taklifi ochiladi */
 async function sendChallenge(ctx, creatorId) {
   const creator = await users.byId(Number(creatorId));
@@ -119,6 +132,7 @@ async function onStart(ctx) {
   if (payload.startsWith('duel_')) await sendDuelInvite(ctx, payload.slice(5));
   if (payload.startsWith('ag_')) await sendArcadeInvite(ctx, payload.slice(3));
   if (/^dch_\d+$/.test(payload)) await sendChallenge(ctx, payload.slice(4));
+  if (payload.startsWith('lg_')) await sendLeagueInvite(ctx, payload.slice(3));
   return undefined;
 }
 

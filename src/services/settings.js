@@ -35,6 +35,10 @@ const DEFAULTS = {
   channel_daily_enabled: true,
   channel_daily_hour: 9,
   channel_winner_enabled: true,
+  // 👥 Do'stlar ligasi (sinov): bir ligada ko'pi bilan a'zo, bir foydalanuvchi ko'pi bilan nechta ligada
+  leagues_enabled: true,
+  leagues_max_members: 50,
+  leagues_max_per_user: 10,
   // 👋 Yangi foydalanuvchiga 3 qadamli tanishtiruv (sinov)
   onboarding_enabled: true,
   // 🗳 "Kim yutadi?" ovoz berish (sinov rejimi): to'g'ri taxmin uchun points

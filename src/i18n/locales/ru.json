@@ -624,5 +624,10 @@
   "ob_next": "Далее ▶️",
   "ob_skip": "⏭ Пропустить",
   "ob_start": "🚀 Начать",
-  "ob_open_games": "🎮 Открыть игры"
+  "ob_open_games": "🎮 Открыть игры",
+  "lg_invite_msg": "👥 <b>{name}</b> зовёт вас в лигу друзей «{league}»!\n\n⚽ Посмотрим, кто наберёт больше points? Нажмите кнопку, чтобы вступить 👇",
+  "btn_lg_open": "👥 Открыть лигу",
+  "a_set_leagues_enabled": "👥 Лига друзей (тест)",
+  "a_set_leagues_max_members": "Максимум участников в лиге",
+  "a_set_leagues_max_per_user": "Максимум лиг у одного человека"
 }
