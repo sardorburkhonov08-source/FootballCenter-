@@ -367,7 +367,7 @@ test('admin: qoida matni, FAQ (kirill avtomatik), eksport, broadcast', async () 
   assert.strictEqual((await user(U)).notify.news, false);
   await h.click(OWNER, 'a:broadcast');
   await h.text(OWNER, '📢 Yangilik!');
-  assert.match(h.lastText(OWNER), /^📢 Shu xabar \d+ ta foydalanuvchiga/);
+  assert.match(h.lastText(OWNER), /^📢 <b>Xabarni kimga yuboramiz\?<\/b>[\s\S]*Qabul qiluvchilar: <b>\d+<\/b>/);  // 🎯 auditoriya tanlash ekrani
   h.clear();
   await h.click(OWNER, 'bc:go');
   await new Promise((r) => setTimeout(r, 600));

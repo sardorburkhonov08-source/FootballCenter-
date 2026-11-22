@@ -29,6 +29,14 @@ const DEFAULTS = {
   // ⭐ Sevimli jamoa: gol va yakun haqida botda xabar; jonli o'yinni tekshirish oralig'i (soniya, API yuklamasi)
   fav_team_notify: true,
   fav_team_check_seconds: 120,
+  // 📣 Kanalga avtomatik post (sinov): kanal (@kanal yoki -100...; bo'sh — o'chiq), til, kechagi natijalar soati, g'olib kartasi
+  channel_post_id: '',
+  channel_lang: 'uz',
+  channel_daily_enabled: true,
+  channel_daily_hour: 9,
+  channel_winner_enabled: true,
+  // 👋 Yangi foydalanuvchiga 3 qadamli tanishtiruv (sinov)
+  onboarding_enabled: true,
   // 🗳 "Kim yutadi?" ovoz berish (sinov rejimi): to'g'ri taxmin uchun points
   poll_enabled: true,
   poll_points: 2,

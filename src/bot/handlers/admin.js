@@ -18,13 +18,13 @@ const { CARD_LABEL, formatCardNumber } = require('./balance');
 const { RULE_KEYS, tariffLabel } = require('./sections');
 
 // ---------- Sozlamalar muharriri (umumiy)
-const BOOL_KEYS = ['premium_enabled', 'fav_team_notify', 'group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
-const TEXT_KEYS = ['donation_channel_id'];
+const BOOL_KEYS = ['channel_daily_enabled', 'channel_winner_enabled', 'onboarding_enabled', 'premium_enabled', 'fav_team_notify', 'group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
+const TEXT_KEYS = ['donation_channel_id', 'channel_post_id', 'channel_lang'];
 const MIN1_KEYS = ['bonus_goal_multiplier', 'premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'alerts_repeat_minutes', 'alerts_db_slow_ms', 'fan_card_club_change_price', 'fan_card_first_fans'];
 // Admin tahrirlaydigan matnlar (texts jadvali) va ularning bo'limi
 const TEXT_BACK = { premium_description: 'a:tariff', ref_invite: 'a:referral' };
-const MAX_VALUES = { digest_hour: 23, group_quiz_hour: 23 };
+const MAX_VALUES = { digest_hour: 23, group_quiz_hour: 23, channel_daily_hour: 23 };
 const MIN_MAX = [['bonus_free_min', 'bonus_free_max'], ['bonus_premium_min', 'bonus_premium_max']];
 
 const SECTIONS = {
@@ -36,7 +36,8 @@ const SECTIONS = {
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
   community: { title: 'a_btn_community_settings', keys: ['community_extra_price'] },
-  games: { title: 'a_btn_games_settings', keys: ['menu_image_enabled', 'digest_hour', 'group_quiz_enabled', 'group_quiz_hour', 'poll_enabled', 'poll_points', 'fav_team_notify', 'fav_team_check_seconds', 'quest_reward_points', 'quest_streak_bonus', 'quest_streak_max', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
+  channel: { title: 'a_btn_channel', keys: ['channel_post_id', 'channel_lang', 'channel_daily_enabled', 'channel_daily_hour', 'channel_winner_enabled'] },
+  games: { title: 'a_btn_games_settings', keys: ['onboarding_enabled', 'menu_image_enabled', 'digest_hour', 'group_quiz_enabled', 'group_quiz_hour', 'poll_enabled', 'poll_points', 'fav_team_notify', 'fav_team_check_seconds', 'quest_reward_points', 'quest_streak_bonus', 'quest_streak_max', 'duel_win_points', 'duel_draw_points', 'duel_daily_limit', 'penalty_win_points', 'penalty_draw_points', 'penalty_daily_games', 'arcade_win_points', 'arcade_draw_points', 'arcade_daily_games', 'arcade_pvp_win_points', 'arcade_pvp_draw_points', 'arcade_pvp_daily_limit'] },
 };
 
 function fmtValue(lang, key, v) {
@@ -82,7 +83,7 @@ function adminMenuKb(lang) {
     [ui.btn(L('a_btn_fancard_settings'), 'a:fancard'), ui.btn(L('a_btn_community_settings'), 'a:community')],
     [ui.btn(L('a_btn_games_settings'), 'a:games'), ui.btn(L('a_btn_maintenance'), 'a:maintenance')],
     [ui.btn(L('a_btn_stats'), 'a:stats'), ui.btn(L('a_btn_export'), 'a:export')],
-    [ui.btn(L('a_btn_broadcast'), 'a:broadcast')],
+    [ui.btn(L('a_btn_broadcast'), 'a:broadcast'), ui.btn(L('a_btn_channel'), 'a:channel')],
   ];
   if (config.webAppUrl) rows.push([{ text: L('a_btn_webadmin'), web_app: { url: `${config.publicUrl}/admin/` } }]);
   rows.push([ui.btn(L('back'), 'm:menu')]);
@@ -210,25 +211,39 @@ async function exportUsers(ctx) {
   await ctx.replyWithDocument(new InputFile(Buffer.from(csv, 'utf8'), `users_${ymd()}.csv`), { caption: t(ctx.lang, 'a_export_caption', { count: rows.length }) });
 }
 
-async function broadcastAudience() {
-  const all = await db.many('SELECT * FROM users WHERE NOT is_blocked AND NOT group_only');
-  return all.filter((u) => notify.isEnabled(u, 'news'));
+// 📢 Xabar tarqatish — src/services/broadcast.js (🎯 auditoriya, ⏰ rejalashtirish)
+const broadcast = require('../../services/broadcast');
+async function broadcastAudience(aud) { return broadcast.audienceUsers(aud); }
+async function runBroadcast(api, fromChatId, messageId, adminUser, aud) { return broadcast.run(api, fromChatId, messageId, adminUser, aud); }
+
+/** Tasdiqlash ekrani: tanlangan auditoriya va soni + auditoriya tugmalari */
+async function showBroadcastConfirm(ctx, data) {
+  const lang = ctx.lang;
+  const aud = broadcast.normalize(data.aud);
+  const count = (await broadcast.audienceUsers(aud)).length;
+  const mark = (type) => (aud.type === type ? '✅ ' : '');
+  const text = t(lang, 'bc_confirm', { aud: await broadcast.audienceLabel(lang, aud), count });
+  const markup = ui.kb([
+    [ui.btn(`${mark('all')}${t(lang, 'bc_aud_all')}`, 'bc:a:all'), ui.btn(`${mark('premium')}${t(lang, 'bc_aud_premium')}`, 'bc:a:premium')],
+    [ui.btn(`${mark('free')}${t(lang, 'bc_aud_free')}`, 'bc:a:free'), ui.btn(`${mark('inactive')}${t(lang, 'bc_aud_inactive')}`, 'bc:a:inactive')],
+    [ui.btn(`${mark('club')}${t(lang, 'bc_btn_club')}`, 'bc:clubs'), ui.btn(`${mark('region')}${t(lang, 'bc_btn_region')}`, 'bc:regions')],
+    [ui.btn(t(lang, 'bc_btn_now'), 'bc:go'), ui.btn(t(lang, 'bc_btn_later'), 'bc:later')],
+    [ui.btn(t(lang, 'cancel_btn'), 'm:admin')],
+  ]);
+  if (ctx.callbackQuery) return ui.show(ctx, text, markup);
+  return ctx.reply(text, { ...ui.HTML, reply_markup: markup });
 }
 
-async function runBroadcast(api, fromChatId, messageId, adminUser) {
-  const audience = await broadcastAudience();
-  let ok = 0;
-  let fail = 0;
-  for (const u of audience) {
-    try {
-      await api.copyMessage(u.telegram_id, fromChatId, messageId);
-      ok += 1;
-    } catch (e) {
-      fail += 1;
-    }
-    await new Promise((r) => setTimeout(r, 40)); // ~25 xabar/soniya — Telegram limitidan past
-  }
-  await notify.sendRaw(adminUser.telegram_id, t(adminUser.language || 'uz', 'a_broadcast_done', { ok, fail }));
+async function showScheduled(ctx) {
+  const lang = ctx.lang;
+  const list = await broadcast.pending();
+  const lines = [];
+  for (const j of list) lines.push(t(lang, 'bc_sched_line', { id: j.id, date: formatDateTime(j.send_at), aud: await broadcast.audienceLabel(lang, j.audience) }));
+  const text = list.length ? t(lang, 'bc_sched_title', { list: raw(lines.join('\n')) }) : t(lang, 'bc_sched_empty');
+  return ui.show(ctx, text, ui.kb([
+    ...list.map((j) => [ui.btn(t(lang, 'bc_btn_cancel_job', { id: j.id }), `bcq:x:${j.id}`)]),
+    [ui.btn(t(lang, 'back'), 'a:broadcast')],
+  ]));
 }
 
 /** To'lov/donat so'rovi qayta ishlangach admin xabarini yangilash */
@@ -277,7 +292,7 @@ function register(bot) {
     await ui.show(ctx, L(ctx, 'a_title'), adminMenuKb(ctx.lang));
   });
 
-  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard|community|games)$/, async (ctx) => {
+  admin.callbackQuery(/^a:(referral|bonus|donation|tariff|maintenance|forcesub|fancard|community|games|channel)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.clear(ctx.from.id);
     await renderSection(ctx, ctx.match[1]);
@@ -577,16 +592,70 @@ function register(bot) {
   admin.callbackQuery('a:broadcast', async (ctx) => {
     await ctx.answerCallbackQuery();
     await state.set(ctx.from.id, 'admin_broadcast');
-    await ui.show(ctx, L(ctx, 'a_broadcast_enter'), ui.kb([[ui.btn(L(ctx, 'back'), 'm:admin')]]));
+    const n = (await broadcast.pending()).length;
+    await ui.show(ctx, L(ctx, 'a_broadcast_enter'), ui.kb([[ui.btn(L(ctx, 'bc_btn_scheduled', { n }), 'bcq:list')], [ui.btn(L(ctx, 'back'), 'm:admin')]]));
+  });
+  // 🎯 Auditoriya tanlash (tasdiqlash ekrani holati saqlanadi)
+  const confirmState = async (ctx) => {
+    const s = await state.get(ctx.from.id);
+    return s && ['admin_broadcast_confirm', 'admin_broadcast_time'].includes(s.state) ? s.data : null;
+  };
+  const setAud = async (ctx, aud) => {
+    const data = await confirmState(ctx);
+    await ctx.answerCallbackQuery();
+    if (!data) return undefined;
+    data.aud = aud;
+    await state.set(ctx.from.id, 'admin_broadcast_confirm', data);
+    return showBroadcastConfirm(ctx, data);
+  };
+  admin.callbackQuery(/^bc:a:(all|premium|free|inactive)$/, (ctx) => setAud(ctx, { type: ctx.match[1] }));
+  admin.callbackQuery(/^bc:a:club:(\d+)$/, (ctx) => setAud(ctx, { type: 'club', value: Number(ctx.match[1]) }));
+  admin.callbackQuery(/^bc:a:region:(\w+)$/, (ctx) => setAud(ctx, { type: 'region', value: ctx.match[1] }));
+  admin.callbackQuery('bc:back', async (ctx) => setAud(ctx, (await confirmState(ctx) || {}).aud));
+  admin.callbackQuery('bc:clubs', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    if (!(await confirmState(ctx))) return undefined;
+    const clubs = await broadcast.topClubs();
+    return ui.show(ctx, clubs.length ? L(ctx, 'bc_pick_club') : L(ctx, 'bc_no_cards'), ui.kb([
+      ...ui.grid(clubs.map((c) => ui.btn(`${c.team_name} (${c.n})`, `bc:a:club:${c.team_id}`))),
+      [ui.btn(L(ctx, 'back'), 'bc:back')],
+    ]));
+  });
+  admin.callbackQuery('bc:regions', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    if (!(await confirmState(ctx))) return undefined;
+    const regions = await broadcast.regionCounts();
+    return ui.show(ctx, regions.length ? L(ctx, 'bc_pick_region') : L(ctx, 'bc_no_cards'), ui.kb([
+      ...ui.grid(regions.map((r) => ui.btn(`${t(ctx.lang, `region_${r.region}`)} (${r.n})`, `bc:a:region:${r.region}`))),
+      [ui.btn(L(ctx, 'back'), 'bc:back')],
+    ]));
   });
   admin.callbackQuery('bc:go', async (ctx) => {
-    const s = await state.get(ctx.from.id);
+    const data = await confirmState(ctx);
     await ctx.answerCallbackQuery();
-    if (!s || s.state !== 'admin_broadcast_confirm') return undefined;
+    if (!data) return undefined;
     await state.clear(ctx.from.id);
     await ui.show(ctx, L(ctx, 'a_broadcast_started'), undefined);
-    runBroadcast(ctx.api, s.data.chatId, s.data.messageId, ctx.user).catch((e) => console.error('[broadcast]', e));
+    runBroadcast(ctx.api, data.chatId, data.messageId, ctx.user, data.aud).catch((e) => console.error('[broadcast]', e));
     return undefined;
+  });
+  // ⏰ Rejalashtirish: sana va vaqt kiritiladi (Toshkent)
+  admin.callbackQuery('bc:later', async (ctx) => {
+    const data = await confirmState(ctx);
+    await ctx.answerCallbackQuery();
+    if (!data) return undefined;
+    await state.set(ctx.from.id, 'admin_broadcast_time', data);
+    return ui.show(ctx, L(ctx, 'bc_time_enter'), ui.kb([[ui.btn(L(ctx, 'back'), 'bc:back')]]));
+  });
+  admin.callbackQuery('bcq:list', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await state.clear(ctx.from.id);
+    return showScheduled(ctx);
+  });
+  admin.callbackQuery(/^bcq:x:(\d+)$/, async (ctx) => {
+    const r = await broadcast.cancel(Number(ctx.match[1]));
+    await ctx.answerCallbackQuery({ text: r ? L(ctx, 'bc_cancelled') : L(ctx, 'bc_not_pending') });
+    return showScheduled(ctx);
   });
 }
 
@@ -628,6 +697,12 @@ const states = {
     if (TEXT_KEYS.includes(key)) {
       value = text;
       if (key === 'donation_channel_id' && !/^(@\w{4,}|-?\d{5,})$/.test(value)) return ctx.reply(t(ctx.lang, 'a_channel_value_hint'));
+      // 📣 Kanal: "-" — o'chirish (avtomatik post to'xtaydi)
+      if (key === 'channel_post_id') {
+        if (value === '-') value = '';
+        else if (!/^(@\w{4,}|-?\d{5,})$/.test(value)) return ctx.reply(t(ctx.lang, 'a_channel_value_hint'));
+      }
+      if (key === 'channel_lang' && !LANGS.includes(value)) return ctx.reply(t(ctx.lang, 'a_lang_value_hint', { langs: LANGS.join(', ') }));
     } else {
       const n = Number(text.replace(/\s/g, ''));
       const min = MIN1_KEYS.includes(key) ? 1 : 0;
@@ -819,9 +894,21 @@ const states = {
   },
 
   async admin_broadcast(ctx) {
-    const count = (await broadcastAudience()).length;
-    await state.set(ctx.from.id, 'admin_broadcast_confirm', { chatId: ctx.chat.id, messageId: ctx.message.message_id });
-    return ctx.reply(t(ctx.lang, 'a_broadcast_confirm', { count }), { reply_markup: ui.kb([[ui.btn(t(ctx.lang, 'confirm_btn'), 'bc:go'), ui.btn(t(ctx.lang, 'cancel_btn'), 'm:admin')]]) });
+    const data = { chatId: ctx.chat.id, messageId: ctx.message.message_id, aud: { type: 'all' } };
+    await state.set(ctx.from.id, 'admin_broadcast_confirm', data);
+    return showBroadcastConfirm(ctx, data);
+  },
+
+  async admin_broadcast_time(ctx, data) {
+    const when = parseDate(ctx.message && ctx.message.text);
+    const hasTime = /\d{1,2}:\d{2}\s*$/.test((ctx.message && ctx.message.text) || '');
+    if (!when || !hasTime) return ctx.reply(t(ctx.lang, 'bc_time_bad'));
+    if (when.getTime() < Date.now() + 60000) return ctx.reply(t(ctx.lang, 'bc_time_past'));
+    const job = await broadcast.schedule({ fromChatId: data.chatId, messageId: data.messageId, audience: data.aud, sendAt: when, adminId: ctx.user.id });
+    await state.clear(ctx.from.id);
+    return ctx.reply(t(ctx.lang, 'bc_scheduled', { id: job.id, date: formatDateTime(when), aud: await broadcast.audienceLabel(ctx.lang, data.aud) }), {
+      ...ui.HTML, reply_markup: ui.kb([[ui.btn(t(ctx.lang, 'bc_btn_scheduled', { n: (await broadcast.pending()).length }), 'bcq:list')], [ui.btn(t(ctx.lang, 'back'), 'm:admin')]]),
+    });
   },
 
   async admin_broadcast_confirm(ctx) {

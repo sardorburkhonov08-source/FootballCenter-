@@ -159,6 +159,13 @@ test/                   avtomatik testlar
 - **🗳 "Kim yutadi?" — SINOV** (`src/services/poll.js`, `poll_votes`, `users.points_poll`; `poll_enabled`, `poll_points` (2)): kunning o'yini — "🎯 Hisobni top" ga belgilangan bugungi eng kechki o'yin; kunlik dayjestdan keyin alohida xabar (3 tugma), ovoz bir marta, keyin foizlar; o'yin tugagach (`poll_score`) to'g'ri taxminga points (umumiy points, `leaderboard` kind `poll`). Olib tashlash kerak bo'lsa: poll.js, `pl:` handler (sections.js), scheduler (`poll_score`, dayjest), `POINT_COLUMNS`/`GAME_KINDS`/community ro'yxatidagi `poll`.
 - Webhook `allowed_updates`: `message`, `callback_query`, `inline_query`, `pre_checkout_query`, `my_chat_member` (`src/index.js`).
 
+## 📣 Kanal, 🎯 xabar tarqatish, 👋 tanishtiruv (SINOV, egasi talabi bilan)
+
+- **📣 Kanalga avtomatik post** (`src/services/channel.js`; bot admin → "📣 Kanalga avtopost"): `channel_post_id` (@kanal yoki -100..., bo'sh — o'chiq; bot kanalda admin bo'lishi kerak), `channel_lang`. Har kuni `channel_daily_hour` (9, Toshkent) dan keyin **kechagi natijalar** rasmi (1080×1350: asosiy ligalar birinchi, ko'pi bilan 12 o'yin; kechagi `/fixtures?date=` — bitta keshli so'rov), kuniga bir marta (`daily_notify_log` `channel_results`; xato bo'lsa belgi olib tashlanadi va 🚨 adminga). Hafta/oy g'olibi aniqlanganda (`finalizePeriods`) **g'olib kartasi**: profil rasmi (`topCard.avatar`), points, faol umumiy sovrin matni. `channel_daily_enabled`, `channel_winner_enabled`. Matnlar `ch_*`.
+- **🎯 Maqsadli xabar tarqatish** (`src/services/broadcast.js`, bot admin → 📢 Xabar yuborish): xabar yuborilgach auditoriya tanlanadi — hammaga, 💎 Premium, 🆓 oddiy, 😴 7+ kun kirmaganlar, ⚽ klub muxlislari (muxlislik kartasidagi klub), 📍 hudud (kartadagi hudud); soni ko'rsatiladi. «Bot yangiliklari»ni o'chirganlar va `group_only` ga yuborilmaydi.
+- **⏰ Rejalashtirilgan xabar** (027-migratsiya `scheduled_broadcasts`): "⏰ Vaqtini belgilash" → `DD.MM.YYYY HH:MM` (Toshkent, kelajakda); `scheduled_broadcasts` vazifasi (har daqiqa) vaqti kelganini bir marta yuboradi (`FOR UPDATE SKIP LOCKED`), adminga hisobot; "⏰ Rejalashtirilgan (N)" ro'yxati va bekor qilish.
+- **👋 Tanishtiruv** (`settings.onboarding_enabled`, bot admin → 🎮 O'yinlar sozlamalari; testlarda standart o'chiq): yangi foydalanuvchi birinchi marta til tanlagach 3 qadam (`ob_1..3`: nima bor → o'yinlar va points → karta/community/referral), "Keyingi ▶️ / ⏭ O'tkazib yuborish", oxirida "🎮 O'yinlarni ochish" va "🚀 Boshlash" → bosh menyu.
+
 ## Egasi talabi bilan SPEC'dan farqlar
 
 - 💎 Tarif bo'limida **"📊 Taqqoslash" yo'q** (SPEC 3-bo'limdagi tugma va admin tahrirlaydigan taqqoslash matni olib tashlangan, 008-migratsiya).
