@@ -28,6 +28,7 @@ async function matchStartReminders() {
 }
 
 async function premiumExpiry() {
+  if (users.premiumFree()) return;   // Premium o'chiq — tugash eslatmasi kerak emas
   await db.query("UPDATE users SET tariff = 'free' WHERE tariff = 'premium' AND (premium_expires_at IS NULL OR premium_expires_at <= now())");
   const rows = await db.many(
     `SELECT * FROM users WHERE premium_expires_at > now() AND premium_expires_at <= now() + interval '3 days'
@@ -44,9 +45,9 @@ async function bonusReady() {
   const cooldownHours = 24 / perDay;
   const rows = await db.many(
     `SELECT u.* FROM users u
-     WHERE NOT u.bonus_ready_notified AND u.premium_expires_at > now() AND NOT u.is_blocked
+     WHERE NOT u.bonus_ready_notified AND (u.premium_expires_at > now() OR $2::boolean) AND NOT u.is_blocked
        AND (SELECT max(claimed_at) FROM bonuses_log b WHERE b.user_id = u.id) <= now() - ($1 || ' hours')::interval`,
-    [String(cooldownHours)],
+    [String(cooldownHours), users.premiumFree()],
   );
   for (const u of rows) {
     await db.query('UPDATE users SET bonus_ready_notified = true WHERE id = $1', [u.id]);
@@ -74,7 +75,8 @@ async function dailyDigest(now = new Date()) {
   if (parts(now).hour < hour) return false;
   const mark = await db.one("INSERT INTO daily_notify_log (kind, day) VALUES ('digest', $1) ON CONFLICT DO NOTHING RETURNING *", [ymd(now)]);
   if (!mark) return false;
-  const rows = await db.many('SELECT * FROM users WHERE premium_expires_at > now() AND NOT is_blocked AND language IS NOT NULL');
+  // Premium o'chiq bo'lsa — hamma (bepul rejim)
+  const rows = await db.many('SELECT * FROM users WHERE (premium_expires_at > now() OR $1::boolean) AND NOT is_blocked AND language IS NOT NULL AND NOT group_only', [users.premiumFree()]);
   const webApp = require('../config').webAppUrl;
   const pollGame = await require('../services/poll').todayGame(now);   // 🗳 "Kim yutadi?" (sinov)
   for (const u of rows) {
@@ -165,7 +167,7 @@ async function finalizePeriods(now = new Date()) {
        VALUES ('referral','monthly',$1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING *`,
       [m.start, m.end, winner ? winner.id : null, winner ? winner.count : 0],
     );
-    if (ins && winner) {
+    if (ins && winner && !users.premiumFree()) {   // Premium o'chiq bo'lsa — Premium sovrin berilmaydi
       const days = Number(await settings.get('referral_league_premium_days'));
       const u = await db.tx((c) => users.grantPremium(c, winner.id, days, 'referral_league', 0));
       const p = parts(m.start);

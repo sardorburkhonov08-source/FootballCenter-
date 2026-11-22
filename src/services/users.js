@@ -63,6 +63,7 @@ async function upsertFromTelegram(from, opts = {}) {
 /** 🎁 Yangi foydalanuvchiga sovg'a Premium (settings.welcome_premium_days; 0 — o'chiq) */
 async function welcomePremium(user) {
   const settings = require('./settings');
+  if ((await settings.get('premium_enabled')) === false) return user;   // Premium o'chiq — sovg'a ham berilmaydi
   const days = Number(await settings.get('welcome_premium_days'));
   if (!Number.isInteger(days) || days <= 0) return user;
   return grantPremium(db, user.id, days, 'welcome');
@@ -96,7 +97,11 @@ function totalPoints(u) { return POINT_COLUMNS.reduce((sum, k) => sum + (Number(
 /** SQL ifoda: (u.points_manager + ...); prefix — jadval taxallusi */
 function totalPointsSql(prefix = '') { return `(${POINT_COLUMNS.map((c) => `${prefix}${c}`).join(' + ')})`; }
 
+/** Premium tarifi admin tomonidan o'chirilganmi (o'chiq bo'lsa — hamma funksiyalar hammaga bepul) */
+function premiumFree() { return require('./settings').peek('premium_enabled') === false; }
+
 function isPremium(user) {
+  if (user && premiumFree()) return true;
   return !!(user && user.premium_expires_at && new Date(user.premium_expires_at) > new Date());
 }
 
@@ -148,6 +153,6 @@ async function activeReferralCount(userId) {
 module.exports = {
   totalPoints, totalPointsSql, POINT_COLUMNS,
   welcomePremium, gotWelcomePremium,
-  upsertFromTelegram, byTelegramId, byId, find, isPremium, isOwner, isAdmin, premiumDaysLeft, displayName,
+  upsertFromTelegram, byTelegramId, byId, find, isPremium, premiumFree, isOwner, isAdmin, premiumDaysLeft, displayName,
   grantPremium, setLanguage, activeReferralCount,
 };

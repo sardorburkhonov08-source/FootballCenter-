@@ -23,7 +23,10 @@ async function planInfo(plan) {
 }
 
 /** Balansdan Premium sotib olish. { ok, price, days, user } yoki { ok:false, reason:'no_money' } */
+async function enabled() { return (await settings.get('premium_enabled')) !== false; }
+
 async function buy(user, plan = 'month') {
+  if (!(await enabled())) return { ok: false, reason: 'off' };
   const { price, days } = await planInfo(plan);
   const result = await db.tx(async (c) => {
     const { rows } = await c.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [user.id]);
@@ -43,6 +46,7 @@ async function buy(user, plan = 'month') {
  * { ok, price, days, from, to } yoki { ok:false, reason: 'no_money' | 'not_found' | 'self' }
  */
 async function gift(fromUser, toUserId, plan = 'month') {
+  if (!(await enabled())) return { ok: false, reason: 'off' };
   const { price, days } = await planInfo(plan);
   if (Number(toUserId) === Number(fromUser.id)) return { ok: false, reason: 'self' };
   const result = await db.tx(async (c) => {
@@ -70,6 +74,7 @@ const STAR_KEYS = { week: 'premium_week_stars', month: 'premium_month_stars' };
 
 /** { week: { plan, stars, days }, ... } — faqat narxi > 0 bo'lganlari */
 async function starPlans() {
+  if (!(await enabled())) return {};
   const p = await plans();
   const s = await settings.getMany(Object.values(STAR_KEYS));
   const out = {};
@@ -113,4 +118,4 @@ async function grantStars(user, payment) {
   return result;
 }
 
-module.exports = { PLANS, plans, planInfo, buy, gift, STAR_KEYS, starPlans, starPayload, checkStarPayload, grantStars };
+module.exports = { PLANS, enabled, plans, planInfo, buy, gift, STAR_KEYS, starPlans, starPayload, checkStarPayload, grantStars };

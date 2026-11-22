@@ -22,6 +22,7 @@ async function redeem(user, rawCode) {
     const used = await c.query('SELECT 1 FROM promo_code_uses WHERE promo_code_id = $1 AND user_id = $2', [promo.id, user.id]);
     if (used.rowCount) return { key: 'promo_used' };
     if (promo.premium_only && !users.isPremium(user)) return { key: 'promo_premium_only' };
+    if (promo.type === 'premium' && users.premiumFree()) return { key: 'promo_premium_off' };   // Premium o'chiq — Premium promokodlar ishlamaydi
 
     await c.query('INSERT INTO promo_code_uses (promo_code_id, user_id) VALUES ($1, $2)', [promo.id, user.id]);
     await c.query('UPDATE promo_codes SET used_count = used_count + 1 WHERE id = $1', [promo.id]);

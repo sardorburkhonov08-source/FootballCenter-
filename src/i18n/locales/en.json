@@ -570,5 +570,10 @@
   "fav_ft_loss": "😔 <b>{team} lost</b>\n\n🏁 {home} <b>{h}–{a}</b> {away}",
   "notif_fav_team": "⭐ Favourite team: goals and result",
   "a_set_fav_team_notify": "⭐ Favourite team goal/result alerts",
-  "a_set_fav_team_check_seconds": "Live match check interval (sec, min 30)"
+  "a_set_fav_team_check_seconds": "Live match check interval (sec, min 30)",
+  "tariff_all_free": "🎉 Everything is free",
+  "premium_off_info": "🎉 <b>All features are free right now!</b>\n\nThe Premium plan is temporarily off — games, the fan card, community and everything else are open to everyone. No need to buy Premium.",
+  "promo_premium_off": "ℹ️ Everything is free right now — Premium promo codes are temporarily disabled.",
+  "a_set_premium_enabled": "💎 Premium plan (off — everything is free)",
+  "mc_all_free": "Everything is free"
 }

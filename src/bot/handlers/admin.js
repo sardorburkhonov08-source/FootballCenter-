@@ -18,7 +18,7 @@ const { CARD_LABEL, formatCardNumber } = require('./balance');
 const { RULE_KEYS, tariffLabel } = require('./sections');
 
 // ---------- Sozlamalar muharriri (umumiy)
-const BOOL_KEYS = ['fav_team_notify', 'group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
+const BOOL_KEYS = ['premium_enabled', 'fav_team_notify', 'group_quiz_enabled', 'poll_enabled', 'alerts_enabled', 'menu_image_enabled', 'force_sub_enabled', 'referral_enabled', 'referral_fake_protection', 'maintenance_mode'];
 const TEXT_KEYS = ['donation_channel_id'];
 const MIN1_KEYS = ['bonus_goal_multiplier', 'premium_price', 'premium_days', 'premium_week_price', 'premium_week_days', 'bonus_free_per_day', 'bonus_premium_per_day', 'referral_league_premium_days',
   'donation_announce_timeout_minutes', 'alerts_repeat_minutes', 'alerts_db_slow_ms', 'fan_card_club_change_price', 'fan_card_first_fans'];
@@ -31,7 +31,7 @@ const SECTIONS = {
   referral: { title: 'a_btn_referral', keys: ['referral_enabled', 'referral_bonus_free', 'referral_bonus_premium', 'referral_fake_protection', 'referral_league_premium_days'] },
   bonus: { title: 'a_btn_bonus', keys: ['bonus_goal_multiplier', 'bonus_free_min', 'bonus_free_max', 'bonus_free_per_day', 'bonus_premium_min', 'bonus_premium_max', 'bonus_premium_per_day'] },
   donation: { title: 'a_btn_donation', keys: ['donation_channel_id', 'donation_big_threshold', 'donation_announce_timeout_minutes'] },
-  tariff: { title: 'a_btn_tariff', keys: ['premium_week_price', 'premium_week_days', 'premium_price', 'premium_days', 'premium_week_stars', 'premium_month_stars', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
+  tariff: { title: 'a_btn_tariff', keys: ['premium_enabled', 'premium_week_price', 'premium_week_days', 'premium_price', 'premium_days', 'premium_week_stars', 'premium_month_stars', 'welcome_premium_days', 'ai_limit_free', 'ai_limit_premium'] },
   maintenance: { title: 'a_btn_maintenance', keys: ['maintenance_mode', 'alerts_enabled', 'alerts_repeat_minutes', 'alerts_db_slow_ms'] },
   forcesub: { title: 'a_btn_forcesub', keys: ['force_sub_enabled'] },
   fancard: { title: 'a_btn_fancard_settings', keys: ['fan_card_club_change_price', 'fan_card_first_fans'] },
