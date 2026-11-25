@@ -629,5 +629,8 @@
   "btn_lg_open": "👥 Открыть лигу",
   "a_set_leagues_enabled": "👥 Лига друзей (тест)",
   "a_set_leagues_max_members": "Максимум участников в лиге",
-  "a_set_leagues_max_per_user": "Максимум лиг у одного человека"
+  "a_set_leagues_max_per_user": "Максимум лиг у одного человека",
+  "home_title": "⚽ Добро пожаловать в <b>FootballCenter</b>, {name}!\n\n🚀 <b>Веб-страница</b> — live-счёт, игры, квиз, дуэли и еженедельные призы.\n📋 <b>Главное меню</b> — баланс, Premium, профиль и настройки.",
+  "btn_home_webapp": "🚀 Открыть веб-страницу",
+  "btn_home_menu": "📋 Главное меню"
 }

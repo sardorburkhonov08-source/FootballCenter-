@@ -25,19 +25,29 @@ test('/start: til tanlash faqat birinchi marta, keyin menyu', async () => {
   assert.deepStrictEqual(h.buttons().map((b) => b.callback_data), ['lang:uz', 'lang:uz_cyrl', 'lang:ru', 'lang:en']);
   await h.click(U, 'lang:ru');
   assert.strictEqual((await user(U)).language, 'ru');
+  // 🏁 Boshlang'ich ekran: birinchi — yashil "Web sahifa" (web_app), ikkinchi — "Asosiy menyu"
+  assert.match(h.lastText(U), /^⚽ Добро пожаловать в <b>FootballCenter<\/b>/);
+  let btns = h.buttons();
+  assert.deepStrictEqual(btns.map((b) => b.web_app ? 'web' : b.callback_data), ['web', 'm:main']);
+  assert.strictEqual(btns[0].web_app.url, 'https://fc.example.com/app/');
+  assert.strictEqual(btns[0].style, 'success');
+  // Asosiy menyu — botdagi bo'limlar, Web App tugmasisiz
+  await h.click(U, 'm:main');
   assert.match(h.lastText(U), /^🏠 Главное меню/);
-  const btns = h.buttons();
-  assert.ok(btns.some((b) => b.web_app && b.web_app.url === 'https://fc.example.com/app/'), 'web_app tugmasi');
+  btns = h.buttons();
+  assert.ok(btns.some((b) => b.callback_data === 'm:balance'));
+  assert.ok(!btns.some((b) => b.web_app), "asosiy menyuda Web App tugmasi yo'q");
   assert.ok(!btns.some((b) => b.callback_data === 'm:admin'), "oddiy foydalanuvchida admin tugmasi yo'q");
   h.clear();
   await h.text(U, '/start');
-  assert.match(h.lastText(U), /^🏠 Главное меню/);
+  assert.match(h.lastText(U), /^⚽ Добро пожаловать/);
   await h.click(U, 'lang:uz');
 });
 
 test('admin (ega) menyusida 🔒 Admin Panel bor', async () => {
   h.clear();
   await h.text(OWNER, '/start');
+  await h.click(OWNER, 'm:main');
   assert.ok(h.buttons().some((b) => b.callback_data === 'm:admin'));
   await h.click(OWNER, 'm:admin');
   assert.match(h.lastText(OWNER), /^🔒 Admin Panel/);
@@ -58,7 +68,7 @@ test("majburiy obuna: a'zo bo'lmaguncha o'tkazilmaydi", async () => {
   assert.match(h.lastText(U), /^❌ Siz hali barcha kanallarga/);
   status = 'member';
   await h.click(U, 'sub:check');
-  assert.match(h.lastText(U), /^🏠 Asosiy menyu/);
+  assert.match(h.lastText(U), /^⚽ <b>FootballCenter<\/b>ga xush kelibsiz/);
   delete h.overrides.getChatMember;
   await settings.set('force_sub_enabled', false);
 });
