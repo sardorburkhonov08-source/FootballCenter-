@@ -41,7 +41,7 @@ async function afterSubscription(ctx) {
     await ui.show(ctx, LANG_PROMPT, ui.langKb());
     return;
   }
-  await ui.showMenu(ctx);
+  await ui.showHome(ctx);   // 🏁 ikki tugma: Web App va Asosiy menyu
 }
 
 async function sendDuelInvite(ctx, code) {
@@ -163,7 +163,14 @@ function register(bot) {
     }
     // 👋 Birinchi marta — 3 qadamli tanishtiruv (sinov, settings.onboarding_enabled)
     if (firstTime && (await settings.get('onboarding_enabled'))) return showOnboarding(ctx, 1);
-    return ctx.reply(t(lang, 'menu_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.mainMenuKb(lang, ctx.user) });
+    return ctx.reply(t(lang, 'home_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.homeKb(lang) });
+  });
+
+  // 📋 Boshlang'ich ekrandagi "Asosiy menyu" — botdagi bo'limlar
+  bot.callbackQuery('m:main', async (ctx) => {
+    await state.clear(ctx.from.id);
+    await ctx.answerCallbackQuery();
+    await ui.showMenu(ctx);
   });
 
   bot.callbackQuery(/^ob:([1-3])$/, async (ctx) => {
@@ -172,7 +179,7 @@ function register(bot) {
   });
   bot.callbackQuery('ob:done', async (ctx) => {
     await ctx.answerCallbackQuery();
-    return ui.showMenu(ctx);
+    return ui.showHome(ctx);
   });
 
   bot.callbackQuery('m:menu', async (ctx) => {

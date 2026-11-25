@@ -631,5 +631,8 @@
   "btn_lg_open": "👥 Ligani ochish",
   "a_set_leagues_enabled": "👥 Do'stlar ligasi (sinov)",
   "a_set_leagues_max_members": "Ligada ko'pi bilan a'zo",
-  "a_set_leagues_max_per_user": "Bir kishi ko'pi bilan nechta ligada"
+  "a_set_leagues_max_per_user": "Bir kishi ko'pi bilan nechta ligada",
+  "home_title": "⚽ <b>FootballCenter</b>ga xush kelibsiz, {name}!\n\n🚀 <b>Web sahifa</b> — jonli hisob, o'yinlar, Quiz, duellar va haftalik sovrinlar.\n📋 <b>Asosiy menyu</b> — balans, Premium, profil va sozlamalar.",
+  "btn_home_webapp": "🚀 Web sahifaga kirish",
+  "btn_home_menu": "📋 Asosiy menyu"
 }

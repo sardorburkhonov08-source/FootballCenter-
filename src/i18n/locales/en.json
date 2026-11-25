@@ -629,5 +629,8 @@
   "btn_lg_open": "👥 Open league",
   "a_set_leagues_enabled": "👥 Friends league (test)",
   "a_set_leagues_max_members": "Max members per league",
-  "a_set_leagues_max_per_user": "Max leagues per person"
+  "a_set_leagues_max_per_user": "Max leagues per person",
+  "home_title": "⚽ Welcome to <b>FootballCenter</b>, {name}!\n\n🚀 <b>Web app</b> — live scores, games, quiz, duels and weekly prizes.\n📋 <b>Main menu</b> — balance, Premium, profile and settings.",
+  "btn_home_webapp": "🚀 Open the web app",
+  "btn_home_menu": "📋 Main menu"
 }

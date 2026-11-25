@@ -76,9 +76,7 @@ function mainMenuKb(lang, user) {
     [btn(L('btn_tariff'), 'm:tariff'), btn(L('btn_settings'), 'm:settings')],
     [btn(L('btn_help'), 'm:help'), btn(L('btn_ai'), 'm:ai')],
   ];
-  rows.push(config.webAppUrl
-    ? [{ text: L('btn_webapp'), web_app: { url: `${config.webAppUrl}/` } }]
-    : [btn(L('btn_webapp'), 'm:webapp_missing')]);
+  // 🌐 Web App tugmasi asosiy menyuda yo'q — u boshlang'ich ekranda (showHome), egasi talabi
   if (users.isAdmin(user)) rows.push([btn(L('btn_admin'), 'm:admin')]);
   return kb(rows);
 }
@@ -103,6 +101,20 @@ async function showMenu(ctx) {
   return show(ctx, caption, markup);
 }
 
+/**
+ * 🏁 Boshlang'ich ekran (/start va til tanlagandan keyin): ikki tugma — 🚀 Web sahifaga kirish (yashil, birinchi)
+ * va 📋 Asosiy menyu (botdagi bo'limlar).
+ */
+function homeKb(lang) {
+  const web = config.webAppUrl
+    ? { text: t(lang, 'btn_home_webapp'), web_app: { url: `${config.webAppUrl}/` }, style: 'success' }
+    : { text: t(lang, 'btn_home_webapp'), callback_data: 'm:webapp_missing', style: 'success' };
+  return kb([[web], [btn(t(lang, 'btn_home_menu'), 'm:main')]]);
+}
+async function showHome(ctx) {
+  return show(ctx, t(ctx.lang, 'home_title', { name: ctx.from.first_name || '' }), homeKb(ctx.lang));
+}
+
 /** Davomiylik: "3 soat 20 daqiqa" */
 function duration(lang, ms) {
   const totalMin = Math.max(1, Math.ceil(ms / 60000));
@@ -111,4 +123,4 @@ function duration(lang, ms) {
   return h ? t(lang, 'dur_hm', { h, m }) : t(lang, 'dur_m', { m });
 }
 
-module.exports = { btn, urlBtn, kb, grid, HTML, replyFx, show, showPhoto, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, duration };
+module.exports = { btn, urlBtn, kb, grid, HTML, replyFx, show, showPhoto, replyLong, backKb, cancelKb, langKb, mainMenuKb, showMenu, homeKb, showHome, duration };

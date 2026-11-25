@@ -142,13 +142,13 @@ test('👋 tanishtiruv: yangi foydalanuvchi til tanlagach 3 qadam, keyin menyu; 
   assert.ok(h.lastText(9601).includes('3/3'));
   assert.ok(h.buttons().some((b) => b.callback_data === 'ob:done'));
   await h.click(9601, 'ob:done');
-  assert.ok(h.buttons().some((b) => b.callback_data === 'm:balance'));
+  assert.ok(h.buttons().some((b) => b.callback_data === 'm:main'));
 
   await settings.set('onboarding_enabled', false);
   await h.text(9602, '/start');
   h.clear();
   await h.click(9602, 'lang:uz');
   assert.ok(!h.texts(9602).some((x) => x.startsWith('👋 <b>Xush kelibsiz')));
-  assert.ok(h.buttons().some((b) => b.callback_data === 'm:balance'));
+  assert.ok(h.buttons().some((b) => b.callback_data === 'm:main'));
   await settings.set('onboarding_enabled', true);
 });
