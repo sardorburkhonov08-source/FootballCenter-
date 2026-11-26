@@ -634,5 +634,22 @@
   "a_set_leagues_max_per_user": "Bir kishi ko'pi bilan nechta ligada",
   "home_title": "⚽ <b>FootballCenter</b>ga xush kelibsiz, {name}!\n\n🚀 <b>Web sahifa</b> — jonli hisob, o'yinlar, Quiz, duellar va haftalik sovrinlar.\n📋 <b>Asosiy menyu</b> — balans, Premium, profil va sozlamalar.",
   "btn_home_webapp": "🚀 Web sahifaga kirish",
-  "btn_home_menu": "📋 Asosiy menyu"
+  "btn_home_menu": "📋 Asosiy menyu",
+  "hc_title": "Web sahifa",
+  "hc_sub": "Futbol uchun hammasi bir joyda — bitta tugma bilan oching",
+  "hc_live_t": "Jonli hisob",
+  "hc_live_d": "Dunyo ligalari o'yinlari, jonli hisob, tarkiblar va statistika",
+  "hc_games_t": "8 ta o'yin",
+  "hc_games_d": "Quiz, Duel, Penalty, Crossbar, Keepy-uppy, Hisobni top va Mini Manager",
+  "hc_prize_t": "Haftalik sovrin",
+  "hc_prize_d": "Points to'plang — umumiy reytingda 1-o'rin sovrin oladi",
+  "hc_fav_t": "Sevimli jamoa",
+  "hc_fav_d": "O'yinlari tepada, gol urilsa darhol xabar keladi",
+  "hc_card_t": "Muxlislik kartasi",
+  "hc_card_d": "Klubingiz kartasi va muxlislar community'si",
+  "hc_friends_t": "Do'stlar ligasi",
+  "hc_friends_d": "Do'stlaringiz bilan o'z ligangizda bellashing",
+  "hc_menu_t": "Asosiy menyu",
+  "hc_menu_d": "Balans, Premium, profil, sozlamalar, yordam va AI yordamchi",
+  "hc_cta": "Pastdagi yashil tugmani bosing"
 }
