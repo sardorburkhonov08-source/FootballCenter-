@@ -905,11 +905,54 @@
       el('p', { class: 'muted small', style: 'margin-top:12px', text: t('fav_notify_hint') }));
   }
 
+  // 📊 API-Football statistikasining barcha ko'rsatkichlari (football.statKey bilan bir xil kalitlar), ko'rsatish tartibida
+  const STAT_ORDER = ['ball_possession', 'expected_goals', 'shots', 'shots_on_goal', 'shots_off_goal', 'blocked_shots', 'shots_insidebox',
+    'shots_outsidebox', 'corner_kicks', 'offsides', 'fouls', 'yellow_cards', 'red_cards', 'saves', 'total_passes', 'passes_accurate', 'passes',
+    'goals_prevented', 'free_kicks', 'throw_ins', 'goal_kicks'];
   const STAT_LABELS = {
-    uz: { ball_possession: "To'p nazorati", shots: 'Zarbalar', shots_on_goal: 'Darvozaga zarbalar', shots_off_goal: 'Darvozadan tashqari', corner_kicks: 'Burchak to\'plari', free_kicks: 'Jarima to\'plari', fouls: 'Qoidabuzarliklar', offsides: 'Offsaydlar', saves: 'Seyvlar', yellow_cards: 'Sariq kartalar', red_cards: 'Qizil kartalar', throw_ins: 'Autlar', goal_kicks: 'Darvozadan zarbalar' },
-    ru: { ball_possession: 'Владение мячом', shots: 'Удары', shots_on_goal: 'Удары в створ', shots_off_goal: 'Удары мимо', corner_kicks: 'Угловые', free_kicks: 'Штрафные', fouls: 'Фолы', offsides: 'Офсайды', saves: 'Сейвы', yellow_cards: 'Жёлтые карточки', red_cards: 'Красные карточки', throw_ins: 'Ауты', goal_kicks: 'Удары от ворот' },
-    en: { ball_possession: 'Possession', shots: 'Shots', shots_on_goal: 'Shots on target', shots_off_goal: 'Shots off target', corner_kicks: 'Corners', free_kicks: 'Free kicks', fouls: 'Fouls', offsides: 'Offsides', saves: 'Saves', yellow_cards: 'Yellow cards', red_cards: 'Red cards', throw_ins: 'Throw-ins', goal_kicks: 'Goal kicks' },
+    uz: { ball_possession: "To'p nazorati", expected_goals: 'Kutilgan gollar (xG)', shots: 'Jami zarbalar', shots_on_goal: 'Darvozaga zarbalar', shots_off_goal: 'Darvozadan tashqari', blocked_shots: "To'silgan zarbalar", shots_insidebox: 'Jarima maydonchasidan', shots_outsidebox: 'Jarima maydonchasi tashqarisidan', corner_kicks: "Burchak to'plari", offsides: 'Offsaydlar', fouls: 'Qoidabuzarliklar', yellow_cards: 'Sariq kartochkalar', red_cards: 'Qizil kartochkalar', saves: 'Darvozabon seyvlari', total_passes: 'Jami paslar', passes_accurate: 'Aniq paslar', passes: 'Pas aniqligi', goals_prevented: 'Oldi olingan gollar', free_kicks: "Jarima to'plari", throw_ins: 'Autlar', goal_kicks: 'Darvozadan zarbalar' },
+    ru: { ball_possession: 'Владение мячом', expected_goals: 'Ожидаемые голы (xG)', shots: 'Всего ударов', shots_on_goal: 'Удары в створ', shots_off_goal: 'Удары мимо', blocked_shots: 'Заблокированные удары', shots_insidebox: 'Удары из штрафной', shots_outsidebox: 'Удары из-за штрафной', corner_kicks: 'Угловые', offsides: 'Офсайды', fouls: 'Фолы', yellow_cards: 'Жёлтые карточки', red_cards: 'Красные карточки', saves: 'Сейвы вратаря', total_passes: 'Всего передач', passes_accurate: 'Точные передачи', passes: 'Точность передач', goals_prevented: 'Предотвращённые голы', free_kicks: 'Штрафные', throw_ins: 'Ауты', goal_kicks: 'Удары от ворот' },
+    en: { ball_possession: 'Possession', expected_goals: 'Expected goals (xG)', shots: 'Total shots', shots_on_goal: 'Shots on target', shots_off_goal: 'Shots off target', blocked_shots: 'Blocked shots', shots_insidebox: 'Shots inside the box', shots_outsidebox: 'Shots outside the box', corner_kicks: 'Corners', offsides: 'Offsides', fouls: 'Fouls', yellow_cards: 'Yellow cards', red_cards: 'Red cards', saves: 'Goalkeeper saves', total_passes: 'Total passes', passes_accurate: 'Accurate passes', passes: 'Pass accuracy', goals_prevented: 'Goals prevented', free_kicks: 'Free kicks', throw_ins: 'Throw-ins', goal_kicks: 'Goal kicks' },
   };
+  /**
+   * ⚽ Tarkib maydonda: uy jamoasi pastki yarmida, mehmon — yuqorida; o'yinchilar API'dagi grid ("qator:ustun") bo'yicha,
+   * futbolka rangida raqam bilan. Grid bo'lmasa — null (oddiy ro'yxat ko'rsatiladi).
+   */
+  function lineupPitch(m) {
+    const L = m.tabs.lineups;
+    const hasGrid = (lu) => lu && lu.lineup.length && lu.lineup.every((p) => /^\d+:\d+$/.test(p.grid || ''));
+    if (!hasGrid(L.home) && !hasGrid(L.away)) return null;
+    const pitch = el('div', { class: 'pitch' }, el('div', { class: 'pitch-lines' }, el('i', { class: 'mid' }), el('i', { class: 'circle' }), el('i', { class: 'box top' }), el('i', { class: 'box bottom' })));
+    const surname = (n) => { const parts = String(n || '').split(' '); return parts.length > 1 ? parts.slice(1).join(' ') : n; };
+    for (const side of ['home', 'away']) {
+      const lu = L[side];
+      if (!hasGrid(lu)) continue;
+      const rows = {};
+      for (const p of lu.lineup) { const [r, c] = p.grid.split(':').map(Number); (rows[r] = rows[r] || []).push({ p, c }); }
+      const nRows = Math.max(...Object.keys(rows).map(Number));
+      for (const [r, list] of Object.entries(rows)) {
+        const n = list.length;
+        list.sort((x, y) => x.c - y.c);
+        list.forEach(({ p }, i) => {
+          const row = Number(r);
+          const depth = nRows > 1 ? (row - 1) / (nRows - 1) : 0;      // 0 — darvozabon, 1 — hujumchilar
+          const y = side === 'home' ? 94 - depth * 37 : 6 + depth * 37;
+          const xi = (i + 1) / (n + 1) * 100;
+          const x = side === 'home' ? xi : 100 - xi;                    // mehmon tomoni oynadek aks ettiriladi
+          const kit = lu.colors && (row === 1 ? lu.colors.goalkeeper : lu.colors.player);
+          const bg = (kit && kit.primary) || (side === 'home' ? '#2ecc71' : '#f2f2f2');
+          const fg = (kit && kit.number) || (side === 'home' ? '#06210f' : '#0c1712');
+          pitch.append(el('div', { class: 'pl', style: `left:${x}%;top:${y}%` },
+            el('span', { class: 'pl-num', style: `background:${bg};color:${fg};border-color:${(kit && kit.border) || 'rgba(0,0,0,.35)'}`, text: p.shirtNumber ?? '' }),
+            el('span', { class: 'pl-name', text: surname(p.name) })));
+        });
+      }
+    }
+    const head = (side) => el('div', { class: 'pitch-head' }, crest(m[side].crest, null, m[side].name), el('b', { class: 'grow ellipsis', text: m[side].name }),
+      L[side] && L[side].formation ? el('span', { class: 'badge', text: L[side].formation }) : null);
+    return el('div', { class: 'card pitch-card' }, head('away'), pitch, head('home'));
+  }
+
   function statLabel(key) {
     const l = I.lang === 'uz_cyrl' ? 'uz' : I.lang;
     const v = (STAT_LABELS[l] || STAT_LABELS.en)[key] || key.replace(/_/g, ' ');
@@ -952,10 +995,29 @@
       content.replaceChildren();
       if (cur === 'statistics') {
         const st = m.tabs.statistics;
-        const allKeys = [...new Set([...Object.keys(st.home), ...Object.keys(st.away)])];
-        content.append(el('div', { class: 'card' }, allKeys.map((k) => el('div', { class: 'stat-row' },
-          el('span', { class: 'v', text: st.home[k] ?? '-' }), el('span', { class: 'label', text: statLabel(k) }), el('span', { class: 'v', text: st.away[k] ?? '-' })))));
+        const keys = [...new Set([...Object.keys(st.home), ...Object.keys(st.away)])]
+          .sort((a, b) => (STAT_ORDER.indexOf(a) + 1 || 99) - (STAT_ORDER.indexOf(b) + 1 || 99));
+        const num = (v) => { const n = parseFloat(String(v ?? '').replace('%', '')); return Number.isFinite(n) ? n : 0; };
+        // Har ko'rsatkich: qiymatlar va ikki tomonlama solishtirish chizig'i (ko'prog'i yorqin)
+        content.append(el('div', { class: 'card stats-card' },
+          el('div', { class: 'stats-teams' }, el('span', null, crest(m.home.crest, null, m.home.name)), el('span'), el('span', null, crest(m.away.crest, null, m.away.name))),
+          keys.map((k) => {
+            const h = num(st.home[k]);
+            const a = num(st.away[k]);
+            const total = h + a;
+            const hp = total ? (h / total) * 100 : 50;
+            return el('div', { class: 'stat2' },
+              el('div', { class: 'stat2-top' },
+                el('b', { class: h >= a && total ? 'lead' : '', text: st.home[k] ?? '0' }),
+                el('span', { class: 'label', text: statLabel(k) }),
+                el('b', { class: a >= h && total ? 'lead' : '', text: st.away[k] ?? '0' })),
+              el('div', { class: 'stat2-bar' },
+                el('span', { class: `h${h >= a ? ' lead' : ''}`, style: `width:${total ? hp : 0}%` }),
+                el('span', { class: `a${a >= h ? ' lead' : ''}`, style: `width:${total ? 100 - hp : 0}%` })));
+          })));
       } else if (cur === 'lineups') {
+        const pitch = lineupPitch(m);
+        if (pitch) content.append(pitch);
         for (const side of ['home', 'away']) {
           const lu = m.tabs.lineups[side];
           const team = m[side];
@@ -963,7 +1025,7 @@
           content.append(el('div', { class: 'card' },
             el('div', { class: 'row', style: 'margin-bottom:8px' }, crest(team.crest), el('b', { class: 'grow', text: team.name }), lu.formation ? el('span', { class: 'badge', text: lu.formation }) : null),
             lu.coach ? el('div', { class: 'small muted', text: `${t('coach')}: ${lu.coach}` }) : null,
-            lu.lineup.map((p) => el('div', { class: 'kv' }, el('span', { text: p.shirtNumber ?? '' }), el('b', { text: p.name }))),
+            pitch ? null : lu.lineup.map((p) => el('div', { class: 'kv' }, el('span', { text: p.shirtNumber ?? '' }), el('b', { text: p.name }))),
             lu.bench && lu.bench.length ? el('h3', { text: t('bench') }) : null,
             (lu.bench || []).map((p) => el('div', { class: 'kv small' }, el('span', { text: p.shirtNumber ?? '' }), el('span', { text: p.name })))));
         }

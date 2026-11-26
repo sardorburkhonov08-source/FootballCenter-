@@ -27,7 +27,10 @@ const HOUR = 3600;
 const DAY = 24 * HOUR;
 const MEM_LIMIT = 500;                  // xotiradagi kesh yozuvlari soni chegarasi
 const USER_MAX_WAIT_MS = 15000;         // foydalanuvchi so'rovi navbatda ko'pi bilan shuncha kutadi
-const RATE_LIMIT = Number(process.env.FOOTBALL_API_RATE || 10);              // daqiqasiga
+// Daqiqalik limit: boshlanishda bepul tarifdagidek 10 (yoki FOOTBALL_API_RATE). API javobidagi `x-ratelimit-limit`
+// sarlavhasi (tarifning haqiqiy daqiqalik limiti) kelgach, uning 90% iga moslashadi — pullik tarifda ko'p so'rov bir vaqtda o'tadi.
+const RATE_ENV = Number(process.env.FOOTBALL_API_RATE) || 0;
+let rateLimit = RATE_ENV || 10;
 const DAILY_RESERVE = Number(process.env.FOOTBALL_DAILY_RESERVE || 10);      // fon vazifalari uchun zaxira
 const TZ = 'Asia/Tashkent';
 
@@ -49,6 +52,8 @@ async function clearCache() {
   daily = { remaining: null, day: null };
   blockedUntil = 0;
   callTimes.length = 0;
+  planPurged = false;
+  rateLimit = RATE_ENV || 10;
   await db.query('DELETE FROM api_cache').catch(() => {});
 }
 
@@ -86,7 +91,7 @@ async function throttle(maxWaitMs) {
     while (callTimes.length && now - callTimes[0] > 60000) callTimes.shift();
     let wait = 0;
     if (blockedUntil > now) wait = blockedUntil - now;
-    else if (callTimes.length >= RATE_LIMIT) wait = 60000 - (now - callTimes[0]) + 50;
+    else if (callTimes.length >= rateLimit) wait = 60000 - (now - callTimes[0]) + 50;
     if (!wait) { callTimes.push(now); return; }
     if (wait > maxWaitMs) throw new FootballUnavailable('Football API band, keyinroq urinib ko\'ring', 'busy');
     await new Promise((r) => setTimeout(r, wait));
@@ -114,6 +119,10 @@ async function fetchFromApi(key, ttl, { background }) {
   stats.network += 1;
   const res = await fetchImpl(`${config.footballApiBase}${key}`, { headers: { 'x-apisports-key': config.footballApiKey } });
 
+  const perMinute = Number(header(res, 'x-ratelimit-limit'));
+  if (!RATE_ENV && perMinute > 0) rateLimit = Math.max(1, Math.floor(perMinute * 0.9));
+  const dayLimit = Number(header(res, 'x-ratelimit-requests-limit'));
+  if (dayLimit > 100) purgePlanErrors().catch(() => {});   // pullik tarif — eski "tarifda yo'q" javoblari o'chiriladi
   const dayLeft = header(res, 'x-ratelimit-requests-remaining');
   if (dayLeft !== null && dayLeft !== undefined && dayLeft !== '') daily = { remaining: Number(dayLeft), day: utcDay() };
   if (header(res, 'x-ratelimit-remaining') === '0') blockedUntil = Date.now() + 60000;
@@ -184,6 +193,20 @@ async function request(path, params = {}, ttl = MIN, opts = {}) {
  * Tashxis: kalit to'g'riligi, tarif va bugungi so'rovlar (API-Football /status — kunlik limitga kirmaydi).
  * Shaxsiy ma'lumot (email, ism) qaytarilmaydi.
  */
+/**
+ * Bepul tarif davrida keshlangan "tarifda yo'q" (plan) va limit javoblari — pullik tarifga o'tilgach bir marta o'chiriladi,
+ * aks holda ular 6 soatgacha qayta ishlatilib, ma'lumot "to'liq kelmayotgandek" ko'rinadi.
+ */
+let planPurged = false;
+async function purgePlanErrors() {
+  if (planPurged) return 0;
+  planPurged = true;
+  for (const [k, v] of mem) if (v && v.data && v.data.__error) mem.delete(k);
+  const r = await db.query("DELETE FROM api_cache WHERE data ? '__error'");
+  if (r.rowCount) console.log(`⚽ API-Football: ${r.rowCount} ta eski tarif cheklovi javobi keshdan o'chirildi`);
+  return r.rowCount;
+}
+
 async function checkStatus() {
   if (!config.footballApiKey) return { ok: false, reason: 'no_key' };
   try {
@@ -196,6 +219,7 @@ async function checkStatus() {
     const sub = r.subscription || {};
     const reqs = r.requests || {};
     if (reqs.limit_day !== undefined) daily = { remaining: Math.max(0, reqs.limit_day - (reqs.current || 0)), day: utcDay() };
+    if (reqs.limit_day > 100) await purgePlanErrors().catch(() => {});
     return { ok: true, plan: sub.plan || null, active: sub.active !== false, end: sub.end || null, requestsToday: reqs.current ?? null, limitDay: reqs.limit_day ?? null };
   } catch (e) {
     return { ok: false, reason: 'network', message: e.message };
@@ -301,9 +325,12 @@ function normMatchDetail(f) {
   const lineups = {};
   for (const l of f.lineups || []) {
     const side = l.team && l.team.id === homeId ? 'home' : 'away';
-    const pl = (x) => ({ id: x.player.id, name: x.player.name, position: x.player.pos || null, shirtNumber: x.player.number ?? null });
+    // grid — "qator:ustun" (1-qator — darvozabon); Mini App maydon chizmasida joylashtiradi
+    const pl = (x) => ({ id: x.player.id, name: x.player.name, position: x.player.pos || null, shirtNumber: x.player.number ?? null, grid: x.player.grid || null });
+    const kit = (c) => (c ? { primary: c.primary ? `#${c.primary}` : null, number: c.number ? `#${c.number}` : null, border: c.border ? `#${c.border}` : null } : null);
+    const colors = l.team && l.team.colors ? { player: kit(l.team.colors.player), goalkeeper: kit(l.team.colors.goalkeeper) } : null;
     lineups[side] = {
-      formation: l.formation || null, coach: l.coach ? l.coach.name : null,
+      formation: l.formation || null, coach: l.coach ? l.coach.name : null, colors,
       lineup: (l.startXI || []).map(pl), bench: (l.substitutes || []).map(pl),
     };
   }
@@ -375,7 +402,10 @@ function ttlForMatch(f) {
   if (LIVE.includes(s)) return 30;
   if (DONE.includes(s) || CANCELLED.includes(s)) return 6 * HOUR;
   const untilStart = (kickoffMs(f) - Date.now()) / 1000;
-  return untilStart <= 0 ? MIN : clamp(untilStart, 2 * MIN, 6 * HOUR);
+  if (untilStart <= 0) return MIN;
+  // Tarkiblar odatda o'yindan ~1 soat oldin e'lon qilinadi — 90 daqiqa qolganda tez-tez yangilanadi
+  if (untilStart <= 90 * MIN) return 5 * MIN;
+  return clamp(untilStart - 90 * MIN, 2 * MIN, 6 * HOUR);
 }
 
 const firstFixtureTtl = (list) => (list[0] ? ttlForMatch(list[0]) : HOUR);
@@ -577,7 +607,7 @@ async function matchesRange(fromYmd, toYmd) {
 }
 
 module.exports = {
-  FootballUnavailable, setFetch, clearCache, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
+  FootballUnavailable, setFetch, clearCache, purgePlanErrors, cleanupCache, checkStatus, logError, stats, request, ttlForMatch, ttlForMatchList,
   matchesByDate, cachedMatchesByDate, matchDetail, rawMatch, rawState, matchResult, competitions, competitionInfo,
   standings, competitionMatches, scorers, squad, matchesRange, normMatch, matchState, positionGroup,
   searchTeams, teamMatches, normalizeQuery, teamInfo,

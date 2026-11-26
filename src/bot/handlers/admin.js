@@ -11,6 +11,7 @@ const promo = require('../../services/promo');
 const donations = require('../../services/donations');
 const fancard = require('../../services/fancard');
 const community = require('../../services/community');
+const pointsAdmin = require('../../services/pointsAdmin');
 const { formatDate, formatDateTime, parseDate, dayStart, ymd } = require('../../services/time');
 const state = require('../state');
 const ui = require('../ui');
@@ -146,9 +147,13 @@ async function userCard(ctx, u) {
     lang: LANG_NAMES[u.language] || t(lang, 'none'), balance: money(u.balance), tariff: tariffLabel(lang, u),
     date: formatDate(u.registered_at), refs: await users.activeReferralCount(u.id),
     status: t(lang, u.is_blocked ? 'a_status_blocked' : 'a_status_active'),
+    points: users.totalPoints(u), adminPoints: u.points_admin || 0,
   });
   const action = u.is_blocked ? ui.btn(t(lang, 'a_btn_unblock'), `us:u:${u.telegram_id}`) : ui.btn(t(lang, 'a_btn_block'), `us:b:${u.telegram_id}`);
-  return ui.show(ctx, text, ui.kb([[action], [ui.btn(t(lang, 'a_btn_fancard'), `fc:v:${u.telegram_id}`)],
+  const chat = u.username ? [[ui.urlBtn(t(lang, 'a_btn_winner_chat'), `https://t.me/${u.username}`)]] : [];
+  return ui.show(ctx, text, ui.kb([[action],
+    [ui.btn(t(lang, 'a_btn_points_add'), `pt:add:${u.telegram_id}`), ui.btn(t(lang, 'a_btn_points_sub'), `pt:sub:${u.telegram_id}`)],
+    [ui.btn(t(lang, 'a_btn_fancard'), `fc:v:${u.telegram_id}`)], ...chat,
     [ui.btn(t(lang, 'a_btn_users'), 'a:users')], [ui.btn(t(lang, 'back'), 'm:admin')]]));
 }
 
@@ -504,6 +509,17 @@ function register(bot) {
     const updated = await db.one('UPDATE users SET is_blocked = $2 WHERE id = $1 RETURNING *', [u.id, block]);
     await ctx.answerCallbackQuery({ text: L(ctx, block ? 'a_blocked_done' : 'a_unblocked_done') });
     return userCard(ctx, updated);
+  });
+
+  // ⭐ Points qo'shish / olib tashlash
+  admin.callbackQuery(/^pt:(add|sub):(\d+)$/, async (ctx) => {
+    const u = await users.byTelegramId(Number(ctx.match[2]));
+    if (!u) return ctx.answerCallbackQuery({ text: L(ctx, 'a_user_not_found'), show_alert: true });
+    await ctx.answerCallbackQuery();
+    const sign = ctx.match[1] === 'add' ? 1 : -1;
+    await state.set(ctx.from.id, 'admin_points', { tg: Number(u.telegram_id), sign });
+    return ui.show(ctx, L(ctx, sign > 0 ? 'a_points_enter_add' : 'a_points_enter_sub', { name: users.displayName(u), points: users.totalPoints(u), max: pointsAdmin.MAX_AMOUNT }),
+      ui.kb([[ui.btn(L(ctx, 'back'), `fc:u:${u.telegram_id}`)]]));
   });
 
   // 🪪 Muxlislik kartasi
@@ -874,6 +890,32 @@ const states = {
     await state.clear(ctx.from.id);
     await ctx.reply(t(ctx.lang, 'a_fancard_saved'));
     return fanCardAdmin(ctx, u);
+  },
+
+  // ⭐ "50" yoki "50 Turnir g'olibi" — son va ixtiyoriy sabab
+  async admin_points(ctx, { tg, sign }) {
+    const text = needText(ctx);
+    const m = /^\s*[+-]?(\d{1,6})(?:\s+([\s\S]+))?$/.exec(text);
+    const n = m ? Number(m[1]) : 0;
+    if (!n || n > pointsAdmin.MAX_AMOUNT) return ctx.reply(t(ctx.lang, 'a_points_bad', { max: pointsAdmin.MAX_AMOUNT }));
+    const u = await users.byTelegramId(tg);
+    if (!u) { await state.clear(ctx.from.id); return ctx.reply(t(ctx.lang, 'a_user_not_found')); }
+    const reason = m[2] ? m[2].trim().slice(0, 300) : null;
+    let res;
+    try {
+      res = await pointsAdmin.adjust(u.id, sign * n, ctx.user.id, reason);
+    } catch (e) {
+      if (!(e instanceof pointsAdmin.PointsError)) throw e;
+      await state.clear(ctx.from.id);
+      await ctx.reply(t(ctx.lang, 'a_points_none'));
+      return userCard(ctx, u);
+    }
+    await state.clear(ctx.from.id);
+    const amount = res.amount > 0 ? `+${res.amount}` : String(res.amount);
+    await ctx.reply(t(ctx.lang, 'a_points_done', { name: users.displayName(u), amount, total: res.total }));
+    const key = `${res.amount > 0 ? 'points_added_notify' : 'points_removed_notify'}${reason ? '_reason' : ''}`;
+    await notify.toUser(res.user, key, { amount: Math.abs(res.amount), total: res.total, reason: reason || '' });
+    return userCard(ctx, res.user);
   },
 
   async admin_cm_reject(ctx, data) {

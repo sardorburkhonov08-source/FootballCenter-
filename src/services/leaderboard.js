@@ -8,7 +8,8 @@ function range(period, date = new Date()) {
 
 // 🏆 Umumiy reyting (egasi talabi bilan): hamma o'yinlar points'i yig'indisi — faqat foydalanuvchining o'zi to'plagani
 // (community bunga kirmaydi). Haftalik va oylik g'oliblar shu reyting bo'yicha aniqlanadi.
-const GAME_KINDS = ['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest', 'poll'];
+// admin — ⭐ admin qo'shgan/olib tashlagan points (point_adjustments; manfiy bo'lishi mumkin)
+const GAME_KINDS = ['manager', 'quiz', 'score', 'duel', 'penalty', 'crossbar', 'keepy', 'quest', 'poll', 'admin'];
 
 // Reyting hisoblash og'ir (barcha javoblarni yig'adi). Natija 30 soniya umumiy keshda saqlanadi:
 // minglab foydalanuvchi bir vaqtda ochsa ham bazada bitta hisob-kitob bajariladi.
@@ -64,6 +65,16 @@ async function computeRanking(kind, r) {
        WHERE q.claimed_at >= $1 AND q.claimed_at < $2 AND NOT u.is_blocked
        GROUP BY u.id HAVING sum(q.reward) > 0
        ORDER BY points DESC, last_at ASC`,
+      [r.start, r.end],
+    );
+  }
+  if (kind === 'admin') {   // ⭐ admin tuzatishlari (umumiy reytingga qo'shiladi; manfiy ham bo'ladi)
+    return db.many(
+      `SELECT u.id, u.telegram_id, u.first_name, u.last_name, u.username, u.coach_name,
+              sum(p.amount)::int AS points, max(p.created_at) AS last_at
+       FROM point_adjustments p JOIN users u ON u.id = p.user_id
+       WHERE p.created_at >= $1 AND p.created_at < $2 AND NOT u.is_blocked
+       GROUP BY u.id HAVING sum(p.amount) <> 0`,
       [r.start, r.end],
     );
   }

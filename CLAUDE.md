@@ -39,7 +39,8 @@ test/                   avtomatik testlar
 
 ## Yuklama va API'dan himoya (o'zgartirishda saqlang)
 
-- **Futbol API — API-Football v3** (`src/services/football.js`, header `x-apisports-key`): xotira + PostgreSQL (`api_cache`) keshi, ma'lumot turiga qarab TTL (tugagan o'yin — qayta so'ralmaydi, jonli — 30–60 s), eskirgan keshni darhol berib orqada bitta so'rov bilan yangilash, bir xil so'rovlarni birlashtirish, daqiqalik limit navbati (foydalanuvchi so'rovi 15 s dan ortiq kutmaydi), kunlik limit nazorati (oxirgi 10 so'rov fon vazifalariga zaxira), tarif rad javoblari ham keshlanadi. Bir kunning barcha o'yinlari — bitta so'rov (`/fixtures?date=`). Yangi API chaqiruvi faqat `request()` orqali; tashqariga faqat normalize qilingan ma'lumot chiqadi.
+- **Futbol API — API-Football v3** (`src/services/football.js`, header `x-apisports-key`): xotira + PostgreSQL (`api_cache`) keshi, ma'lumot turiga qarab TTL (tugagan o'yin — qayta so'ralmaydi, jonli — 30–60 s), eskirgan keshni darhol berib orqada bitta so'rov bilan yangilash, bir xil so'rovlarni birlashtirish, daqiqalik limit navbati (foydalanuvchi so'rovi 15 s dan ortiq kutmaydi), kunlik limit nazorati (oxirgi 10 so'rov fon vazifalariga zaxira), tarif rad javoblari ham keshlanadi. Bir kunning barcha o'yinlari — bitta so'rov (`/fixtures?date=`). Yangi API chaqiruvi faqat `request()` orqali; tashqariga faqat normalize qilingan ma'lumot chiqadi. **Daqiqalik limit tarifga moslashadi**: javobdagi `x-ratelimit-limit` × 0,9 (`FOOTBALL_API_RATE` bilan qo'lda belgilash mumkin, standart 10); pullik tarif aniqlansa (`x-ratelimit-requests-limit` > 100 yoki `/status`) bepul davrdan qolgan "tarifda yo'q" keshlari bir marta o'chiriladi (`purgePlanErrors`). Kelgusi o'yin boshlanishiga 90 daqiqa qolganda kesh 5 daqiqa (tarkiblar e'lon qilinadi).
+- **O'yin sahifasi**: Statistika — to'liq tarjima (`STAT_LABELS`, 4 tilda), har qator ikki tomonlama chiziq bilan; Tarkib — maydon chizmasi (`lineupPitch`: API `grid` "qator:ustun", forma ranglari `colors`; uy jamoasi pastda, mehmon tepada), ostida murabbiy va zaxira; `grid` bo'lmasa — ro'yxat.
 - **Reyting** (`src/services/leaderboard.js`): 30 s umumiy kesh. G'olibni aniqlash (fon vazifasi) — keshsiz `computeRanking`.
 - **Spam**: bot — foydalanuvchiga 3 s da 8 ta yangilanish; Mini App API — daqiqasiga 120 so'rov (`src/services/ratelimit.js`).
 - **Telegram**: `@grammyjs/auto-retry` (429 da kutib qayta yuboradi), webhook `max_connections: 40`.
@@ -74,10 +75,10 @@ test/                   avtomatik testlar
 ## 🎯 Hisobni top (SPEC'dan tashqari, egasi talabi bilan)
 
 - `src/services/scorePredict.js`, 012-migratsiya (`score_games`, `score_predictions`, `users.points_score`), Mini App → Games → **Hisobni top**. **Faqat Premium.**
-- Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi.
+- Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi. O'yin tanlashda (Hisobni top va Mini Manager, `gamesAdmin`) yuklangan o'yinlar ichida 🔍 qidiruv (jamoa, liga, davlat; harf belgilarisiz) va liga ro'yxati — API'ga qayta so'rov yubormaydi.
 - Foydalanuvchi aniq hisobni (0—20) o'yin boshlanguncha kiritadi/o'zgartiradi; boshlangach qulflanadi.
 - Ball: aniq hisob — `settings.score_exact_points` (5), faqat natija (g'alaba/durang/mag'lubiyat) — `score_outcome_points` (2); web admin'da o'zgaradi.
-- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy + Vazifalar + "Kim yutadi?" (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
+- **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy + Vazifalar + "Kim yutadi?" + ⭐ admin tuzatishi (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).
 - API yuklamasi: natijalar kun bo'yicha **bitta** `/fixtures?date=` so'rovida olinadi (kesh); kun ro'yxatida bo'lmagan yoki qoldirilgan o'yin alohida tekshiriladi va boshqa kunga ko'chirilgan bo'lsa qayta ochiladi.
 
 ## ⚔️ Duel o'yinlari (SPEC'dan tashqari, egasi talabi bilan)
@@ -149,9 +150,12 @@ test/                   avtomatik testlar
 
 ## 🏆 Umumiy reyting va g'oliblar (egasi talabi bilan)
 
-- Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest, poll). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
+- Har o'yinning points'i o'zida alohida hisoblanadi va o'z reytingi bor (o'yin ichida). Bundan tashqari **umumiy points** — hamma o'yinlar yig'indisi (`leaderboard` kind `overall` = `GAME_KINDS`: manager, quiz, score, duel, penalty, crossbar, keepy, quest, poll, admin). Faqat foydalanuvchining o'zi to'plagani — **fan community bunga kirmaydi**.
 - Mini App → Games, o'yinlar ro'yxatidan **pastda** "🏆 Umumiy reyting": **Bugun / Haftalik / Oylik** (`period` `daily|weekly|monthly`), 5 qator + "Hammasi"; Premiumsizga ham ko'rinadi.
 - **Kunlik g'olib yo'q.** Haftalik va oylik g'oliblar **faqat umumiy reyting** bo'yicha aniqlanadi (`finalizePeriods`, `period_winners.kind = 'overall'`); har o'yin bo'yicha alohida g'olib aniqlanmaydi (SPEC 13.5 / 14 dagi bo'lim g'oliblari o'rniga). Sovrinlar — `prizes.kind = 'overall'` (021-migratsiya; web admin → "🏆 Sovrinlar"), Games'da umumiy reyting ustida ko'rsatiladi; Mini Manager va Quiz ichidagi sovrin bloklari olib tashlangan.
+
+- **⭐ Admin points tuzatishi** (`src/services/pointsAdmin.js`, 029-migratsiya `users.points_admin`, `point_adjustments` jurnali): bot admin → 👤 Foydalanuvchilar → kartada "➕ Points qo'shish / ➖ olib tashlash" (`pt:add|sub:<tg>`, son va ixtiyoriy sabab: `50 Turnir g'olibi`), web admin → 📊 Statistika → "⭐ Points" (`POST /api/admin/points`, `GET /api/admin/points/user`). 1—100 000; olib tashlashda umumiy points 0 dan pastga tushmaydi. Umumiy points'ga (`POINT_COLUMNS`) va haftalik/oylik umumiy reytingga (`leaderboard` kind `admin`, `created_at` bo'yicha) kiradi; community reytingiga kirmaydi. Foydalanuvchiga botda xabar (`points_added_notify*` / `points_removed_notify*`).
+- **🏆 G'olib lichkasi adminga**: hafta/oy g'olibi aniqlanganda (`scheduler.winnerToAdmins`) har adminga xabar — ism (bosilsa lichka, `tg://user?id`), @username, ID, points, faol sovrin va "✉️ Lichkaga yozish" tugmasi (username bo'lsa `t.me/<username>`, aks holda `tg://user?id`; rad etilsa tugmasiz). Web admin → "🏆 Davr g'oliblari" va bot admin foydalanuvchi kartasida ham "✉️ Lichka" havolasi.
 
 ## 👥 Guruhlar, 🔎 inline rejim, 🗳 "Kim yutadi?" (egasi talabi bilan)
 

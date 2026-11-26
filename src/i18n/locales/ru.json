@@ -285,7 +285,7 @@
   "a_owner_tag": " (владелец)",
   "a_cannot_remove_owner": "⚠️ Владельца нельзя снять с админов.",
   "a_user_search_enter": "🔍 Отправьте Telegram ID или @username:",
-  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Баланс: {balance} сум\n💎 Тариф: {tariff}\n📅 Регистрация: {date}\n👥 Активные рефералы: {refs}\n🚦 Статус: {status}",
+  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Баланс: {balance} сум\n💎 Тариф: {tariff}\n📅 Регистрация: {date}\n👥 Активные рефералы: {refs}\n⭐ Points: {points} (корректировка админа: {adminPoints})\n🚦 Статус: {status}",
   "a_status_active": "✅ Активен",
   "a_status_blocked": "🚫 Заблокирован",
   "a_btn_block": "🚫 Заблокировать",
@@ -649,5 +649,18 @@
   "hc_friends_d": "Соревнуйтесь с друзьями в своей лиге",
   "hc_menu_t": "Главное меню",
   "hc_menu_d": "Баланс, Premium, профиль, настройки, помощь и AI-помощник",
-  "hc_cta": "Нажмите зелёную кнопку ниже"
+  "hc_cta": "Нажмите зелёную кнопку ниже",
+  "a_btn_points_add": "➕ Добавить points",
+  "a_btn_points_sub": "➖ Снять points",
+  "a_points_enter_add": "➕ Сколько points добавить пользователю <b>{name}</b>?\n\nСейчас: <b>{points}</b> points.\nОтправьте число (1—{max}), при необходимости с причиной:\n<code>50 Победитель турнира</code>",
+  "a_points_enter_sub": "➖ Сколько points снять у <b>{name}</b>?\n\nСейчас: <b>{points}</b> points.\nОтправьте число (1—{max}), при необходимости с причиной:\n<code>20 Нарушение правил</code>\nPoints не опустятся ниже 0.",
+  "a_points_bad": "⚠️ Отправьте число от 1 до {max} (при необходимости — причину после него).",
+  "a_points_none": "⚠️ У пользователя нет points для снятия.",
+  "a_points_done": "✅ {name}: {amount} points. Теперь всего: <b>{total}</b>",
+  "points_added_notify": "⭐ Админ начислил вам <b>+{amount} points</b>!\nВсего: <b>{total}</b> points",
+  "points_added_notify_reason": "⭐ Админ начислил вам <b>+{amount} points</b>!\n📝 Причина: {reason}\nВсего: <b>{total}</b> points",
+  "points_removed_notify": "⚠️ Админ снял с вашего счёта <b>{amount} points</b>.\nВсего: <b>{total}</b> points",
+  "points_removed_notify_reason": "⚠️ Админ снял с вашего счёта <b>{amount} points</b>.\n📝 Причина: {reason}\nВсего: <b>{total}</b> points",
+  "a_winner_notify": "🏆 <b>Общий рейтинг — победитель ({period})</b> ({from} — {to})\n\n👤 {mention}\n📛 {username}\n🆔 <code>{tgid}</code>\n⭐ {points} points\n🎁 Приз: {prize}\n\nЧтобы вручить приз, напишите победителю: нажмите на имя или кнопку ниже.",
+  "a_btn_winner_chat": "✉️ Написать в личку"
 }

@@ -285,7 +285,7 @@
   "a_owner_tag": " (owner)",
   "a_cannot_remove_owner": "⚠️ The owner cannot be removed from admins.",
   "a_user_search_enter": "🔍 Send a Telegram ID or @username:",
-  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Balance: {balance} UZS\n💎 Plan: {tariff}\n📅 Registered: {date}\n👥 Active referrals: {refs}\n🚦 Status: {status}",
+  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Balance: {balance} UZS\n💎 Plan: {tariff}\n📅 Registered: {date}\n👥 Active referrals: {refs}\n⭐ Points: {points} (admin adjustment: {adminPoints})\n🚦 Status: {status}",
   "a_status_active": "✅ Active",
   "a_status_blocked": "🚫 Blocked",
   "a_btn_block": "🚫 Block",
@@ -649,5 +649,18 @@
   "hc_friends_d": "Compete with friends in your own league",
   "hc_menu_t": "Main menu",
   "hc_menu_d": "Balance, Premium, profile, settings, help and the AI assistant",
-  "hc_cta": "Tap the green button below"
+  "hc_cta": "Tap the green button below",
+  "a_btn_points_add": "➕ Add points",
+  "a_btn_points_sub": "➖ Remove points",
+  "a_points_enter_add": "➕ How many points to add to <b>{name}</b>?\n\nNow: <b>{points}</b> points.\nSend a number (1—{max}), optionally with a reason:\n<code>50 Tournament winner</code>",
+  "a_points_enter_sub": "➖ How many points to remove from <b>{name}</b>?\n\nNow: <b>{points}</b> points.\nSend a number (1—{max}), optionally with a reason:\n<code>20 Rule violation</code>\nPoints never go below 0.",
+  "a_points_bad": "⚠️ Send a number from 1 to {max} (optionally followed by a reason).",
+  "a_points_none": "⚠️ The user has no points to remove.",
+  "a_points_done": "✅ {name}: {amount} points. Total now: <b>{total}</b>",
+  "points_added_notify": "⭐ An admin gave you <b>+{amount} points</b>!\nTotal: <b>{total}</b> points",
+  "points_added_notify_reason": "⭐ An admin gave you <b>+{amount} points</b>!\n📝 Reason: {reason}\nTotal: <b>{total}</b> points",
+  "points_removed_notify": "⚠️ An admin removed <b>{amount} points</b> from your account.\nTotal: <b>{total}</b> points",
+  "points_removed_notify_reason": "⚠️ An admin removed <b>{amount} points</b> from your account.\n📝 Reason: {reason}\nTotal: <b>{total}</b> points",
+  "a_winner_notify": "🏆 <b>Overall leaderboard — {period} winner</b> ({from} — {to})\n\n👤 {mention}\n📛 {username}\n🆔 <code>{tgid}</code>\n⭐ {points} points\n🎁 Prize: {prize}\n\nTo hand over the prize, message the winner: tap their name or the button below.",
+  "a_btn_winner_chat": "✉️ Message privately"
 }
