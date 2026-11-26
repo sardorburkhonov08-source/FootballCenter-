@@ -652,3 +652,36 @@ body {
 .mr-name.sm { font-size: 12px; }
 .mr-name.xs { font-size: 10.5px; }
 .mr-mid { min-width: 74px; padding: 7px 8px; }
+
+/* 📊 Statistika: ikki tomonlama solishtirish chiziqlari */
+.stats-card { padding: 14px 14px 8px; }
+.stats-teams { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.stats-teams .crest, .stats-teams .crest-ph { width: 28px; height: 28px; }
+.stat2 { padding: 8px 0; }
+.stat2 + .stat2 { border-top: 1px solid var(--glass-b, var(--border)); }
+.stat2-top { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 6px; }
+.stat2-top b { font-size: 15px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.stat2-top b:last-child { text-align: right; }
+.stat2-top b.lead { color: var(--text); }
+.stat2-top .label { text-align: center; font-size: 13px; color: var(--muted); }
+.stat2-bar { display: flex; gap: 4px; margin-top: 6px; height: 6px; }
+.stat2-bar span { display: block; height: 100%; border-radius: 3px; background: var(--surface2); }
+.stat2-bar .h { margin-left: auto; }
+.stat2-bar .h.lead { background: var(--neon, var(--accent)); }
+.stat2-bar .a.lead { background: #f2c94c; }
+.stat2-bar { justify-content: center; }
+/* ⚽ Tarkib maydonda */
+.pitch-card { padding: 12px; }
+.pitch-head { display: flex; align-items: center; gap: 10px; padding: 4px 2px; }
+.pitch-head .crest, .pitch-head .crest-ph { width: 26px; height: 26px; }
+.pitch { position: relative; margin: 8px 0; aspect-ratio: 68 / 105; max-height: 78vh; width: 100%; border-radius: 16px; overflow: hidden;
+  background: repeating-linear-gradient(180deg, #1e7a3e 0 9.5%, #1a6d37 9.5% 19%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
+.pitch-lines i { position: absolute; border: 2px solid rgba(255,255,255,.45); }
+.pitch-lines .mid { left: 0; right: 0; top: 50%; height: 0; border-width: 2px 0 0; }
+.pitch-lines .circle { left: 50%; top: 50%; width: 26%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; }
+.pitch-lines .box { left: 22%; right: 22%; height: 13%; }
+.pitch-lines .box.top { top: -2px; border-top: 0; }
+.pitch-lines .box.bottom { bottom: -2px; border-bottom: 0; }
+.pl { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 72px; z-index: 1; }
+.pl-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; border: 2px solid; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.pl-name { margin-top: 3px; max-width: 72px; padding: 1px 5px; border-radius: 6px; background: rgba(0,0,0,.45); color: #fff; font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

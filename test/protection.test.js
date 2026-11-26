@@ -175,3 +175,46 @@ test("bir necha kunlik o'yinlar: tarifda yo'q kun o'tkazib yuboriladi, qolganlar
   assert.deepStrictEqual(r.skipped, [{ date: '2030-01-03', reason: 'plan' }, { date: '2030-01-04', reason: 'plan' }]);
   await assert.rejects(() => fb.matchesRange('2030-02-01', '2030-02-02'), (e) => e.reason === 'plan', "hamma kun olinmasa — xato");
 });
+
+test("pullik tarif: bepul davrdagi 'tarifda yo'q' keshi tozalanadi, daqiqalik limit sarlavhadan olinadi", async () => {
+  const fb = require('../src/services/football');
+  await fb.clearCache();
+  let paid = false;
+  let n = 0;
+  fb.setFetch(async (url) => {
+    n += 1;
+    const date = new URL(url).searchParams.get('date');
+    if (!paid) return { ok: true, status: 200, headers: new Map(), json: async () => ({ errors: { plan: 'Free plans do not have access to this season' }, response: [] }) };
+    return envelope([{ ...fx('NS', 3600e3), fixture: { id: Number(date.slice(-2)), timestamp: Math.floor(Date.now() / 1000) + 3600, status: { short: 'NS' } } }],
+      [['x-ratelimit-limit', '300'], ['x-ratelimit-requests-limit', '75000'], ['x-ratelimit-requests-remaining', '74000']]);
+  });
+  await assert.rejects(fb.matchesByDate('2031-05-01'), (e) => e.reason === 'plan');
+  assert.ok(await db.one("SELECT 1 AS x FROM api_cache WHERE data ? '__error'"), 'rad javobi keshlangan');
+  paid = true;
+  await fb.matchesByDate('2031-05-02'); // pullik tarif sarlavhasi keladi
+  await new Promise((r) => setTimeout(r, 50));
+  assert.strictEqual(await db.one("SELECT 1 AS x FROM api_cache WHERE data ? '__error'"), null, 'eski rad javoblari o\'chirildi');
+  const before = n;
+  assert.strictEqual((await fb.matchesByDate('2031-05-01')).length, 1, 'endi ma\'lumot keladi');
+  assert.strictEqual(n, before + 1);
+  // Daqiqasiga 300 (×0,9) — 10 dan ortiq so'rov kutmasdan ketadi
+  const t0 = Date.now();
+  await Promise.all(Array.from({ length: 15 }, (_, i) => fb.matchesByDate(`2031-06-${String(i + 1).padStart(2, '0')}`)));
+  assert.ok(Date.now() - t0 < 3000, 'navbatda kutmadi');
+});
+
+test("tarkib: maydon joylashuvi (grid) va forma ranglari; boshlanishiga yaqin tez-tez yangilanadi", async () => {
+  const fb = require('../src/services/football');
+  await fb.clearCache();
+  const p = (id, grid) => ({ player: { id, name: `P${id}`, number: id, pos: 'D', grid } });
+  fb.setFetch(async () => envelope([{ ...fx('NS', 3600e3), lineups: [
+    { team: { id: 1, name: 'A', colors: { player: { primary: 'e20520', number: 'ffffff', border: 'e20520' }, goalkeeper: { primary: '222222', number: 'ffffff', border: '222222' } } }, formation: '4-4-2', startXI: [p(1, '1:1'), p(2, '2:1')], substitutes: [p(3, null)] },
+    { team: { id: 2, name: 'B' }, formation: '4-3-3', startXI: [p(4, '1:1')], substitutes: [] },
+  ] }]));
+  const d = await fb.matchDetail(1);
+  assert.strictEqual(d.tabs.lineups.home.lineup[1].grid, '2:1');
+  assert.strictEqual(d.tabs.lineups.home.colors.player.primary, '#e20520');
+  assert.strictEqual(d.tabs.lineups.home.bench[0].grid, null);
+  assert.strictEqual(d.tabs.lineups.away.colors, null);
+  assert.strictEqual(fb.ttlForMatch(fx('NS', 60 * 60e3)), 5 * 60, 'tarkiblar e\'lon qilinadigan payt — 5 daqiqa');
+});
