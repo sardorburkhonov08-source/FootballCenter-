@@ -57,3 +57,25 @@ test("🖼 bosh menyu — shaxsiy karta-rasm (sendPhoto) va menyu tugmalari; cha
   await h.click(7803, 'm:menu');
   assert.ok(!h.calls.some((c) => c.method === 'sendPhoto'), 'o\'chirilsa — matnli menyu');
 });
+
+test("🏁 boshlang'ich ekran rasm bilan: Web sahifa haqida ma'lumot, yashil Web App va Asosiy menyu tugmalari", async () => {
+  await settings.set('menu_image_enabled', true);
+  await h.text(7804, '/start');
+  h.clear();
+  await h.click(7804, 'lang:uz');
+  const photo = h.calls.find((c) => c.method === 'sendPhoto');
+  assert.ok(photo, 'rasm yuborildi');
+  assert.match(photo.payload.caption, /^⚽ <b>FootballCenter<\/b>ga xush kelibsiz/);
+  const kb = photo.payload.reply_markup.inline_keyboard.flat();
+  assert.deepStrictEqual(kb.map((b) => (b.web_app ? 'web' : b.callback_data)), ['web', 'm:main']);
+  assert.strictEqual(kb[0].style, 'success');
+  const homeCard = require('../src/services/homeCard');
+  assert.strictEqual(homeCard.renderPng('ru').subarray(1, 4).toString(), 'PNG');
+  const svg = homeCard.svg('uz');
+  assert.ok(svg.includes('WEB SAHIFA') && svg.includes('JONLI HISOB') && svg.includes('ASOSIY MENYU'));
+  // Qayta /start — yana rasm bilan
+  h.clear();
+  await h.text(7804, '/start');
+  assert.ok(h.calls.some((c) => c.method === 'sendPhoto'));
+  await settings.set('menu_image_enabled', false);
+});

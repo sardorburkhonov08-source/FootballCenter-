@@ -111,8 +111,17 @@ function homeKb(lang) {
     : { text: t(lang, 'btn_home_webapp'), callback_data: 'm:webapp_missing', style: 'success' };
   return kb([[web], [btn(t(lang, 'btn_home_menu'), 'm:main')]]);
 }
-async function showHome(ctx) {
-  return show(ctx, t(ctx.lang, 'home_title', { name: ctx.from.first_name || '' }), homeKb(ctx.lang));
+async function showHome(ctx, { fresh = false } = {}) {
+  const caption = t(ctx.lang, 'home_title', { name: ctx.from.first_name || '' });
+  // 🖼 Rasm bilan: Web sahifa imkoniyatlari va asosiy menyu haqida qisqacha (settings.menu_image_enabled; testlarda o'chiq)
+  if (await require('../services/settings').get('menu_image_enabled')) {
+    try {
+      const png = require('../services/homeCard').renderPng(ctx.lang);
+      return await showPhoto(ctx, png, caption, homeKb(ctx.lang));
+    } catch (e) { console.error('[home image]', e.message); }
+  }
+  if (fresh) return ctx.reply(caption, { ...HTML, reply_markup: homeKb(ctx.lang) });
+  return show(ctx, caption, homeKb(ctx.lang));
 }
 
 /** Davomiylik: "3 soat 20 daqiqa" */

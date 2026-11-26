@@ -163,7 +163,7 @@ function register(bot) {
     }
     // 👋 Birinchi marta — 3 qadamli tanishtiruv (sinov, settings.onboarding_enabled)
     if (firstTime && (await settings.get('onboarding_enabled'))) return showOnboarding(ctx, 1);
-    return ctx.reply(t(lang, 'home_title', { name: ctx.from.first_name || '' }), { ...ui.HTML, reply_markup: ui.homeKb(lang) });
+    return ui.showHome(ctx, { fresh: true });
   });
 
   // 📋 Boshlang'ich ekrandagi "Asosiy menyu" — botdagi bo'limlar

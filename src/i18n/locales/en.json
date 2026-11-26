@@ -632,5 +632,22 @@
   "a_set_leagues_max_per_user": "Max leagues per person",
   "home_title": "⚽ Welcome to <b>FootballCenter</b>, {name}!\n\n🚀 <b>Web app</b> — live scores, games, quiz, duels and weekly prizes.\n📋 <b>Main menu</b> — balance, Premium, profile and settings.",
   "btn_home_webapp": "🚀 Open the web app",
-  "btn_home_menu": "📋 Main menu"
+  "btn_home_menu": "📋 Main menu",
+  "hc_title": "Web app",
+  "hc_sub": "All of football in one place — open it with one tap",
+  "hc_live_t": "Live scores",
+  "hc_live_d": "Matches from leagues worldwide, live scores, lineups and stats",
+  "hc_games_t": "8 games",
+  "hc_games_d": "Quiz, Duel, Penalty, Crossbar, Keepy-uppy, Guess the score and Mini Manager",
+  "hc_prize_t": "Weekly prize",
+  "hc_prize_d": "Earn points — #1 in the overall leaderboard wins a prize",
+  "hc_fav_t": "Favourite team",
+  "hc_fav_d": "Its matches on top and instant goal alerts",
+  "hc_card_t": "Fan card",
+  "hc_card_d": "Your club's fan card and a fan community",
+  "hc_friends_t": "Friends league",
+  "hc_friends_d": "Compete with friends in your own league",
+  "hc_menu_t": "Main menu",
+  "hc_menu_d": "Balance, Premium, profile, settings, help and the AI assistant",
+  "hc_cta": "Tap the green button below"
 }
