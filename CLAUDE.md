@@ -75,7 +75,7 @@ test/                   avtomatik testlar
 ## 🎯 Hisobni top (SPEC'dan tashqari, egasi talabi bilan)
 
 - `src/services/scorePredict.js`, 012-migratsiya (`score_games`, `score_predictions`, `users.points_score`), Mini App → Games → **Hisobni top**. **Faqat Premium.**
-- Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi.
+- Admin web admin'da ("🎯 Hisobni top") API'dagi kelgusi o'yinlardan bir nechtasini belgilaydi (kuniga 5—10 tasi qulay); boshlangan o'yinni belgilab bo'lmaydi, hisoblangan o'yin o'chirilmaydi. O'yin tanlashda (Hisobni top va Mini Manager, `gamesAdmin`) yuklangan o'yinlar ichida 🔍 qidiruv (jamoa, liga, davlat; harf belgilarisiz) va liga ro'yxati — API'ga qayta so'rov yubormaydi.
 - Foydalanuvchi aniq hisobni (0—20) o'yin boshlanguncha kiritadi/o'zgartiradi; boshlangach qulflanadi.
 - Ball: aniq hisob — `settings.score_exact_points` (5), faqat natija (g'alaba/durang/mag'lubiyat) — `score_outcome_points` (2); web admin'da o'zgaradi.
 - **Ballar umumiy points'ga qo'shiladi**: points = Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy + Vazifalar + "Kim yutadi?" (`users.totalPoints`) — profil, muxlislik kartasi, community haftalik reytingi. O'z haftalik/oylik reytingi bor (`leaderboard` kind `score`); sovrin va g'olib xabari yo'q, o'yin bo'yicha bildirishnoma yuborilmaydi (kuniga ko'p o'yin — spam bo'lmasin).

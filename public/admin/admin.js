@@ -469,13 +469,43 @@
     const results = el('div', { class: 'list', style: 'margin-top:10px' });
     const search = el('button', { class: 'btn', text: '🔍 API\'dan o\'yinlar' });
     const assignedIds = new Set(assigned.map((g) => Number(g.api_match_id)));
+    // 🔍 Yuklangan o'yinlar ichida qidirish (jamoa, liga, davlat) va liga bo'yicha saralash — API'ga qayta so'rov yo'q
+    const filter = el('input', { class: 'input', type: 'search', placeholder: '🔍 Jamoa, liga yoki davlat (masalan: Arsenal, Premier, Uzbekistan)', disabled: '' });
+    const league = el('select', { class: 'input', disabled: '' }, el('option', { value: '', text: 'Barcha ligalar' }));
+    const count = el('div', { class: 'small muted', style: 'margin-top:6px' });
+    let loaded = null;
+    const norm = (x) => String(x || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    const hay = (m) => norm([m.home.fullName, m.home.name, m.away.fullName, m.away.name, m.competition && m.competition.name, m.area && m.area.name].join(' '));
+    const applyFilter = () => {
+      if (!loaded) return;
+      const words = norm(filter.value).split(/\s+/).filter(Boolean);
+      const lg = league.value;
+      const list = loaded.matches.filter((m) => (!lg || String(m.competition && m.competition.id) === lg) && words.every((w) => hay(m).includes(w)));
+      count.textContent = `${list.length} / ${loaded.matches.length} ta o'yin`;
+      renderList(list);
+    };
+    filter.addEventListener('input', applyFilter);
+    league.addEventListener('change', applyFilter);
     search.addEventListener('click', async () => {
       results.replaceChildren(el('div', { class: 'skeleton' }));
+      count.textContent = '';
       try {
         const d = await api(`/manager/matches?from=${from.value}&to=${to.value}`);
+        loaded = d;
+        const leagues = new Map();
+        for (const m of d.matches) if (m.competition && !leagues.has(String(m.competition.id))) leagues.set(String(m.competition.id), `${m.competition.name}${m.area && m.area.name ? ` (${m.area.name})` : ''}`);
+        league.replaceChildren(el('option', { value: '', text: `Barcha ligalar (${leagues.size})` }),
+          ...[...leagues].sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => el('option', { value: id, text: name })));
+        filter.removeAttribute('disabled'); league.removeAttribute('disabled');
+        applyFilter();
+      } catch (e) { results.replaceChildren(); fail(e); }
+    });
+    function renderList(list) {
+      const d = loaded;
+      {
         const skippedNote = d.skipped && d.skipped.length ? el('div', { class: 'card small', style: 'border-color:var(--gold)' },
           `⚠️ Bu kunlar olinmadi: ${d.skipped.map((x) => `${x.date.slice(8, 10)}.${x.date.slice(5, 7)} — ${FOOTBALL_REASONS[x.reason] || x.reason}`).join('; ')}`) : null;
-        results.replaceChildren(...(skippedNote ? [skippedNote] : []), ...(d.matches.length ? d.matches.map((m) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
+        results.replaceChildren(...(skippedNote ? [skippedNote] : []), ...(list.length ? list.map((m) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
           el('div', { class: 'grow', style: 'min-width:200px' }, el('b', { text: `${m.home.fullName} — ${m.away.fullName}` }),
             el('div', { class: 'small muted', text: `${m.competition ? m.competition.name : ''} · ${fmt(m.utcDate)}` })),
           assignedIds.has(m.id) ? el('span', { class: 'badge live', text: '✅ Belgilangan' })
@@ -489,16 +519,17 @@
                 e.target.replaceWith(el('span', { class: 'badge live', text: '✅ Belgilangan' }));
               } catch (err) { fail(err); e.target.disabled = false; }
             } })))
-          : [el('div', { class: 'card center muted', text: '📭 Bu oraliqda o\'yinlar topilmadi' })]));
-      } catch (e) { results.replaceChildren(); fail(e); }
-    });
+          : [el('div', { class: 'card center muted', text: d.matches.length ? '📭 Qidiruv bo\'yicha o\'yin topilmadi' : '📭 Bu oraliqda o\'yinlar topilmadi' })]));
+      }
+    }
     const st = { upcoming: '⏳ kutilmoqda', locked: '🔒 boshlangan', finished: '✅ hisoblangan' };
     v.replaceChildren(
       ...(cfg.before ? [cfg.before] : []),
       el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '➕ O\'yin belgilash' }),
         el('p', { class: 'small muted', text: cfg.hint }),
         el('div', { class: 'form-grid' }, el('div', null, el('label', { class: 'field-label', text: 'Dan' }), from), el('div', null, el('label', { class: 'field-label', text: 'Gacha' }), to), search),
-        results),
+        el('div', { class: 'form-grid', style: 'margin-top:10px' }, el('div', { style: 'flex:2 1 260px' }, el('label', { class: 'field-label', text: 'Qidirish' }), filter), el('div', null, el('label', { class: 'field-label', text: 'Liga' }), league)),
+        count, results),
       el('h2', { text: `Belgilangan o'yinlar (${assigned.length})` }),
       assigned.length ? el('div', { class: 'list' }, assigned.map((g) => el('div', { class: 'card row', style: 'flex-wrap:wrap' },
         el('div', { class: 'grow', style: 'min-width:200px' }, el('b', { text: `${g.home_team_name} — ${g.away_team_name}` }),
