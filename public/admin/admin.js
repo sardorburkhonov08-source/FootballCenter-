@@ -25,6 +25,8 @@
   function toast(msg) { const b = $('toast'); b.textContent = msg; b.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { b.hidden = true; }, 3000); }
 
   const ERRORS = {
+    user_not_found: '⚠️ Foydalanuvchi topilmadi (Telegram ID yoki @username)', bad_amount: '⚠️ Son 1 dan 100 000 gacha bo\'lsin',
+    nothing_to_remove: '⚠️ Foydalanuvchida olib tashlanadigan points yo\'q',
     bad_media: '⚠️ Fayl turi qo\'llab-quvvatlanmaydi (JPG, PNG, WEBP, GIF, MP4, WEBM, Lottie JSON)',
     bad_link: '⚠️ Havola https:// bilan boshlanishi kerak', file_too_large: '⚠️ Fayl juda katta (maks. 50 MB)',
     football_unavailable: '⚠️ Football API mavjud emas (FOOTBALL_API_KEY ni tekshiring)', match_not_scheduled: '⚠️ Bu o\'yin allaqachon boshlangan',
@@ -742,6 +744,48 @@
     );
   }
 
+  // ✉️ Foydalanuvchiga yozish havolasi: username bo'lsa t.me, aks holda tg://user?id (Telegram ilovasi ochiladi)
+  function chatLink(u) {
+    const href = u.username ? `https://t.me/${u.username}` : `tg://user?id=${u.telegram_id}`;
+    return el('a', { class: 'mini', href, target: '_blank', rel: 'noopener', text: '✉️ Lichka', style: 'text-decoration:none;margin-left:8px' });
+  }
+
+  // ⭐ Points qo'shish / olib tashlash
+  function pointsCard() {
+    const who = el('input', { class: 'input', placeholder: 'Telegram ID yoki @username' });
+    const amount = el('input', { class: 'input', type: 'number', min: '1', max: '100000', placeholder: 'Nechta points' });
+    const reason = el('input', { class: 'input', placeholder: 'Sabab (ixtiyoriy, foydalanuvchiga ko\'rinadi)', maxlength: '300' });
+    const info = el('div', { class: 'small muted', style: 'margin-top:8px' });
+    const load = async () => {
+      if (!who.value.trim()) return;
+      try {
+        const u = await api(`/points/user?q=${encodeURIComponent(who.value.trim())}`);
+        info.replaceChildren(el('b', { text: `${u.name}${u.username ? ` (@${u.username})` : ''}` }), ` — jami ${u.total} points (admin tuzatishi: ${u.adminPoints})`,
+          ...u.history.map((h) => el('div', { text: `${fmt(h.at)} · ${h.amount > 0 ? '+' : ''}${h.amount}${h.reason ? ` · ${h.reason}` : ''}${h.admin ? ` · ${h.admin}` : ''}` })));
+      } catch (e) { info.replaceChildren(); fail(e); }
+    };
+    who.addEventListener('change', load);
+    const send = (sign) => async (e) => {
+      const n = Number(amount.value);
+      if (!who.value.trim() || !n) { toast('⚠️ Foydalanuvchi va sonni kiriting'); return; }
+      if (!window.confirm(`${who.value.trim()}: ${sign > 0 ? '+' : '−'}${n} points?`)) return;
+      e.target.disabled = true;
+      try {
+        const r = await api('/points', { method: 'POST', body: { user: who.value.trim(), amount: sign * n, reason: reason.value.trim() } });
+        toast(`✅ ${r.name}: ${r.amount > 0 ? '+' : ''}${r.amount} · jami ${r.total}`);
+        amount.value = ''; reason.value = '';
+        await load();
+      } catch (err) { fail(err); }
+      e.target.disabled = false;
+    };
+    return el('div', { class: 'card' }, el('h3', { style: 'margin-top:0', text: '⭐ Points qo\'shish / olib tashlash' }),
+      el('p', { class: 'small muted', text: 'Umumiy points va haftalik/oylik umumiy reytingga ta\'sir qiladi. Foydalanuvchiga botda xabar boradi. Olib tashlanganda points 0 dan pastga tushmaydi.' }),
+      el('div', { class: 'form-grid' }, who, amount, reason),
+      el('div', { class: 'row', style: 'gap:8px;margin-top:8px' },
+        el('button', { class: 'btn', text: '➕ Qo\'shish', onclick: send(1) }), el('button', { class: 'btn ghost', text: '➖ Olib tashlash', onclick: send(-1) })),
+      info);
+  }
+
   // 📊 Statistika
   async function stats(v) {
     const s = await api('/stats');
@@ -756,15 +800,16 @@
       el('div', { class: 'card', style: 'margin-top:10px' }, el('h3', { style: 'margin-top:0', text: '🌐 Web App tashriflari (14 kun)' }),
         s.days.length ? [el('div', { class: 'bars' }, s.days.map((d) => el('div', { style: `height:${(d.visits / max) * 100}%`, title: `${d.date}: ${d.visits}` }))),
           el('div', { class: 'bars-x' }, s.days.map((d) => el('span', { text: d.date.slice(8) })))] : el('div', { class: 'muted small', text: 'Ma\'lumot yo\'q' })),
+      el('h2', { text: '⭐ Points' }), pointsCard(),
       el('h2', { text: '🏅 TOP faol foydalanuvchilar' }),
       el('div', { class: 'card' }, s.top.length ? s.top.map((u, i) => el('div', { class: 'lb-row' }, el('span', { class: 'pl', text: i + 1 }),
         el('span', { class: 'grow ellipsis' }, el('b', { text: u.name }), u.coach_name ? el('span', { class: 'small muted', text: ` · 👔 ${u.coach_name}` }) : null),
-        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz} · 🎯 ${u.points_score} · ⚔️ ${u.points_duel} · 🥅 ${u.points_penalty} · 🕹 ${u.points_arcade}` }), el('span', { class: 'pts', text: u.total })))
+        el('span', { class: 'small muted', text: `🎮 ${u.points_manager} · 🧠 ${u.points_quiz} · 🎯 ${u.points_score} · ⚔️ ${u.points_duel} · 🥅 ${u.points_penalty} · 🕹 ${u.points_arcade}${u.points_admin ? ` · ⭐ ${u.points_admin}` : ''}` }), el('span', { class: 'pts', text: u.total })))
         : el('div', { class: 'muted center', text: '📭 Hali yo\'q' })),
       el('h2', { text: '🏆 Davr g\'oliblari (sovrin topshirish uchun)' }),
       el('div', { class: 'card' }, s.winners.length ? s.winners.map((w) => el('div', { class: 'kv' },
         el('span', { text: `${winnerKind[w.kind]} · ${w.period === 'weekly' ? 'haftalik' : 'oylik'} · ${fmt(w.period_start).slice(0, 10)}` }),
-        el('b', { text: w.name ? `${w.name} (${w.telegram_id}) — ${w.points}` : '—' })))
+        el('span', null, el('b', { text: w.name ? `${w.name}${w.username ? ` @${w.username}` : ''} (${w.telegram_id}) — ${w.points}` : '—' }), w.telegram_id ? chatLink(w) : null)))
         : el('div', { class: 'muted center', text: '📭 Hali yakunlangan davrlar yo\'q' })),
     );
   }

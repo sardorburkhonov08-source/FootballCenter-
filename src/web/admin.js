@@ -451,6 +451,33 @@ router.delete('/quiz/questions/:id', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---- ⭐ Points qo'shish / olib tashlash (foydalanuvchi: Telegram ID yoki @username)
+router.get('/points/user', wrap(async (req, res) => {
+  const u = await users.find(req.query.q);
+  if (!u) return res.status(404).json({ error: 'user_not_found' });
+  const history = await require('../services/pointsAdmin').history(u.id, 10);
+  return res.json({
+    telegramId: Number(u.telegram_id), name: users.displayName(u), username: u.username || null, total: users.totalPoints(u), adminPoints: u.points_admin || 0,
+    history: history.map((h) => ({ amount: h.amount, reason: h.reason, at: h.created_at, admin: h.admin_id ? users.displayName({ first_name: h.admin_first_name, last_name: h.admin_last_name, username: h.admin_username }) : null })),
+  });
+}));
+router.post('/points', express.json(), wrap(async (req, res) => {
+  const pointsAdmin = require('../services/pointsAdmin');
+  const u = await users.find(req.body && req.body.user);
+  if (!u) return res.status(404).json({ error: 'user_not_found' });
+  const reason = req.body.reason ? String(req.body.reason).trim().slice(0, 300) : null;
+  let r;
+  try {
+    r = await pointsAdmin.adjust(u.id, Number(req.body.amount), req.admin.user ? req.admin.user.id : null, reason);
+  } catch (e) {
+    if (e instanceof pointsAdmin.PointsError) return res.status(400).json({ error: e.message });
+    throw e;
+  }
+  const key = `${r.amount > 0 ? 'points_added_notify' : 'points_removed_notify'}${reason ? '_reason' : ''}`;
+  notify.toUser(r.user, key, { amount: Math.abs(r.amount), total: r.total, reason: reason || '' }).catch(() => {});
+  return res.json({ ok: true, amount: r.amount, total: r.total, name: users.displayName(r.user) });
+}));
+
 // ---- 📊 Statistika
 router.get('/stats', wrap(async (req, res) => {
   const today = dayStart();

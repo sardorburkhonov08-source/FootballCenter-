@@ -287,7 +287,7 @@
   "a_owner_tag": " (ega)",
   "a_cannot_remove_owner": "⚠️ Egani adminlikdan olib bo'lmaydi.",
   "a_user_search_enter": "🔍 Telegram ID yoki @username yuboring:",
-  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Balans: {balance} so'm\n💎 Tarif: {tariff}\n📅 Ro'yxatdan o'tgan: {date}\n👥 Faol referrallar: {refs}\n🚦 Holat: {status}",
+  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Balans: {balance} so'm\n💎 Tarif: {tariff}\n📅 Ro'yxatdan o'tgan: {date}\n👥 Faol referrallar: {refs}\n⭐ Points: {points} (admin tuzatishi: {adminPoints})\n🚦 Holat: {status}",
   "a_status_active": "✅ Faol",
   "a_status_blocked": "🚫 Bloklangan",
   "a_btn_block": "🚫 Bloklash",
@@ -651,5 +651,18 @@
   "hc_friends_d": "Do'stlaringiz bilan o'z ligangizda bellashing",
   "hc_menu_t": "Asosiy menyu",
   "hc_menu_d": "Balans, Premium, profil, sozlamalar, yordam va AI yordamchi",
-  "hc_cta": "Pastdagi yashil tugmani bosing"
+  "hc_cta": "Pastdagi yashil tugmani bosing",
+  "a_btn_points_add": "➕ Points qo'shish",
+  "a_btn_points_sub": "➖ Points olib tashlash",
+  "a_points_enter_add": "➕ <b>{name}</b> ga nechta points qo'shamiz?\n\nHozir: <b>{points}</b> points.\nSon yuboring (1—{max}), kerak bo'lsa sababi bilan:\n<code>50 Turnir g'olibi</code>",
+  "a_points_enter_sub": "➖ <b>{name}</b> dan nechta points olib tashlaymiz?\n\nHozir: <b>{points}</b> points.\nSon yuboring (1—{max}), kerak bo'lsa sababi bilan:\n<code>20 Qoidabuzarlik</code>\nPoints 0 dan pastga tushmaydi.",
+  "a_points_bad": "⚠️ 1 dan {max} gacha son yuboring (kerak bo'lsa ortidan sabab).",
+  "a_points_none": "⚠️ Foydalanuvchida olib tashlanadigan points yo'q.",
+  "a_points_done": "✅ {name}: {amount} points. Endi jami: <b>{total}</b>",
+  "points_added_notify": "⭐ Admin sizga <b>+{amount} points</b> qo'shdi!\nJami: <b>{total}</b> points",
+  "points_added_notify_reason": "⭐ Admin sizga <b>+{amount} points</b> qo'shdi!\n📝 Sabab: {reason}\nJami: <b>{total}</b> points",
+  "points_removed_notify": "⚠️ Admin hisobingizdan <b>{amount} points</b> olib tashladi.\nJami: <b>{total}</b> points",
+  "points_removed_notify_reason": "⚠️ Admin hisobingizdan <b>{amount} points</b> olib tashladi.\n📝 Sabab: {reason}\nJami: <b>{total}</b> points",
+  "a_winner_notify": "🏆 <b>Umumiy reyting — {period} g'olib</b> ({from} — {to})\n\n👤 {mention}\n📛 {username}\n🆔 <code>{tgid}</code>\n⭐ {points} points\n🎁 Sovrin: {prize}\n\nSovrinni topshirish uchun g'olibga yozing: ismini yoki pastdagi tugmani bosing.",
+  "a_btn_winner_chat": "✉️ Lichkaga yozish"
 }

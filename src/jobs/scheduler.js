@@ -120,6 +120,30 @@ async function digestText(u, now = new Date()) {
   return lines.join('\n');
 }
 
+/**
+ * 🏆 Hafta/oy g'olibi — adminlarga: ism (bosilsa lichka ochiladi), @username, ID, points, sovrin.
+ * "✉️ Lichkaga yozish" tugmasi — username bo'lsa t.me havola; bo'lmasa tg://user?id (maxfiylik sozlamasi ruxsat bersa ishlaydi,
+ * rad etilsa xabar tugmasiz qayta yuboriladi).
+ */
+async function winnerToAdmins(winnerUser, points, period, r) {
+  const { escapeHtml, raw } = require('../i18n');
+  const prize = await db.one("SELECT text FROM prizes WHERE kind = 'overall' AND period = $1 AND is_active ORDER BY id DESC LIMIT 1", [period]);
+  const tg = winnerUser.telegram_id;
+  const mention = raw(`<a href="tg://user?id=${Number(tg)}">${escapeHtml(users.displayName(winnerUser))}</a>`);
+  const url = winnerUser.username ? `https://t.me/${winnerUser.username}` : `tg://user?id=${Number(tg)}`;
+  for (const id of await notify.adminIds()) {
+    const a = await users.byTelegramId(id);
+    const lang = (a && a.language) || 'uz';
+    const text = t(lang, 'a_winner_notify', {
+      period: t(lang, `period_${period}`), mention, username: winnerUser.username ? `@${winnerUser.username}` : t(lang, 'none'),
+      tgid: tg, points, prize: prize ? String(prize.text).split('\n')[0].slice(0, 200) : t(lang, 'none'),
+      from: formatDate(r.start), to: formatDate(new Date(r.end.getTime() - 1)),
+    });
+    const kb = { inline_keyboard: [[{ text: t(lang, 'a_btn_winner_chat'), url }]] };
+    if (!(await notify.sendRaw(id, text, { reply_markup: kb }))) await notify.sendRaw(id, text);
+  }
+}
+
 /** Davr (hafta/oy) yakunlanganda g'olibni yozish va xabar berish */
 async function finalizePeriods(now = new Date()) {
   for (const period of ['weekly', 'monthly']) {
@@ -141,6 +165,8 @@ async function finalizePeriods(now = new Date()) {
       await notify.toUser(winnerUser, 'leaderboard_winner_notify', {
         kind: t(winnerUser.language || 'uz', kindKey), period: t(winnerUser.language || 'uz', `period_${period}`),
       }, { extra: notify.effect('party') });
+      // 👤 Adminlarga: g'olibning lichkasi (sovrin topshirish uchun)
+      await winnerToAdmins(winnerUser, winner.points, period, r);
       // 📣 Kanalga g'olib kartasi (sinov; kanal sozlangan bo'lsa)
       require('../services/channel').postWinner(notify.getApi(), winnerUser, winner.points, period).catch((e) => console.error('[channel winner]', e.message));
       for (let i = 0; i < rows.length; i += 1) {
@@ -219,4 +245,4 @@ function start() {
   return () => timers.forEach((x) => clearInterval(x));
 }
 
-module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, dailyDigest, digestText, finalizePeriods };
+module.exports = { start, JOBS, matchStartReminders, premiumExpiry, bonusReady, quizTick, dailyDigest, digestText, finalizePeriods, winnerToAdmins };

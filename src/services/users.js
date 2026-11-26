@@ -92,7 +92,7 @@ async function find(query) {
 }
 
 /** Umumiy points: Mini Manager + Quiz + Hisobni top + Duel + Penalty + Crossbar/Keepy-uppy. Yangi o'yin ustuni shu ro'yxatga qo'shiladi. */
-const POINT_COLUMNS = ['points_manager', 'points_quiz', 'points_score', 'points_duel', 'points_penalty', 'points_arcade', 'points_quest', 'points_poll'];
+const POINT_COLUMNS = ['points_manager', 'points_quiz', 'points_score', 'points_duel', 'points_penalty', 'points_arcade', 'points_quest', 'points_poll', 'points_admin'];
 function totalPoints(u) { return POINT_COLUMNS.reduce((sum, k) => sum + (Number(u[k]) || 0), 0); }
 /** SQL ifoda: (u.points_manager + ...); prefix — jadval taxallusi */
 function totalPointsSql(prefix = '') { return `(${POINT_COLUMNS.map((c) => `${prefix}${c}`).join(' + ')})`; }

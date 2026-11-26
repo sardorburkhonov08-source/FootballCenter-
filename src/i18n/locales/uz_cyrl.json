@@ -287,7 +287,7 @@
   "a_owner_tag": " (эга)",
   "a_cannot_remove_owner": "⚠️ Эгани админликдан олиб бўлмайди.",
   "a_user_search_enter": "🔍 Telegram ID ёки @username юборинг:",
-  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Баланс: {balance} сўм\n💎 Тариф: {tariff}\n📅 Рўйхатдан ўтган: {date}\n👥 Фаол реферраллар: {refs}\n🚦 Ҳолат: {status}",
+  "a_user_card": "👤 {name}\n📛 {username}\n🆔 <code>{tgid}</code>\n🌐 {lang}\n💰 Баланс: {balance} сўм\n💎 Тариф: {tariff}\n📅 Рўйхатдан ўтган: {date}\n👥 Фаол реферраллар: {refs}\n⭐ Points: {points} (админ тузатиши: {adminPoints})\n🚦 Ҳолат: {status}",
   "a_status_active": "✅ Фаол",
   "a_status_blocked": "🚫 Блокланган",
   "a_btn_block": "🚫 Блоклаш",
@@ -651,5 +651,18 @@
   "hc_friends_d": "Дўстларингиз билан ўз лигангизда беллашинг",
   "hc_menu_t": "Асосий меню",
   "hc_menu_d": "Баланс, Premium, профил, созламалар, ёрдам ва AI ёрдамчи",
-  "hc_cta": "Пастдаги яшил тугмани босинг"
+  "hc_cta": "Пастдаги яшил тугмани босинг",
+  "a_btn_points_add": "➕ Points қўшиш",
+  "a_btn_points_sub": "➖ Points олиб ташлаш",
+  "a_points_enter_add": "➕ <b>{name}</b> га нечта points қўшамиз?\n\nҲозир: <b>{points}</b> points.\nСон юборинг (1—{max}), керак бўлса сабаби билан:\n<code>50 Турнир ғолиби</code>",
+  "a_points_enter_sub": "➖ <b>{name}</b> дан нечта points олиб ташлаймиз?\n\nҲозир: <b>{points}</b> points.\nСон юборинг (1—{max}), керак бўлса сабаби билан:\n<code>20 Қоидабузарлик</code>\nPoints 0 дан пастга тушмайди.",
+  "a_points_bad": "⚠️ 1 дан {max} гача сон юборинг (керак бўлса ортидан сабаб).",
+  "a_points_none": "⚠️ Фойдаланувчида олиб ташланадиган points йўқ.",
+  "a_points_done": "✅ {name}: {amount} points. Энди жами: <b>{total}</b>",
+  "points_added_notify": "⭐ Админ сизга <b>+{amount} points</b> қўшди!\nЖами: <b>{total}</b> points",
+  "points_added_notify_reason": "⭐ Админ сизга <b>+{amount} points</b> қўшди!\n📝 Сабаб: {reason}\nЖами: <b>{total}</b> points",
+  "points_removed_notify": "⚠️ Админ ҳисобингиздан <b>{amount} points</b> олиб ташлади.\nЖами: <b>{total}</b> points",
+  "points_removed_notify_reason": "⚠️ Админ ҳисобингиздан <b>{amount} points</b> олиб ташлади.\n📝 Сабаб: {reason}\nЖами: <b>{total}</b> points",
+  "a_winner_notify": "🏆 <b>Умумий рейтинг — {period} ғолиб</b> ({from} — {to})\n\n👤 {mention}\n📛 {username}\n🆔 <code>{tgid}</code>\n⭐ {points} points\n🎁 Соврин: {prize}\n\nСовринни топшириш учун ғолибга ёзинг: исмини ёки пастдаги тугмани босинг.",
+  "a_btn_winner_chat": "✉️ Личкага ёзиш"
 }
